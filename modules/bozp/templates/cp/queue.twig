@@ -1,0 +1,55 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = "Schvaľovacia fronta HSE"|t('bozp') %}
+{% set selectedSubnavItem = 'queue' %}
+
+{% set crumbs = [
+    { label: "BOZP Permity"|t('bozp'), url: cpUrl('bozp') }
+] %}
+
+{% block content %}
+    <div class="content-pane">
+        <h2>
+            {{ "Permity čakajúce na schválenie"|t('bozp') }}
+            <span class="badge">{{ pendingCount }}</span>
+        </h2>
+
+        {% if pendingPermits|length == 0 %}
+            <p class="zilch">
+                {{ "Žiadne permity nečakajú na schválenie."|t('bozp') }}
+            </p>
+        {% else %}
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ "Číslo"|t('bozp') }}</th>
+                        <th>{{ "Dodávateľ"|t('bozp') }}</th>
+                        <th>{{ "Miesto výkonu"|t('bozp') }}</th>
+                        <th>{{ "Odoslané"|t('bozp') }}</th>
+                        <th>{{ "Akcie"|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for permit in pendingPermits %}
+                        <tr>
+                            <td>
+                                <strong>{{ permit.permitNumber }}</strong>
+                            </td>
+                            <td>{{ permit.contractorCompany ?: '—' }}</td>
+                            <td>{{ permit.workLocation ?: '—' }}</td>
+                            <td>
+                                {%- if permit.submittedAt -%}
+                                    {{ permit.submittedAt|date('d.m.Y H:i') }}
+                                {%- else -%}—{%- endif -%}
+                            </td>
+                            <td>
+                                <a href="#" class="btn small">{{ "Otvoriť"|t('bozp') }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}

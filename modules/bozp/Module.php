@@ -5,13 +5,22 @@ declare(strict_types=1);
 namespace modules\bozp;
 
 use Craft;
+use craft\events\RegisterCpNavItemsEvent;
+use craft\events\RegisterTemplateRootsEvent;
+use craft\events\RegisterUrlRulesEvent;
+use craft\events\RegisterUserPermissionsEvent;
+use craft\services\UserPermissions;
+use craft\web\twig\variables\Cp;
+use craft\web\UrlManager;
+use craft\web\View;
+use yii\base\Event;
 use yii\base\Module as BaseModule;
 
 /**
  * BOZP Permits Module
  *
  * Work permit (povolenie na prácu) lifecycle for Mondelez SR Production.
- * Handles general permits (GPTW) in v1; high-risk sub-permits in a later phase.
+ * v1: General permit (GPTW). High-risk sub-permits arrive in v2.
  */
 class Module extends BaseModule
 {
@@ -25,6 +34,96 @@ class Module extends BaseModule
 
         parent::init();
 
+        $this->registerTranslations();
+        $this->registerCpTemplateRoots();
+        $this->registerCpUrlRules();
+        $this->registerCpNavItem();
+        $this->registerUserPermissions();
+
         Craft::info('BOZP module loaded.', __METHOD__);
+    }
+
+    private function registerTranslations(): void
+    {
+        Craft::$app->getI18n()->translations['bozp'] = [
+            'class' => \craft\i18n\PhpMessageSource::class,
+            'sourceLanguage' => 'sk',
+            'basePath' => __DIR__ . '/translations',
+            'forceTranslation' => true,
+            'allowOverrides' => true,
+        ];
+    }
+
+    private function registerCpTemplateRoots(): void
+    {
+        Event::on(
+            View::class,
+            View::EVENT_REGISTER_CP_TEMPLATE_ROOTS,
+            static function (RegisterTemplateRootsEvent $event): void {
+                $event->roots['bozp'] = __DIR__ . '/templates';
+            }
+        );
+    }
+
+    private function registerCpUrlRules(): void
+    {
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_CP_URL_RULES,
+            static function (RegisterUrlRulesEvent $event): void {
+                // Landing page = approval queue
+                $event->rules['bozp'] = 'bozp/queue/index';
+                $event->rules['bozp/queue'] = 'bozp/queue/index';
+            }
+        );
+    }
+
+    private function registerCpNavItem(): void
+    {
+        Event::on(
+            Cp::class,
+            Cp::EVENT_REGISTER_CP_NAV_ITEMS,
+            static function (RegisterCpNavItemsEvent $event): void {
+                $user = Craft::$app->getUser();
+
+                // Don't surface the nav item to users without access
+                if (!$user->getIdentity() || !$user->checkPermission('bozp:viewQueue')) {
+                    return;
+                }
+
+                $event->navItems[] = [
+                    'url' => 'bozp',
+                    'label' => Craft::t('bozp', 'BOZP Permity'),
+                    'icon' => '@modules/bozp/icon-mask.svg',
+                ];
+            }
+        );
+    }
+
+    private function registerUserPermissions(): void
+    {
+        Event::on(
+            UserPermissions::class,
+            UserPermissions::EVENT_REGISTER_PERMISSIONS,
+            static function (RegisterUserPermissionsEvent $event): void {
+                $event->permissions[] = [
+                    'heading' => Craft::t('bozp', 'BOZP Permity'),
+                    'permissions' => [
+                        'bozp:viewQueue' => [
+                            'label' => Craft::t('bozp', 'Zobraziť schvaľovaciu frontu HSE'),
+                        ],
+                        'bozp:approve' => [
+                            'label' => Craft::t('bozp', 'Schvaľovať / zamietať permity'),
+                        ],
+                        'bozp:viewAll' => [
+                            'label' => Craft::t('bozp', 'Zobraziť všetky permity'),
+                        ],
+                        'bozp:manageZones' => [
+                            'label' => Craft::t('bozp', 'Spravovať zóny'),
+                        ],
+                    ],
+                ];
+            }
+        );
     }
 }
