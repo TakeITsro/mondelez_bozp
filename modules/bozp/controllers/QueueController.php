@@ -50,6 +50,33 @@ class QueueController extends Controller
         ]);
     }
 
+    public function actionAll(): Response
+    {
+        $this->requireLogin();
+        $this->requirePermission('bozp:viewAll');
+
+        $request = Craft::$app->getRequest();
+        $statusFilter = (string) $request->getQueryParam('status', '');
+
+        $validStatuses = array_map(static fn (PermitStatus $s) => $s->value, PermitStatus::cases());
+
+        $query = PermitRecord::find()->orderBy(['dateCreated' => SORT_DESC])->limit(200);
+
+        if ($statusFilter !== '' && in_array($statusFilter, $validStatuses, true)) {
+            $query->andWhere(['status' => $statusFilter]);
+        }
+
+        $permits = $query->all();
+
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
+
+        return $this->renderTemplate('bozp/cp/all-permits', [
+            'permits' => $permits,
+            'statusFilter' => $statusFilter,
+            'validStatuses' => $validStatuses,
+        ]);
+    }
+
     public function actionView(int $id): Response
     {
         $this->requireLogin();

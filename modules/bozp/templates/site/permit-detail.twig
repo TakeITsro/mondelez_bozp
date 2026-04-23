@@ -1,0 +1,139 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{# ---------------------------------------------------------------------------
+   Front-end read-only permit detail. Visible to:
+     - the issuer of this permit (always)
+     - anyone with bozp:viewAll
+   HSE approval actions live in the CP — this view is informational only.
+--------------------------------------------------------------------------- #}
+
+{% set statusLabels = {
+    'draft':           'Koncept'|t('bozp'),
+    'submitted':       'Odoslané'|t('bozp'),
+    'approved':        'Schválené'|t('bozp'),
+    'rejected':        'Zamietnuté'|t('bozp'),
+    'signed':          'Podpísané'|t('bozp'),
+    'active':          'Aktívne'|t('bozp'),
+    'pending_closure': 'Čaká na uzavretie'|t('bozp'),
+    'closed':          'Uzavreté'|t('bozp'),
+    'cancelled':       'Zrušené'|t('bozp'),
+    'expired':         'Vypršané'|t('bozp'),
+} %}
+
+{% block title %}{{ permit.permitNumber }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--permit-detail">
+        <header class="bozp-page__header">
+            <div>
+                <p class="bozp-page__back">
+                    <a href="{{ url('bozp') }}">← {{ 'Moje permity'|t('bozp') }}</a>
+                </p>
+                <h1>{{ permit.permitNumber }}</h1>
+                <p>
+                    <span class="bozp-status bozp-status--{{ permit.status }}">
+                        {{ statusLabels[permit.status] ?? permit.status }}
+                    </span>
+                </p>
+            </div>
+        </header>
+
+        {# ---- HSE decision banner ---- #}
+        {% if permit.status == 'rejected' %}
+            <div class="bozp-decision bozp-decision--rejected" role="alert">
+                <h2>{{ 'Permit bol zamietnutý'|t('bozp') }}</h2>
+                {% if permit.approvalComment %}
+                    <p class="bozp-decision__comment">{{ permit.approvalComment|nl2br }}</p>
+                {% endif %}
+                <p class="bozp-decision__meta">
+                    {%- if permit.rejectedAt -%}
+                        {{ permit.rejectedAt|date('d.m.Y H:i') }}
+                        {%- if approver %} · {{ approver.fullName ?: approver.username }}{% endif -%}
+                    {%- endif -%}
+                </p>
+            </div>
+        {% elseif permit.status == 'approved' %}
+            <div class="bozp-decision bozp-decision--approved" role="status">
+                <h2>{{ 'Permit bol schválený'|t('bozp') }}</h2>
+                {% if permit.approvalComment %}
+                    <p class="bozp-decision__comment">{{ permit.approvalComment|nl2br }}</p>
+                {% endif %}
+                <p class="bozp-decision__meta">
+                    {%- if permit.approvedAt -%}
+                        {{ permit.approvedAt|date('d.m.Y H:i') }}
+                        {%- if approver %} · {{ approver.fullName ?: approver.username }}{% endif -%}
+                    {%- endif -%}
+                </p>
+            </div>
+        {% endif %}
+
+        {# ---- Core details ---- #}
+        <dl class="bozp-detail">
+            <dt>{{ 'Dodávateľ'|t('bozp') }}</dt>
+            <dd>{{ permit.contractorCompany ?: '—' }}</dd>
+
+            <dt>{{ 'Kontaktná osoba'|t('bozp') }}</dt>
+            <dd>{{ permit.contractorPersonName ?: '—' }}</dd>
+
+            <dt>{{ 'E-mail'|t('bozp') }}</dt>
+            <dd>
+                {%- if permit.contractorEmail -%}
+                    <a href="mailto:{{ permit.contractorEmail }}">{{ permit.contractorEmail }}</a>
+                {%- else -%}—{%- endif -%}
+            </dd>
+
+            <dt>{{ 'Miesto výkonu'|t('bozp') }}</dt>
+            <dd>{{ permit.workLocation ?: '—' }}</dd>
+
+            <dt>{{ 'Popis prác'|t('bozp') }}</dt>
+            <dd>{{ permit.workOverview|nl2br ?: '—' }}</dd>
+
+            <dt>{{ 'Platnosť od'|t('bozp') }}</dt>
+            <dd>{{ permit.validFrom ? permit.validFrom|date('d.m.Y H:i') : '—' }}</dd>
+
+            <dt>{{ 'Platnosť do'|t('bozp') }}</dt>
+            <dd>{{ permit.validTo ? permit.validTo|date('d.m.Y H:i') : '—' }}</dd>
+
+            <dt>{{ 'Zóny'|t('bozp') }}</dt>
+            <dd>
+                {%- if zones|length > 0 -%}
+                    {% for zone in zones %}
+                        <span class="bozp-tag">{{ zone.name }}{% if zone.code %} ({{ zone.code }}){% endif %}</span>
+                    {% endfor %}
+                {%- else -%}—{%- endif -%}
+            </dd>
+
+            <dt>{{ 'Vytvorené'|t('bozp') }}</dt>
+            <dd>{{ permit.dateCreated|date('d.m.Y H:i') }}</dd>
+
+            {% if permit.submittedAt %}
+                <dt>{{ 'Odoslané'|t('bozp') }}</dt>
+                <dd>{{ permit.submittedAt|date('d.m.Y H:i') }}</dd>
+            {% endif %}
+        </dl>
+
+        {# ---- Audit trail ---- #}
+        {% if auditEntries|length > 0 %}
+            <section class="bozp-audit">
+                <h2>{{ 'História'|t('bozp') }}</h2>
+                <ol class="bozp-audit__list">
+                    {% for entry in auditEntries %}
+                        <li class="bozp-audit__entry">
+                            <time>{{ entry.dateCreated|date('d.m.Y H:i') }}</time>
+                            <code>{{ entry.action }}</code>
+                            {% if entry.fromStatus or entry.toStatus %}
+                                <span class="bozp-audit__transition">
+                                    {{ entry.fromStatus ?: '—' }} → {{ entry.toStatus ?: '—' }}
+                                </span>
+                            {% endif %}
+                            {% set p = entry.payload %}
+                            {% if p is iterable and p.note is defined %}
+                                <p class="bozp-audit__note">{{ p.note }}</p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
+            </section>
+        {% endif %}
+    </section>
+{% endblock %}

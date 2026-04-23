@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace modules\bozp\controllers;
 
 use Craft;
+use craft\elements\User;
 use craft\web\Controller;
 use craft\web\View;
 use modules\bozp\enums\PermitStatus;
 use modules\bozp\enums\PermitType;
 use modules\bozp\Module;
+use modules\bozp\records\AuditLogRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\ZoneRecord;
 use Throwable;
+use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 /**
@@ -40,6 +44,42 @@ use yii\web\Response;
 class PermitsController extends Controller
 {
     protected array|bool|int $allowAnonymous = false;
+
+    public function actionView(int $id): Response
+    {
+        $this->requireLogin();
+
+        $permit = PermitRecord::findOne(['id' => $id]);
+        if (!$permit) {
+            throw new NotFoundHttpException('Permit not found.');
+        }
+
+        $user = Craft::$app->getUser();
+        $userId = $user->getId();
+
+        // Issuer can always see their own permit; otherwise bozp:viewAll is required.
+        $isIssuer = (int) $permit->issuerId === (int) $userId;
+        if (!$isIssuer && !$user->checkPermission('bozp:viewAll')) {
+            throw new ForbiddenHttpException();
+        }
+
+        $zones = $this->loadZonesFor((int) $permit->id);
+        $approver = $permit->approverId ? User::find()->id($permit->approverId)->one() : null;
+        $auditEntries = AuditLogRecord::find()
+            ->where(['permitId' => $permit->id])
+            ->orderBy(['dateCreated' => SORT_DESC])
+            ->limit(20)
+            ->all();
+
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+
+        return $this->renderTemplate('bozp/site/permit-detail', [
+            'permit' => $permit,
+            'zones' => $zones,
+            'approver' => $approver,
+            'auditEntries' => $auditEntries,
+        ]);
+    }
 
     public function actionNew(): Response
     {
@@ -201,6 +241,25 @@ class PermitsController extends Controller
         }
 
         return $errors;
+    }
+
+    /** @return ZoneRecord[] */
+    private function loadZonesFor(int $permitId): array
+    {
+        $zoneIds = (new \yii\db\Query())
+            ->select('zoneId')
+            ->from('{{%bozp_permit_zones}}')
+            ->where(['permitId' => $permitId])
+            ->column();
+
+        if ($zoneIds === []) {
+            return [];
+        }
+
+        return ZoneRecord::find()
+            ->where(['id' => $zoneIds])
+            ->orderBy(['sortOrder' => SORT_ASC, 'name' => SORT_ASC])
+            ->all();
     }
 
     /** @param array<int, string|int> $zoneIds */

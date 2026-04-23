@@ -42,7 +42,9 @@
                 <tbody>
                     {% for permit in myPermits %}
                         <tr class="bozp-table__row bozp-table__row--status-{{ permit.status }}">
-                            <td>{{ permit.permitNumber }}</td>
+                            <td>
+                                <a href="{{ url('bozp/permits/' ~ permit.id) }}">{{ permit.permitNumber }}</a>
+                            </td>
                             <td>{{ permit.contractorCompany }}</td>
                             <td>{{ permit.workLocation }}</td>
                             <td>

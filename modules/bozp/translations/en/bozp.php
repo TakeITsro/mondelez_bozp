@@ -14,6 +14,13 @@ return [
     'Zobraziť všetky permity' => 'View all permits',
     'Spravovať zóny' => 'Manage zones',
 
+    // CP subnav
+    'Schvaľovacia fronta' => 'Approval queue',
+    'Všetky permity' => 'All permits',
+    'Filtrovať' => 'Filter',
+    'Všetky stavy' => 'All statuses',
+    'Žiadne permity.' => 'No permits.',
+
     // Queue page
     'Schvaľovacia fronta HSE' => 'HSE Approval Queue',
     'Permity čakajúce na schválenie' => 'Permits awaiting approval',
@@ -73,6 +80,11 @@ return [
     'Permit sa nepodarilo uložiť. Skúste znova.' => 'The permit could not be saved. Please try again.',
     'Permit {n} bol odoslaný na schválenie HSE.' => 'Permit {n} was submitted for HSE approval.',
     'Permit {n} bol uložený ako koncept.' => 'Permit {n} was saved as a draft.',
+
+    // Front-end permit detail
+    'Permit bol zamietnutý' => 'Permit was rejected',
+    'Permit bol schválený' => 'Permit was approved',
+    'História' => 'History',
 
     // Permit detail view (CP)
     'Permit {n}' => 'Permit {n}',

@@ -97,6 +97,7 @@ class Module extends BaseModule
             static function (RegisterUrlRulesEvent $event): void {
                 $event->rules['bozp'] = 'bozp/queue/index';
                 $event->rules['bozp/queue'] = 'bozp/queue/index';
+                $event->rules['bozp/all'] = 'bozp/queue/all';
                 $event->rules['bozp/permit/<id:\d+>'] = 'bozp/queue/view';
             }
         );
@@ -112,6 +113,7 @@ class Module extends BaseModule
                 $event->rules['bozp/permits'] = 'bozp/dashboard/index';
                 $event->rules['bozp/permits/new'] = 'bozp/permits/new';
                 $event->rules['POST bozp/permits/save'] = 'bozp/permits/save';
+                $event->rules['bozp/permits/<id:\d+>'] = 'bozp/permits/view';
             }
         );
     }
@@ -128,10 +130,25 @@ class Module extends BaseModule
                     return;
                 }
 
+                $subnav = [
+                    'queue' => [
+                        'label' => Craft::t('bozp', 'Schvaľovacia fronta'),
+                        'url' => 'bozp/queue',
+                    ],
+                ];
+
+                if ($user->checkPermission('bozp:viewAll')) {
+                    $subnav['all'] = [
+                        'label' => Craft::t('bozp', 'Všetky permity'),
+                        'url' => 'bozp/all',
+                    ];
+                }
+
                 $event->navItems[] = [
                     'url' => 'bozp',
                     'label' => Craft::t('bozp', 'BOZP Permity'),
                     'icon' => '@modules/bozp/icon-mask.svg',
+                    'subnav' => $subnav,
                 ];
             }
         );

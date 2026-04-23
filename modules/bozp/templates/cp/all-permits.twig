@@ -1,0 +1,81 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = 'Všetky permity'|t('bozp') %}
+{% set selectedSubnavItem = 'all' %}
+
+{% set crumbs = [
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') }
+] %}
+
+{% set statusLabels = {
+    'draft':           'Koncept'|t('bozp'),
+    'submitted':       'Odoslané'|t('bozp'),
+    'approved':        'Schválené'|t('bozp'),
+    'rejected':        'Zamietnuté'|t('bozp'),
+    'signed':          'Podpísané'|t('bozp'),
+    'active':          'Aktívne'|t('bozp'),
+    'pending_closure': 'Čaká na uzavretie'|t('bozp'),
+    'closed':          'Uzavreté'|t('bozp'),
+    'cancelled':       'Zrušené'|t('bozp'),
+    'expired':         'Vypršané'|t('bozp'),
+} %}
+
+{% set statusOptions = [{ label: 'Všetky stavy'|t('bozp'), value: '' }] %}
+{% for value in validStatuses %}
+    {% set statusOptions = statusOptions|merge([{ label: statusLabels[value] ?? value, value: value }]) %}
+{% endfor %}
+
+{% block content %}
+    <div class="content-pane">
+
+        <form method="get" action="" class="flex" style="margin-bottom:16px;align-items:flex-end;gap:12px;">
+            {{ forms.selectField({
+                label: 'Stav'|t('bozp'),
+                name: 'status',
+                value: statusFilter,
+                options: statusOptions,
+            }) }}
+            <div>
+                <button type="submit" class="btn">{{ 'Filtrovať'|t('bozp') }}</button>
+            </div>
+        </form>
+
+        {% if permits|length == 0 %}
+            <p class="zilch">{{ 'Žiadne permity.'|t('bozp') }}</p>
+        {% else %}
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Číslo'|t('bozp') }}</th>
+                        <th>{{ 'Stav'|t('bozp') }}</th>
+                        <th>{{ 'Dodávateľ'|t('bozp') }}</th>
+                        <th>{{ 'Miesto výkonu'|t('bozp') }}</th>
+                        <th>{{ 'Vytvorené'|t('bozp') }}</th>
+                        <th>{{ 'Akcie'|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for permit in permits %}
+                        <tr>
+                            <td><strong>{{ permit.permitNumber }}</strong></td>
+                            <td>
+                                <span class="bozp-status bozp-status--{{ permit.status }}">
+                                    {{ statusLabels[permit.status] ?? permit.status }}
+                                </span>
+                            </td>
+                            <td>{{ permit.contractorCompany ?: '—' }}</td>
+                            <td>{{ permit.workLocation ?: '—' }}</td>
+                            <td>{{ permit.dateCreated|date('d.m.Y H:i') }}</td>
+                            <td>
+                                <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn small">
+                                    {{ 'Otvoriť'|t('bozp') }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}
