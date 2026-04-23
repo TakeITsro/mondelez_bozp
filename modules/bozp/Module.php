@@ -13,6 +13,9 @@ use craft\services\UserPermissions;
 use craft\web\twig\variables\Cp;
 use craft\web\UrlManager;
 use craft\web\View;
+use modules\bozp\services\AuditLogger;
+use modules\bozp\services\PermitNumberGenerator;
+use modules\bozp\services\PermitWorkflow;
 use yii\base\Event;
 use yii\base\Module as BaseModule;
 
@@ -21,6 +24,10 @@ use yii\base\Module as BaseModule;
  *
  * Work permit (povolenie na prácu) lifecycle for Mondelez SR Production.
  * v1: General permit (GPTW). High-risk sub-permits arrive in v2.
+ *
+ * @property-read PermitNumberGenerator $permitNumberGenerator
+ * @property-read PermitWorkflow $permitWorkflow
+ * @property-read AuditLogger $auditLogger
  */
 class Module extends BaseModule
 {
@@ -32,11 +39,18 @@ class Module extends BaseModule
             ? 'modules\\bozp\\console\\controllers'
             : 'modules\\bozp\\controllers';
 
+        $this->setComponents([
+            'permitNumberGenerator' => PermitNumberGenerator::class,
+            'permitWorkflow' => PermitWorkflow::class,
+            'auditLogger' => AuditLogger::class,
+        ]);
+
         parent::init();
 
         $this->registerTranslations();
-        $this->registerCpTemplateRoots();
+        $this->registerTemplateRoots();
         $this->registerCpUrlRules();
+        $this->registerSiteUrlRules();
         $this->registerCpNavItem();
         $this->registerUserPermissions();
 
@@ -54,11 +68,21 @@ class Module extends BaseModule
         ];
     }
 
-    private function registerCpTemplateRoots(): void
+    private function registerTemplateRoots(): void
     {
+        // CP templates
         Event::on(
             View::class,
             View::EVENT_REGISTER_CP_TEMPLATE_ROOTS,
+            static function (RegisterTemplateRootsEvent $event): void {
+                $event->roots['bozp'] = __DIR__ . '/templates';
+            }
+        );
+
+        // Site (front-end) templates
+        Event::on(
+            View::class,
+            View::EVENT_REGISTER_SITE_TEMPLATE_ROOTS,
             static function (RegisterTemplateRootsEvent $event): void {
                 $event->roots['bozp'] = __DIR__ . '/templates';
             }
@@ -71,9 +95,22 @@ class Module extends BaseModule
             UrlManager::class,
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
             static function (RegisterUrlRulesEvent $event): void {
-                // Landing page = approval queue
                 $event->rules['bozp'] = 'bozp/queue/index';
                 $event->rules['bozp/queue'] = 'bozp/queue/index';
+            }
+        );
+    }
+
+    private function registerSiteUrlRules(): void
+    {
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+            static function (RegisterUrlRulesEvent $event): void {
+                $event->rules['bozp'] = 'bozp/dashboard/index';
+                $event->rules['bozp/permits'] = 'bozp/dashboard/index';
+                $event->rules['bozp/permits/new'] = 'bozp/permits/new';
+                $event->rules['POST bozp/permits/save'] = 'bozp/permits/save';
             }
         );
     }
@@ -86,7 +123,6 @@ class Module extends BaseModule
             static function (RegisterCpNavItemsEvent $event): void {
                 $user = Craft::$app->getUser();
 
-                // Don't surface the nav item to users without access
                 if (!$user->getIdentity() || !$user->checkPermission('bozp:viewQueue')) {
                     return;
                 }
@@ -109,6 +145,9 @@ class Module extends BaseModule
                 $event->permissions[] = [
                     'heading' => Craft::t('bozp', 'BOZP Permity'),
                     'permissions' => [
+                        'bozp:createPermit' => [
+                            'label' => Craft::t('bozp', 'Vytvárať permity'),
+                        ],
                         'bozp:viewQueue' => [
                             'label' => Craft::t('bozp', 'Zobraziť schvaľovaciu frontu HSE'),
                         ],

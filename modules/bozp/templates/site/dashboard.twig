@@ -1,0 +1,60 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{% set statusLabels = {
+    'draft':           'Koncept'|t('bozp'),
+    'submitted':       'Odoslané'|t('bozp'),
+    'approved':        'Schválené'|t('bozp'),
+    'rejected':        'Zamietnuté'|t('bozp'),
+    'signed':          'Podpísané'|t('bozp'),
+    'active':          'Aktívne'|t('bozp'),
+    'pending_closure': 'Čaká na uzavretie'|t('bozp'),
+    'closed':          'Uzavreté'|t('bozp'),
+    'cancelled':       'Zrušené'|t('bozp'),
+    'expired':         'Vypršané'|t('bozp'),
+} %}
+
+{% block title %}{{ 'Moje permity'|t('bozp') }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--dashboard">
+        <header class="bozp-page__header">
+            <h1>{{ 'Moje permity'|t('bozp') }}</h1>
+            {% if currentUser.can('bozp:createPermit') %}
+                <a class="bozp-btn bozp-btn--primary" href="{{ url('bozp/permits/new') }}">
+                    {{ 'Nový permit'|t('bozp') }}
+                </a>
+            {% endif %}
+        </header>
+
+        {% if myPermits|length == 0 %}
+            <p class="bozp-empty">{{ 'Zatiaľ ste nevytvorili žiadny permit.'|t('bozp') }}</p>
+        {% else %}
+            <table class="bozp-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'Číslo'|t('bozp') }}</th>
+                        <th>{{ 'Dodávateľ'|t('bozp') }}</th>
+                        <th>{{ 'Miesto výkonu'|t('bozp') }}</th>
+                        <th>{{ 'Stav'|t('bozp') }}</th>
+                        <th>{{ 'Vytvorené'|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for permit in myPermits %}
+                        <tr class="bozp-table__row bozp-table__row--status-{{ permit.status }}">
+                            <td>{{ permit.permitNumber }}</td>
+                            <td>{{ permit.contractorCompany }}</td>
+                            <td>{{ permit.workLocation }}</td>
+                            <td>
+                                <span class="bozp-status bozp-status--{{ permit.status }}">
+                                    {{ statusLabels[permit.status] ?? permit.status }}
+                                </span>
+                            </td>
+                            <td>{{ permit.dateCreated|date('d.m.Y H:i') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </section>
+{% endblock %}

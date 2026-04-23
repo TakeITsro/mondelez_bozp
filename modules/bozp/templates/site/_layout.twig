@@ -1,0 +1,56 @@
+{# ---------------------------------------------------------------------------
+   BOZP front-end layout
+   ---------------------------------------------------------------------------
+   Skeletal on purpose — the user is doing the CSS pass. Class names are
+   namespaced under `.bozp-` so they don't collide with anything else on the
+   site. Every page block is a clearly-named hook so styling can target
+   precisely what it needs.
+--------------------------------------------------------------------------- #}
+<!DOCTYPE html>
+<html lang="{{ craft.app.language }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ 'BOZP Permity'|t('bozp') }}{% endblock %} — Mondelez</title>
+    {% block head %}{% endblock %}
+</head>
+<body class="bozp">
+    <header class="bozp-header">
+        <div class="bozp-header__inner">
+            <a class="bozp-header__brand" href="{{ url('bozp') }}">{{ 'BOZP Permity'|t('bozp') }}</a>
+
+            {% if currentUser %}
+                <nav class="bozp-header__nav">
+                    <a href="{{ url('bozp') }}">{{ 'Moje permity'|t('bozp') }}</a>
+                    {% if currentUser.can('bozp:createPermit') %}
+                        <a href="{{ url('bozp/permits/new') }}">{{ 'Nový permit'|t('bozp') }}</a>
+                    {% endif %}
+                </nav>
+
+                <div class="bozp-header__user">
+                    <span>{{ currentUser.fullName ?: currentUser.username }}</span>
+                    <a href="{{ logoutUrl }}">{{ 'Odhlásiť sa'|t('bozp') }}</a>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="bozp-main">
+        {% set notice = craft.app.session.getFlash('notice') %}
+        {% set error = craft.app.session.getFlash('error') %}
+
+        {% if notice %}
+            <div class="bozp-flash bozp-flash--notice" role="status">{{ notice }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="bozp-flash bozp-flash--error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bozp-footer">
+        <small>Mondelez SR Production · BOZP Permity</small>
+    </footer>
+</body>
+</html>

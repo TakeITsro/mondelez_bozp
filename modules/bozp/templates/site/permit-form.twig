@@ -1,0 +1,155 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{# ---------------------------------------------------------------------------
+   Phase 2B permit form — minimum viable fields.
+
+   Posted to: POST /bozp/permits/save
+   Two submit intents:
+     - intent=save    → stays as draft (relaxed validation)
+     - intent=submit  → validates fully, then transitions to `submitted`
+                        so it lands in the HSE approval queue.
+
+   Hazard matrix + preparation checks arrive in 2C.
+--------------------------------------------------------------------------- #}
+
+{% set values = values ?? {} %}
+{% set errors = errors ?? {} %}
+
+{% macro field_error(errors, key) %}
+    {% if errors[key] is defined %}
+        <p class="bozp-form__error" id="err-{{ key }}">{{ errors[key] }}</p>
+    {% endif %}
+{% endmacro %}
+
+{% block title %}{{ 'Nový permit'|t('bozp') }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--permit-form">
+        <header class="bozp-page__header">
+            <h1>{{ 'Nový permit'|t('bozp') }}</h1>
+            <p class="bozp-page__lede">
+                {{ 'Vyplňte údaje a odošlite na schválenie HSE, alebo uložte ako koncept a pokračujte neskôr.'|t('bozp') }}
+            </p>
+        </header>
+
+        <form method="post" action="" class="bozp-form" novalidate>
+            {{ csrfInput() }}
+            <input type="hidden" name="action" value="bozp/permits/save">
+
+            <fieldset class="bozp-form__section">
+                <legend>{{ 'Dodávateľ'|t('bozp') }}</legend>
+
+                <div class="bozp-form__field{% if errors.contractorCompany is defined %} bozp-form__field--error{% endif %}">
+                    <label for="contractorCompany">{{ 'Názov dodávateľskej firmy'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <input type="text"
+                           id="contractorCompany"
+                           name="contractorCompany"
+                           value="{{ values.contractorCompany ?? '' }}"
+                           maxlength="255"
+                           required
+                           {% if errors.contractorCompany is defined %}aria-invalid="true" aria-describedby="err-contractorCompany"{% endif %}>
+                    {{ _self.field_error(errors, 'contractorCompany') }}
+                </div>
+
+                <div class="bozp-form__row">
+                    <div class="bozp-form__field">
+                        <label for="contractorPersonName">{{ 'Kontaktná osoba'|t('bozp') }}</label>
+                        <input type="text"
+                               id="contractorPersonName"
+                               name="contractorPersonName"
+                               value="{{ values.contractorPersonName ?? '' }}"
+                               maxlength="255">
+                    </div>
+
+                    <div class="bozp-form__field{% if errors.contractorEmail is defined %} bozp-form__field--error{% endif %}">
+                        <label for="contractorEmail">{{ 'E-mail'|t('bozp') }}</label>
+                        <input type="email"
+                               id="contractorEmail"
+                               name="contractorEmail"
+                               value="{{ values.contractorEmail ?? '' }}"
+                               maxlength="255"
+                               {% if errors.contractorEmail is defined %}aria-invalid="true" aria-describedby="err-contractorEmail"{% endif %}>
+                        {{ _self.field_error(errors, 'contractorEmail') }}
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="bozp-form__section">
+                <legend>{{ 'Práca'|t('bozp') }}</legend>
+
+                <div class="bozp-form__field{% if errors.workLocation is defined %} bozp-form__field--error{% endif %}">
+                    <label for="workLocation">{{ 'Miesto výkonu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <input type="text"
+                           id="workLocation"
+                           name="workLocation"
+                           value="{{ values.workLocation ?? '' }}"
+                           maxlength="500"
+                           required
+                           {% if errors.workLocation is defined %}aria-invalid="true" aria-describedby="err-workLocation"{% endif %}>
+                    {{ _self.field_error(errors, 'workLocation') }}
+                </div>
+
+                <div class="bozp-form__field{% if errors.workOverview is defined %} bozp-form__field--error{% endif %}">
+                    <label for="workOverview">{{ 'Popis prác'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <textarea id="workOverview"
+                              name="workOverview"
+                              rows="5"
+                              required
+                              {% if errors.workOverview is defined %}aria-invalid="true" aria-describedby="err-workOverview"{% endif %}>{{ values.workOverview ?? '' }}</textarea>
+                    {{ _self.field_error(errors, 'workOverview') }}
+                </div>
+
+                <div class="bozp-form__row">
+                    <div class="bozp-form__field{% if errors.validFrom is defined %} bozp-form__field--error{% endif %}">
+                        <label for="validFrom">{{ 'Platnosť od'|t('bozp') }}</label>
+                        <input type="datetime-local"
+                               id="validFrom"
+                               name="validFrom"
+                               value="{{ values.validFrom ?? '' }}"
+                               {% if errors.validFrom is defined %}aria-invalid="true" aria-describedby="err-validFrom"{% endif %}>
+                        {{ _self.field_error(errors, 'validFrom') }}
+                    </div>
+
+                    <div class="bozp-form__field{% if errors.validTo is defined %} bozp-form__field--error{% endif %}">
+                        <label for="validTo">{{ 'Platnosť do'|t('bozp') }}</label>
+                        <input type="datetime-local"
+                               id="validTo"
+                               name="validTo"
+                               value="{{ values.validTo ?? '' }}"
+                               {% if errors.validTo is defined %}aria-invalid="true" aria-describedby="err-validTo"{% endif %}>
+                        {{ _self.field_error(errors, 'validTo') }}
+                    </div>
+                </div>
+            </fieldset>
+
+            {% if zones|length > 0 %}
+                <fieldset class="bozp-form__section">
+                    <legend>{{ 'Zóny'|t('bozp') }}</legend>
+                    <p class="bozp-form__hint">{{ 'Vyberte jednu alebo viac zón, ktorých sa práca týka.'|t('bozp') }}</p>
+
+                    <div class="bozp-form__zones">
+                        {% for zone in zones %}
+                            <label class="bozp-form__zone">
+                                <input type="checkbox"
+                                       name="zoneIds[]"
+                                       value="{{ zone.id }}"
+                                       {% if zone.id in (values.zoneIds ?? []) %}checked{% endif %}>
+                                <span>{{ zone.name }}{% if zone.code %} <code>{{ zone.code }}</code>{% endif %}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+            {% endif %}
+
+            <div class="bozp-form__actions">
+                <a href="{{ url('bozp') }}" class="bozp-btn bozp-btn--ghost">{{ 'Zrušiť'|t('bozp') }}</a>
+                <button type="submit" name="intent" value="save" class="bozp-btn">
+                    {{ 'Uložiť ako koncept'|t('bozp') }}
+                </button>
+                <button type="submit" name="intent" value="submit" class="bozp-btn bozp-btn--primary">
+                    {{ 'Odoslať na schválenie'|t('bozp') }}
+                </button>
+            </div>
+        </form>
+    </section>
+{% endblock %}
