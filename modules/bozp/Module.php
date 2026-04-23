@@ -97,6 +97,7 @@ class Module extends BaseModule
             static function (RegisterUrlRulesEvent $event): void {
                 $event->rules['bozp'] = 'bozp/queue/index';
                 $event->rules['bozp/queue'] = 'bozp/queue/index';
+                $event->rules['bozp/permit/<id:\d+>'] = 'bozp/queue/view';
             }
         );
     }

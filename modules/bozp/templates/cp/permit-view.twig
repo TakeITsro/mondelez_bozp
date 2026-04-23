@@ -1,0 +1,200 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = ('Permit {n}'|t('bozp'))|replace({'{n}': permit.permitNumber}) %}
+{% set selectedSubnavItem = 'queue' %}
+
+{% set crumbs = [
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
+    { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) }
+] %}
+
+{% set statusLabels = {
+    'draft':           'Koncept'|t('bozp'),
+    'submitted':       'Odoslané'|t('bozp'),
+    'approved':        'Schválené'|t('bozp'),
+    'rejected':        'Zamietnuté'|t('bozp'),
+    'signed':          'Podpísané'|t('bozp'),
+    'active':          'Aktívne'|t('bozp'),
+    'pending_closure': 'Čaká na uzavretie'|t('bozp'),
+    'closed':          'Uzavreté'|t('bozp'),
+    'cancelled':       'Zrušené'|t('bozp'),
+    'expired':         'Vypršané'|t('bozp'),
+} %}
+
+{% block content %}
+
+    <div class="content-pane">
+
+        <div class="flex flex-nowrap" style="justify-content:space-between;align-items:flex-start;">
+            <div>
+                <h2 style="margin:0;">{{ permit.permitNumber }}</h2>
+                <div style="margin-top:4px;">
+                    <span class="bozp-status bozp-status--{{ permit.status }}">
+                        {{ statusLabels[permit.status] ?? permit.status }}
+                    </span>
+                </div>
+            </div>
+
+            <div>
+                {% if permit.submittedAt %}
+                    <div class="light">
+                        {{ 'Odoslané'|t('bozp') }}: {{ permit.submittedAt|date('d.m.Y H:i') }}
+                    </div>
+                {% endif %}
+                {% if permit.approvedAt %}
+                    <div class="light">
+                        {{ 'Schválené'|t('bozp') }}: {{ permit.approvedAt|date('d.m.Y H:i') }}
+                    </div>
+                {% endif %}
+                {% if permit.rejectedAt %}
+                    <div class="light">
+                        {{ 'Zamietnuté'|t('bozp') }}: {{ permit.rejectedAt|date('d.m.Y H:i') }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <hr>
+
+        <h3>{{ 'Vydavateľ a dodávateľ'|t('bozp') }}</h3>
+        <table class="data fullwidth">
+            <tbody>
+                <tr>
+                    <th style="width:220px;">{{ 'Vydavateľ'|t('bozp') }}</th>
+                    <td>{{ issuer ? issuer.fullName ?: issuer.username : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Dodávateľ'|t('bozp') }}</th>
+                    <td>{{ permit.contractorCompany ?: '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Kontaktná osoba'|t('bozp') }}</th>
+                    <td>{{ permit.contractorPersonName ?: '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'E-mail'|t('bozp') }}</th>
+                    <td>
+                        {%- if permit.contractorEmail -%}
+                            <a href="mailto:{{ permit.contractorEmail }}">{{ permit.contractorEmail }}</a>
+                        {%- else -%}—{%- endif -%}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top:24px;">{{ 'Práca'|t('bozp') }}</h3>
+        <table class="data fullwidth">
+            <tbody>
+                <tr>
+                    <th style="width:220px;">{{ 'Miesto výkonu'|t('bozp') }}</th>
+                    <td>{{ permit.workLocation ?: '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Popis prác'|t('bozp') }}</th>
+                    <td>{{ permit.workOverview|nl2br ?: '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Platnosť od'|t('bozp') }}</th>
+                    <td>{{ permit.validFrom ? permit.validFrom|date('d.m.Y H:i') : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Platnosť do'|t('bozp') }}</th>
+                    <td>{{ permit.validTo ? permit.validTo|date('d.m.Y H:i') : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Zóny'|t('bozp') }}</th>
+                    <td>
+                        {%- if zones|length > 0 -%}
+                            {% for zone in zones %}
+                                <span class="label">{{ zone.name }}{% if zone.code %} ({{ zone.code }}){% endif %}</span>
+                            {% endfor %}
+                        {%- else -%}—{%- endif -%}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if permit.approvalComment %}
+            <h3 style="margin-top:24px;">{{ 'Komentár HSE'|t('bozp') }}</h3>
+            <p>{{ permit.approvalComment|nl2br }}</p>
+            {% if approver %}
+                <p class="light">— {{ approver.fullName ?: approver.username }}</p>
+            {% endif %}
+        {% endif %}
+
+        {% if permit.status == 'submitted' and canApprove %}
+            <hr>
+            <h3>{{ 'Rozhodnutie HSE'|t('bozp') }}</h3>
+
+            <form method="post" action="" accept-charset="UTF-8" id="bozp-approve-form">
+                {{ csrfInput() }}
+                <input type="hidden" name="action" value="bozp/queue/approve">
+                <input type="hidden" name="id" value="{{ permit.id }}">
+
+                {{ forms.textareaField({
+                    label: 'Komentár (nepovinné)'|t('bozp'),
+                    name: 'comment',
+                    rows: 3,
+                }) }}
+
+                <div class="buttons">
+                    <button type="submit" class="btn submit">{{ 'Schváliť'|t('bozp') }}</button>
+                </div>
+            </form>
+
+            <form method="post" action="" accept-charset="UTF-8" id="bozp-reject-form" style="margin-top:24px;">
+                {{ csrfInput() }}
+                <input type="hidden" name="action" value="bozp/queue/reject">
+                <input type="hidden" name="id" value="{{ permit.id }}">
+
+                {{ forms.textareaField({
+                    label: 'Dôvod zamietnutia'|t('bozp'),
+                    instructions: 'Povinné pri zamietnutí.'|t('bozp'),
+                    name: 'comment',
+                    rows: 3,
+                    required: true,
+                }) }}
+
+                <div class="buttons">
+                    <button type="submit" class="btn">{{ 'Zamietnuť'|t('bozp') }}</button>
+                </div>
+            </form>
+        {% endif %}
+
+        <h3 style="margin-top:32px;">{{ 'Audit'|t('bozp') }}</h3>
+        {% if auditEntries|length == 0 %}
+            <p class="light">{{ 'Žiadne záznamy.'|t('bozp') }}</p>
+        {% else %}
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Kedy'|t('bozp') }}</th>
+                        <th>{{ 'Akcia'|t('bozp') }}</th>
+                        <th>{{ 'Zmena stavu'|t('bozp') }}</th>
+                        <th>{{ 'Poznámka'|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in auditEntries %}
+                        <tr>
+                            <td>{{ entry.dateCreated|date('d.m.Y H:i:s') }}</td>
+                            <td><code>{{ entry.action }}</code></td>
+                            <td>
+                                {%- if entry.fromStatus or entry.toStatus -%}
+                                    {{ entry.fromStatus ?: '—' }} → {{ entry.toStatus ?: '—' }}
+                                {%- else -%}—{%- endif -%}
+                            </td>
+                            <td>
+                                {%- set p = entry.payload -%}
+                                {%- if p is iterable and p.note is defined -%}
+                                    {{ p.note }}
+                                {%- else -%}—{%- endif -%}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}

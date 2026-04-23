@@ -44,7 +44,7 @@
                                 {%- else -%}—{%- endif -%}
                             </td>
                             <td>
-                                <a href="#" class="btn small">{{ "Otvoriť"|t('bozp') }}</a>
+                                <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn small">{{ "Otvoriť"|t('bozp') }}</a>
                             </td>
                         </tr>
                     {% endfor %}

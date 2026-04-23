@@ -58,6 +58,50 @@ class PermitWorkflow extends Component
     }
 
     /**
+     * HSE officer approves a submitted permit.
+     * Sets approverId, approvedAt, and (optional) approvalComment.
+     */
+    public function approve(PermitRecord $permit, int $actorUserId, ?string $comment = null): void
+    {
+        $this->transition(
+            $permit,
+            PermitStatus::Approved,
+            $actorUserId,
+            [
+                'approverId' => $actorUserId,
+                'approvedAt' => date('Y-m-d H:i:s'),
+                'approvalComment' => $comment !== '' ? $comment : null,
+            ],
+            'approved',
+            $comment,
+        );
+    }
+
+    /**
+     * HSE officer rejects a submitted permit. Comment is mandatory at the
+     * controller level; enforced here as a sanity check too.
+     */
+    public function reject(PermitRecord $permit, int $actorUserId, string $comment): void
+    {
+        if (trim($comment) === '') {
+            throw new InvalidArgumentException('Rejection requires a comment.');
+        }
+
+        $this->transition(
+            $permit,
+            PermitStatus::Rejected,
+            $actorUserId,
+            [
+                'approverId' => $actorUserId,
+                'rejectedAt' => date('Y-m-d H:i:s'),
+                'approvalComment' => $comment,
+            ],
+            'rejected',
+            $comment,
+        );
+    }
+
+    /**
      * Core transition method. Validates, persists, audits.
      *
      * @param array<string, mixed> $extraColumns Additional column updates (e.g. submittedAt).
