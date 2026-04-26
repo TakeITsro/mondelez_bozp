@@ -1,0 +1,90 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{# ---------------------------------------------------------------------------
+   Front-end login for BOZP issuers.
+   Posted to: POST /bozp/login
+   Fields:  loginName, password, rememberMe
+   Errors keyed by field name; a failure at the credentials level surfaces on
+   the `password` field to avoid leaking which one was wrong.
+--------------------------------------------------------------------------- #}
+
+{% set errors = errors ?? {} %}
+{% set loginName = loginName ?? '' %}
+{% set rememberMe = rememberMe ?? false %}
+
+{% block title %}{{ 'Prihlásenie'|t('bozp') }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--login">
+        <div class="bozp-login">
+            <header class="bozp-login__header">
+                <h1>{{ 'Prihlásenie'|t('bozp') }}</h1>
+                <p class="bozp-login__lede">
+                    {{ 'Prihláste sa vašimi firemnými prístupovými údajmi.'|t('bozp') }}
+                </p>
+            </header>
+
+            <form method="post" action="" class="bozp-form bozp-form--login" novalidate>
+                {{ csrfInput() }}
+                <input type="hidden" name="action" value="bozp/auth/login">
+
+                <div class="bozp-form__field{% if errors.loginName is defined %} bozp-form__field--error{% endif %}">
+                    <label for="loginName">
+                        {{ 'Prihlasovacie meno alebo e-mail'|t('bozp') }}
+                        <span class="bozp-form__req">*</span>
+                    </label>
+                    <input type="text"
+                           id="loginName"
+                           name="loginName"
+                           value="{{ loginName }}"
+                           autocomplete="username"
+                           autocapitalize="off"
+                           autocorrect="off"
+                           spellcheck="false"
+                           required
+                           autofocus
+                           {% if errors.loginName is defined %}aria-invalid="true" aria-describedby="err-loginName"{% endif %}>
+                    {% if errors.loginName is defined %}
+                        <p class="bozp-form__error" id="err-loginName">{{ errors.loginName }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="bozp-form__field{% if errors.password is defined %} bozp-form__field--error{% endif %}">
+                    <label for="password">
+                        {{ 'Heslo'|t('bozp') }}
+                        <span class="bozp-form__req">*</span>
+                    </label>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           autocomplete="current-password"
+                           required
+                           {% if errors.password is defined %}aria-invalid="true" aria-describedby="err-password"{% endif %}>
+                    {% if errors.password is defined %}
+                        <p class="bozp-form__error" id="err-password">{{ errors.password }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="bozp-form__field bozp-form__field--checkbox">
+                    <label>
+                        <input type="checkbox"
+                               name="rememberMe"
+                               value="1"
+                               {% if rememberMe %}checked{% endif %}>
+                        <span>{{ 'Zostať prihlásený na tomto zariadení'|t('bozp') }}</span>
+                    </label>
+                </div>
+
+                <div class="bozp-form__actions bozp-form__actions--login">
+                    <button type="submit" class="bozp-btn bozp-btn--primary">
+                        {{ 'Prihlásiť sa'|t('bozp') }}
+                    </button>
+                </div>
+            </form>
+
+            <p class="bozp-login__help">
+                {{ 'Problém s prihlásením? Kontaktujte HSE oddelenie.'|t('bozp') }}
+            </p>
+        </div>
+    </section>
+{% endblock %}
