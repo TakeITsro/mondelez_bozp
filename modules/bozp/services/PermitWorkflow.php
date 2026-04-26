@@ -59,18 +59,24 @@ class PermitWorkflow extends Component
 
     /**
      * HSE officer approves a submitted permit.
-     * Sets approverId, approvedAt, and (optional) approvalComment.
+     * Sets approverId, approvedAt, approvalComment, and stamps validTo =
+     * approvedAt + 7 days (general permits are valid for 7 days from approval).
      */
     public function approve(PermitRecord $permit, int $actorUserId, ?string $comment = null): void
     {
+        $now = new \DateTimeImmutable();
+        $approvedAt = $now->format('Y-m-d H:i:s');
+        $validTo = $now->modify('+7 days')->format('Y-m-d H:i:s');
+
         $this->transition(
             $permit,
             PermitStatus::Approved,
             $actorUserId,
             [
                 'approverId' => $actorUserId,
-                'approvedAt' => date('Y-m-d H:i:s'),
+                'approvedAt' => $approvedAt,
                 'approvalComment' => $comment !== '' ? $comment : null,
+                'validTo' => $validTo,
             ],
             'approved',
             $comment,

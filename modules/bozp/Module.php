@@ -109,6 +109,12 @@ class Module extends BaseModule
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
             static function (RegisterUrlRulesEvent $event): void {
+                // Auth
+                $event->rules['bozp/login'] = 'bozp/auth/login';
+                $event->rules['POST bozp/login'] = 'bozp/auth/login';
+                $event->rules['POST bozp/logout'] = 'bozp/auth/logout';
+
+                // Permits
                 $event->rules['bozp'] = 'bozp/dashboard/index';
                 $event->rules['bozp/permits'] = 'bozp/dashboard/index';
                 $event->rules['bozp/permits/new'] = 'bozp/permits/new';

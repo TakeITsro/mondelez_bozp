@@ -29,7 +29,17 @@
 
                 <div class="bozp-header__user">
                     <span>{{ currentUser.fullName ?: currentUser.username }}</span>
-                    <a href="{{ logoutUrl }}">{{ 'Odhlásiť sa'|t('bozp') }}</a>
+                    <form method="post" action="" class="bozp-header__logout">
+                        {{ csrfInput() }}
+                        <input type="hidden" name="action" value="bozp/auth/logout">
+                        <button type="submit" class="bozp-header__logout-btn">
+                            {{ 'Odhlásiť sa'|t('bozp') }}
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="bozp-header__user">
+                    <a href="{{ url('bozp/login') }}">{{ 'Prihlásiť sa'|t('bozp') }}</a>
                 </div>
             {% endif %}
         </div>

@@ -22,6 +22,22 @@
     'expired':         'Vypršané'|t('bozp'),
 } %}
 
+{% set controlLabels = {
+    'used':     'Použité'|t('bozp'),
+    'not_used': 'Nepoužité'|t('bozp'),
+    'other':    'Iné'|t('bozp'),
+} %}
+
+{% macro yn(val) %}
+    {%- if val is null -%}
+        <span class="bozp-yn bozp-yn--unset">—</span>
+    {%- elseif val -%}
+        <span class="bozp-yn bozp-yn--yes">{{ 'Áno'|t('bozp') }}</span>
+    {%- else -%}
+        <span class="bozp-yn bozp-yn--no">{{ 'Nie'|t('bozp') }}</span>
+    {%- endif -%}
+{% endmacro %}
+
 {% block content %}
 
     <div class="content-pane">
@@ -96,7 +112,7 @@
                 </tr>
                 <tr>
                     <th>{{ 'Platnosť od'|t('bozp') }}</th>
-                    <td>{{ permit.validFrom ? permit.validFrom|date('d.m.Y H:i') : '—' }}</td>
+                    <td>{{ permit.validFrom ? permit.validFrom|date('d.m.Y') : '—' }}</td>
                 </tr>
                 <tr>
                     <th>{{ 'Platnosť do'|t('bozp') }}</th>
@@ -114,6 +130,73 @@
                 </tr>
             </tbody>
         </table>
+
+        <h3 style="margin-top:24px;">{{ 'Príprava pracoviska'|t('bozp') }}</h3>
+        <table class="data fullwidth">
+            <tbody>
+                <tr>
+                    <th style="width:320px;">{{ 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp') }}</th>
+                    <td>{{ _self.yn(permit.conditionsSuitable) }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp') }}</th>
+                    <td>{{ _self.yn(permit.toolsInGoodCondition) }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp') }}</th>
+                    <td>{{ _self.yn(permit.hasStopConditions) }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Popis podmienok pre zastavenie prác'|t('bozp') }}</th>
+                    <td>{{ permit.stopConditionsDescription ? permit.stopConditionsDescription|nl2br : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp') }}</th>
+                    <td>{{ _self.yn(permit.lotoImplemented) }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Núdzový plán / postup v prípade mimoriadnej udalosti'|t('bozp') }}</th>
+                    <td>{{ permit.emergencyPlan ? permit.emergencyPlan|nl2br : '—' }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top:24px;">{{ 'Riziká a OOPP'|t('bozp') }}</h3>
+        {% set hasHazards = hazards is defined and hazards|length > 0 %}
+        {% if not hasHazards %}
+            <p class="light">{{ 'Neboli uvedené žiadne riziká.'|t('bozp') }}</p>
+        {% else %}
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Riziko'|t('bozp') }}</th>
+                        <th style="width:100px;">{{ 'Exponovaný?'|t('bozp') }}</th>
+                        <th>{{ 'Opatrenie / OOPP'|t('bozp') }}</th>
+                        <th>{{ 'Kontrola počas činnosti'|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in hazardCategories %}
+                        {% set row = hazards[cat.value] ?? null %}
+                        {% if row %}
+                            <tr>
+                                <th scope="row">{{ cat.label()|t('bozp') }}</th>
+                                <td>{{ _self.yn(row.exposed) }}</td>
+                                <td>{{ row.measure ? row.measure|nl2br : '—' }}</td>
+                                <td>
+                                    {%- if row.controlDuringActivity -%}
+                                        {{ controlLabels[row.controlDuringActivity] ?? row.controlDuringActivity }}
+                                        {%- if row.controlDuringActivityOther -%}
+                                            <br><span class="light">{{ row.controlDuringActivityOther }}</span>
+                                        {%- endif -%}
+                                    {%- else -%}—{%- endif -%}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
 
         {% if permit.approvalComment %}
             <h3 style="margin-top:24px;">{{ 'Komentár HSE'|t('bozp') }}</h3>

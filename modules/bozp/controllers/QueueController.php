@@ -8,9 +8,11 @@ use Craft;
 use craft\elements\User;
 use craft\web\Controller;
 use craft\web\View;
+use modules\bozp\enums\HazardCategory;
 use modules\bozp\enums\PermitStatus;
 use modules\bozp\Module;
 use modules\bozp\records\AuditLogRecord;
+use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\ZoneRecord;
 use Throwable;
@@ -101,8 +103,27 @@ class QueueController extends Controller
             'issuer' => $issuer,
             'approver' => $approver,
             'auditEntries' => $auditEntries,
+            'hazardCategories' => HazardCategory::pdfOrder(),
+            'hazards' => $this->loadHazardsFor((int) $permit->id),
             'canApprove' => Craft::$app->getUser()->checkPermission('bozp:approve'),
         ]);
+    }
+
+    /**
+     * @return array<string, PermitHazardRecord> keyed by hazardKey
+     */
+    private function loadHazardsFor(int $permitId): array
+    {
+        $rows = PermitHazardRecord::find()
+            ->where(['permitId' => $permitId])
+            ->orderBy(['sortOrder' => SORT_ASC, 'id' => SORT_ASC])
+            ->all();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[$row->hazardKey] = $row;
+        }
+        return $out;
     }
 
     public function actionApprove(): ?Response

@@ -20,6 +20,22 @@
     'expired':         'Vypršané'|t('bozp'),
 } %}
 
+{% set controlLabels = {
+    'used':     'Použité'|t('bozp'),
+    'not_used': 'Nepoužité'|t('bozp'),
+    'other':    'Iné'|t('bozp'),
+} %}
+
+{% macro yn(val) %}
+    {%- if val is null -%}
+        <span class="bozp-yn bozp-yn--unset">—</span>
+    {%- elseif val -%}
+        <span class="bozp-yn bozp-yn--yes">{{ 'Áno'|t('bozp') }}</span>
+    {%- else -%}
+        <span class="bozp-yn bozp-yn--no">{{ 'Nie'|t('bozp') }}</span>
+    {%- endif -%}
+{% endmacro %}
+
 {% block title %}{{ permit.permitNumber }}{% endblock %}
 
 {% block content %}
@@ -89,7 +105,7 @@
             <dd>{{ permit.workOverview|nl2br ?: '—' }}</dd>
 
             <dt>{{ 'Platnosť od'|t('bozp') }}</dt>
-            <dd>{{ permit.validFrom ? permit.validFrom|date('d.m.Y H:i') : '—' }}</dd>
+            <dd>{{ permit.validFrom ? permit.validFrom|date('d.m.Y') : '—' }}</dd>
 
             <dt>{{ 'Platnosť do'|t('bozp') }}</dt>
             <dd>{{ permit.validTo ? permit.validTo|date('d.m.Y H:i') : '—' }}</dd>
@@ -111,6 +127,70 @@
                 <dd>{{ permit.submittedAt|date('d.m.Y H:i') }}</dd>
             {% endif %}
         </dl>
+
+        {# ---- Preparation checks ---- #}
+        <section class="bozp-section bozp-section--prep">
+            <h2>{{ 'Príprava pracoviska'|t('bozp') }}</h2>
+            <dl class="bozp-detail">
+                <dt>{{ 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp') }}</dt>
+                <dd>{{ _self.yn(permit.conditionsSuitable) }}</dd>
+
+                <dt>{{ 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp') }}</dt>
+                <dd>{{ _self.yn(permit.toolsInGoodCondition) }}</dd>
+
+                <dt>{{ 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp') }}</dt>
+                <dd>{{ _self.yn(permit.hasStopConditions) }}</dd>
+
+                <dt>{{ 'Popis podmienok pre zastavenie prác'|t('bozp') }}</dt>
+                <dd>{{ permit.stopConditionsDescription ? permit.stopConditionsDescription|nl2br : '—' }}</dd>
+
+                <dt>{{ 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp') }}</dt>
+                <dd>{{ _self.yn(permit.lotoImplemented) }}</dd>
+
+                <dt>{{ 'Núdzový plán / postup v prípade mimoriadnej udalosti'|t('bozp') }}</dt>
+                <dd>{{ permit.emergencyPlan ? permit.emergencyPlan|nl2br : '—' }}</dd>
+            </dl>
+        </section>
+
+        {# ---- Hazards matrix ---- #}
+        <section class="bozp-section bozp-section--hazards">
+            <h2>{{ 'Riziká a OOPP'|t('bozp') }}</h2>
+            {% set hasHazards = hazards is defined and hazards|length > 0 %}
+            {% if not hasHazards %}
+                <p class="bozp-empty">{{ 'Neboli uvedené žiadne riziká.'|t('bozp') }}</p>
+            {% else %}
+                <table class="bozp-table bozp-hazards">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Riziko'|t('bozp') }}</th>
+                            <th>{{ 'Exponovaný?'|t('bozp') }}</th>
+                            <th>{{ 'Opatrenie / OOPP'|t('bozp') }}</th>
+                            <th>{{ 'Kontrola počas činnosti'|t('bozp') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in hazardCategories %}
+                            {% set row = hazards[cat.value] ?? null %}
+                            {% if row %}
+                                <tr>
+                                    <th scope="row">{{ cat.label()|t('bozp') }}</th>
+                                    <td>{{ _self.yn(row.exposed) }}</td>
+                                    <td>{{ row.measure ? row.measure|nl2br : '—' }}</td>
+                                    <td>
+                                        {%- if row.controlDuringActivity -%}
+                                            {{ controlLabels[row.controlDuringActivity] ?? row.controlDuringActivity }}
+                                            {%- if row.controlDuringActivityOther -%}
+                                                <br><span class="bozp-muted">{{ row.controlDuringActivityOther }}</span>
+                                            {%- endif -%}
+                                        {%- else -%}—{%- endif -%}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
 
         {# ---- Audit trail ---- #}
         {% if auditEntries|length > 0 %}

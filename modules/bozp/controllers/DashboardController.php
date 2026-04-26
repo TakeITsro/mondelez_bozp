@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace modules\bozp\controllers;
 
 use Craft;
-use craft\web\Controller;
 use craft\web\View;
 use modules\bozp\enums\PermitStatus;
 use modules\bozp\records\PermitRecord;
@@ -22,13 +21,15 @@ use yii\web\Response;
  * `bozp:createPermit` lands here. HSE officers also use the CP queue
  * for approvals; this dashboard is the issuer's view.
  */
-class DashboardController extends Controller
+class DashboardController extends BaseSiteController
 {
-    protected array|bool|int $allowAnonymous = false;
+    protected array|bool|int $allowAnonymous = ['index'];
 
     public function actionIndex(): Response
     {
-        $this->requireLogin();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
         $this->requirePermission('bozp:createPermit');
 
         $userId = Craft::$app->getUser()->getId();

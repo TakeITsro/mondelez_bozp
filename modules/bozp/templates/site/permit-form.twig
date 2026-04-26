@@ -1,7 +1,7 @@
 {% extends 'bozp/site/_layout.twig' %}
 
 {# ---------------------------------------------------------------------------
-   Phase 2B permit form — minimum viable fields.
+   Phase 2C.2 permit form — core fields + hazard matrix + preparation checks.
 
    Posted to: POST /bozp/permits/save
    Two submit intents:
@@ -9,16 +9,44 @@
      - intent=submit  → validates fully, then transitions to `submitted`
                         so it lands in the HSE approval queue.
 
-   Hazard matrix + preparation checks arrive in 2C.
+   Hazard matrix naming:
+     hazards[<key>][exposed]      "yes" | "no" | ""
+     hazards[<key>][measure]      free text (prefilled with default measure)
+     hazards[<key>][control]      "used" | "not_used" | "other" | ""
+     hazards[<key>][controlOther] free text
+
+   Preparation naming:
+     preparation[conditionsSuitable]        "yes" | "no" | ""
+     preparation[toolsInGoodCondition]      "yes" | "no" | ""
+     preparation[hasStopConditions]         "yes" | "no" | ""
+     preparation[stopConditionsDescription] free text
+     preparation[lotoImplemented]           "yes" | "no" | ""
+     preparation[emergencyPlan]             free text
 --------------------------------------------------------------------------- #}
 
 {% set values = values ?? {} %}
 {% set errors = errors ?? {} %}
+{% set hazardCategories = hazardCategories ?? [] %}
+{% set preparation = values.preparation ?? {} %}
+{% set hazards = values.hazards ?? {} %}
 
 {% macro field_error(errors, key) %}
     {% if errors[key] is defined %}
         <p class="bozp-form__error" id="err-{{ key }}">{{ errors[key] }}</p>
     {% endif %}
+{% endmacro %}
+
+{% macro yes_no(name, value) %}
+    <div class="bozp-form__yesno">
+        <label class="bozp-form__yesno-opt">
+            <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+            <span>{{ 'Áno'|t('bozp') }}</span>
+        </label>
+        <label class="bozp-form__yesno-opt">
+            <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+            <span>{{ 'Nie'|t('bozp') }}</span>
+        </label>
+    </div>
 {% endmacro %}
 
 {% block title %}{{ 'Nový permit'|t('bozp') }}{% endblock %}
@@ -99,26 +127,17 @@
                     {{ _self.field_error(errors, 'workOverview') }}
                 </div>
 
-                <div class="bozp-form__row">
-                    <div class="bozp-form__field{% if errors.validFrom is defined %} bozp-form__field--error{% endif %}">
-                        <label for="validFrom">{{ 'Platnosť od'|t('bozp') }}</label>
-                        <input type="datetime-local"
-                               id="validFrom"
-                               name="validFrom"
-                               value="{{ values.validFrom ?? '' }}"
-                               {% if errors.validFrom is defined %}aria-invalid="true" aria-describedby="err-validFrom"{% endif %}>
-                        {{ _self.field_error(errors, 'validFrom') }}
-                    </div>
-
-                    <div class="bozp-form__field{% if errors.validTo is defined %} bozp-form__field--error{% endif %}">
-                        <label for="validTo">{{ 'Platnosť do'|t('bozp') }}</label>
-                        <input type="datetime-local"
-                               id="validTo"
-                               name="validTo"
-                               value="{{ values.validTo ?? '' }}"
-                               {% if errors.validTo is defined %}aria-invalid="true" aria-describedby="err-validTo"{% endif %}>
-                        {{ _self.field_error(errors, 'validTo') }}
-                    </div>
+                <div class="bozp-form__field{% if errors.validFrom is defined %} bozp-form__field--error{% endif %}">
+                    <label for="validFrom">{{ 'Platnosť od'|t('bozp') }}</label>
+                    <input type="date"
+                           id="validFrom"
+                           name="validFrom"
+                           value="{{ values.validFrom ?? '' }}"
+                           {% if errors.validFrom is defined %}aria-invalid="true" aria-describedby="err-validFrom"{% endif %}>
+                    <p class="bozp-form__hint">
+                        {{ 'Platnosť permitu je 7 dní od dátumu schválenia HSE.'|t('bozp') }}
+                    </p>
+                    {{ _self.field_error(errors, 'validFrom') }}
                 </div>
             </fieldset>
 
@@ -140,6 +159,120 @@
                     </div>
                 </fieldset>
             {% endif %}
+
+            {# ----- Hazard matrix ----- #}
+            {% if hazardCategories|length > 0 %}
+                <fieldset class="bozp-form__section bozp-form__section--hazards">
+                    <legend>{{ 'Riziká a OOPP'|t('bozp') }}</legend>
+                    <p class="bozp-form__hint">
+                        {{ 'Pri každom riziku vyznačte, či je pracovník exponovaný, uveďte ochranné opatrenie a spôsob kontroly počas činnosti.'|t('bozp') }}
+                    </p>
+
+                    <div class="bozp-form__hazards">
+                        <table class="bozp-hazards">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ 'Riziko'|t('bozp') }}</th>
+                                    <th scope="col">{{ 'Exponovaný?'|t('bozp') }}</th>
+                                    <th scope="col">{{ 'Opatrenie / OOPP'|t('bozp') }}</th>
+                                    <th scope="col">{{ 'Kontrola počas činnosti'|t('bozp') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in hazardCategories %}
+                                    {% set key = cat.value %}
+                                    {% set row = hazards[key] ?? {} %}
+                                    {% set exposed = row.exposed ?? '' %}
+                                    {% set measure = row.measure ?? cat.defaultMeasure() %}
+                                    {% set control = row.control ?? '' %}
+                                    {% set controlOther = row.controlOther ?? '' %}
+                                    <tr class="bozp-hazards__row">
+                                        <th scope="row" class="bozp-hazards__label">
+                                            {{ cat.label()|t('bozp') }}
+                                        </th>
+                                        <td class="bozp-hazards__exposed">
+                                            {{ _self.yes_no('hazards[' ~ key ~ '][exposed]', exposed) }}
+                                        </td>
+                                        <td class="bozp-hazards__measure">
+                                            <textarea name="hazards[{{ key }}][measure]"
+                                                      rows="2"
+                                                      aria-label="{{ cat.label()|t('bozp') }} — {{ 'Opatrenie / OOPP'|t('bozp') }}">{{ measure }}</textarea>
+                                        </td>
+                                        <td class="bozp-hazards__control">
+                                            <select name="hazards[{{ key }}][control]"
+                                                    aria-label="{{ cat.label()|t('bozp') }} — {{ 'Kontrola počas činnosti'|t('bozp') }}">
+                                                <option value="" {% if control == '' %}selected{% endif %}>—</option>
+                                                <option value="used" {% if control == 'used' %}selected{% endif %}>
+                                                    {{ 'Použité'|t('bozp') }}
+                                                </option>
+                                                <option value="not_used" {% if control == 'not_used' %}selected{% endif %}>
+                                                    {{ 'Nepoužité'|t('bozp') }}
+                                                </option>
+                                                <option value="other" {% if control == 'other' %}selected{% endif %}>
+                                                    {{ 'Iné'|t('bozp') }}
+                                                </option>
+                                            </select>
+                                            <input type="text"
+                                                   name="hazards[{{ key }}][controlOther]"
+                                                   value="{{ controlOther }}"
+                                                   maxlength="255"
+                                                   class="bozp-hazards__control-other"
+                                                   placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+                                                   aria-label="{{ cat.label()|t('bozp') }} — {{ 'Iné — upresnite'|t('bozp') }}">
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </fieldset>
+            {% endif %}
+
+            {# ----- Preparation checks ----- #}
+            <fieldset class="bozp-form__section bozp-form__section--prep">
+                <legend>{{ 'Príprava pracoviska'|t('bozp') }}</legend>
+                <p class="bozp-form__hint">
+                    {{ 'Potvrďte stav pracoviska a vybavenia pred začiatkom prác.'|t('bozp') }}
+                </p>
+
+                <div class="bozp-form__field">
+                    <span class="bozp-form__label">{{ 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp') }}</span>
+                    {{ _self.yes_no('preparation[conditionsSuitable]', preparation.conditionsSuitable ?? '') }}
+                </div>
+
+                <div class="bozp-form__field">
+                    <span class="bozp-form__label">{{ 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp') }}</span>
+                    {{ _self.yes_no('preparation[toolsInGoodCondition]', preparation.toolsInGoodCondition ?? '') }}
+                </div>
+
+                <div class="bozp-form__field">
+                    <span class="bozp-form__label">{{ 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp') }}</span>
+                    {{ _self.yes_no('preparation[hasStopConditions]', preparation.hasStopConditions ?? '') }}
+                </div>
+
+                <div class="bozp-form__field">
+                    <label for="stopConditionsDescription">
+                        {{ 'Popis podmienok pre zastavenie prác'|t('bozp') }}
+                    </label>
+                    <textarea id="stopConditionsDescription"
+                              name="preparation[stopConditionsDescription]"
+                              rows="3">{{ preparation.stopConditionsDescription ?? '' }}</textarea>
+                </div>
+
+                <div class="bozp-form__field">
+                    <span class="bozp-form__label">{{ 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp') }}</span>
+                    {{ _self.yes_no('preparation[lotoImplemented]', preparation.lotoImplemented ?? '') }}
+                </div>
+
+                <div class="bozp-form__field">
+                    <label for="emergencyPlan">
+                        {{ 'Núdzový plán / postup v prípade mimoriadnej udalosti'|t('bozp') }}
+                    </label>
+                    <textarea id="emergencyPlan"
+                              name="preparation[emergencyPlan]"
+                              rows="3">{{ preparation.emergencyPlan ?? '' }}</textarea>
+                </div>
+            </fieldset>
 
             <div class="bozp-form__actions">
                 <a href="{{ url('bozp') }}" class="bozp-btn bozp-btn--ghost">{{ 'Zrušiť'|t('bozp') }}</a>
