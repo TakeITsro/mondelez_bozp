@@ -203,4 +203,109 @@ return [
     'Je zavedený LOTO (uzamknutie / označenie)?' => 'Is LOTO (lockout / tagout) in place?',
     'Núdzový plán / postup v prípade mimoriadnej udalosti' =>
         'Emergency plan / procedure in case of an incident',
+
+    // ----- Email notifications --------------------------------------------
+    'E-mail dodávateľa je povinný pri odoslaní.' => 'Contractor email is required at submit.',
+    'Dobrý deň,' => 'Hello,',
+    'Toto je automatická správa zo systému BOZP Permity.' =>
+        'This is an automated message from the BOZP Permits system.',
+
+    // submitted-hse
+    'Nový permit čaká na schválenie' => 'A new permit is waiting for approval',
+    'Nový permit čaká na schválenie: {n}' => 'A new permit is waiting for approval: {n}',
+    'Bol odoslaný nový permit {n} a čaká na vaše schválenie.' =>
+        'Permit {n} has been submitted and is waiting for your approval.',
+    'Otvoriť permit' => 'Open permit',
+
+    // approved
+    'Permit bol schválený' => 'Permit approved',
+    'Permit {n} bol schválený' => 'Permit {n} approved',
+    'Permit {n} bol schválený oddelením HSE.' => 'Permit {n} has been approved by HSE.',
+    'Zobraziť permit' => 'View permit',
+
+    // rejected
+    'Permit bol zamietnutý' => 'Permit rejected',
+    'Permit {n} bol zamietnutý' => 'Permit {n} rejected',
+    'Permit {n} bol zamietnutý oddelením HSE.' => 'Permit {n} has been rejected by HSE.',
+    'Dôvod' => 'Reason',
+
+    // ----- Contractor email (QR + password) ------------------------------
+    'Permit {n} bol schválený. Pre prístup k detailu permitu použite nasledujúci odkaz alebo naskenujte QR kód.' =>
+        'Permit {n} has been approved. Use the link below or scan the QR code to view the permit.',
+    'Heslo pre prístup' => 'Access password',
+    'Odkaz a heslo platia do dátumu skončenia platnosti permitu.' =>
+        'The link and password are valid until the permit expires.',
+
+    // ----- Contractor pages ----------------------------------------------
+    'Permit' => 'Permit',
+    'Permit {n}' => 'Permit {n}',
+    'Prístup k permitu' => 'Permit access',
+    'Zadajte heslo, ktoré ste dostali e-mailom, pre zobrazenie permitu {n}.' =>
+        'Enter the password you received by email to view permit {n}.',
+    'Heslo' => 'Password',
+    'Pokračovať' => 'Continue',
+    'Nesprávne heslo.' => 'Incorrect password.',
+    'Platnosť odkazu vypršala' => 'Link has expired',
+    'Tento permit už nie je platný a odkaz nie je možné použiť. V prípade otázok kontaktujte HSE oddelenie.' =>
+        'This permit is no longer valid and the link cannot be used. Contact HSE for assistance.',
+
+    // ----- Contractor detail page ----------------------------------------
+    'Stav' => 'Status',
+    'Dodávateľ' => 'Contractor',
+    'Miesto výkonu' => 'Work location',
+    'Popis prác' => 'Work description',
+    'Zóny' => 'Zones',
+    'Príprava pracoviska' => 'Workplace preparation',
+    'Riziká a OOPP' => 'Hazards & PPE',
+    'Kategória' => 'Category',
+    'Vystavený' => 'Exposed',
+    'Opatrenie / OOPP' => 'Measure / PPE',
+    'Kontrola počas činnosti' => 'Control during activity',
+    'Áno' => 'Yes',
+    'Nie' => 'No',
+    'V používaní' => 'In use',
+    'Nepoužíva sa' => 'Not in use',
+    'Iné' => 'Other',
+
+    // ----- Attachment upload ---------------------------------------------
+    'Prílohy dodávateľa' => 'Contractor attachments',
+    'Zatiaľ neboli nahrané žiadne prílohy.' => 'No attachments have been uploaded yet.',
+    'Súbor nie je dostupný' => 'File is not available',
+    'Nahrať súbor (PDF, DOCX, JPG, PNG, max 10 MB)' =>
+        'Upload a file (PDF, DOCX, JPG, PNG, max 10 MB)',
+    'Nahrať' => 'Upload',
+    'Súbor bol nahraný.' => 'File uploaded.',
+    'Nepodarilo sa nahrať súbor. Skúste znova.' => 'Could not upload the file. Please try again.',
+    'Nahrávanie súboru zlyhalo. Skúste znova.' => 'File upload failed. Please try again.',
+    'Súbor je príliš veľký. Maximálna veľkosť je 10 MB.' =>
+        'File is too large. Maximum size is 10 MB.',
+    'Nepodporovaný typ súboru. Povolené: PDF, DOCX, JPG, PNG.' =>
+        'Unsupported file type. Allowed: PDF, DOCX, JPG, PNG.',
+    'Úložisko súborov nie je nastavené. Kontaktujte HSE.' =>
+        'File storage is not configured. Please contact HSE.',
+
+    // ----- CP attachments / actions --------------------------------------
+    'Prílohy' => 'Attachments',
+    'Žiadne prílohy.' => 'No attachments.',
+    'Súbor' => 'File',
+    'Typ' => 'Type',
+    'Nahral' => 'Uploaded by',
+    'Akcie' => 'Actions',
+    'Mazať permity' => 'Delete permits',
+    'Zmazať permit' => 'Delete permit',
+    'Naozaj zmazať tento permit? Operáciu nie je možné vrátiť.' =>
+        'Really delete this permit? This cannot be undone.',
+    'Permit {n} bol zmazaný.' => 'Permit {n} has been deleted.',
+    'Permit sa nepodarilo zmazať.' => 'Could not delete the permit.',
+    'Znova odoslať schválenie (nové heslo)' => 'Resend approval (new password)',
+    'Znova odoslať e-mail o zamietnutí' => 'Resend rejection email',
+    'Notifikácia o schválení bola znova odoslaná. Vygenerované nové prístupové údaje pre dodávateľa.' =>
+        'Approval notification resent. New access credentials generated for the contractor.',
+    'Notifikácia o zamietnutí bola znova odoslaná.' => 'Rejection notification resent.',
+    'Notifikáciu možno znova odoslať len pre schválené alebo zamietnuté permity.' =>
+        'Notification can only be resent for approved or rejected permits.',
+    'Notifikáciu sa nepodarilo odoslať.' => 'Could not resend the notification.',
+
+    // ----- Login language switcher ---------------------------------------
+    'Jazyk' => 'Language',
 ];

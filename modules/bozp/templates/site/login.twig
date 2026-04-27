@@ -11,12 +11,24 @@
 {% set errors = errors ?? {} %}
 {% set loginName = loginName ?? '' %}
 {% set rememberMe = rememberMe ?? false %}
+{% set currentLang = currentLang ?? craft.app.language %}
+{% set lang = currentLang starts with 'en' ? 'en' : 'sk' %}
 
 {% block title %}{{ 'Prihlásenie'|t('bozp') }}{% endblock %}
 
 {% block content %}
     <section class="bozp-page bozp-page--login">
         <div class="bozp-login">
+            <nav class="bozp-login__lang" aria-label="{{ 'Jazyk'|t('bozp') }}">
+                <a href="{{ url('bozp/login', { lang: 'sk' }) }}"
+                   class="bozp-login__lang-link{% if lang == 'sk' %} is-active{% endif %}"
+                   {% if lang == 'sk' %}aria-current="true"{% endif %}>SK</a>
+                <span class="bozp-login__lang-sep" aria-hidden="true">·</span>
+                <a href="{{ url('bozp/login', { lang: 'en' }) }}"
+                   class="bozp-login__lang-link{% if lang == 'en' %} is-active{% endif %}"
+                   {% if lang == 'en' %}aria-current="true"{% endif %}>EN</a>
+            </nav>
+
             <header class="bozp-login__header">
                 <h1>{{ 'Prihlásenie'|t('bozp') }}</h1>
                 <p class="bozp-login__lede">

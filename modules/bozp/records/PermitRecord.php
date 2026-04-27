@@ -48,6 +48,7 @@ use craft\db\ActiveRecord;
  *
  * @property string|null $accessToken
  * @property string|null $accessPasswordHash
+ * @property string|null $accessExpiresAt
  *
  * @property array|null $recipientClosureStatus
  * @property string|null $recipientClosureSignedAt

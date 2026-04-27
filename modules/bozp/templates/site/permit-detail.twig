@@ -192,6 +192,30 @@
             {% endif %}
         </section>
 
+        {# ---- Attachments (read-only list) ---- #}
+        <section class="bozp-section bozp-section--attachments">
+            <h2>{{ 'Prílohy'|t('bozp') }}</h2>
+            {% if attachments is not defined or attachments|length == 0 %}
+                <p class="bozp-empty">{{ 'Žiadne prílohy.'|t('bozp') }}</p>
+            {% else %}
+                <ul class="bozp-attachments">
+                    {% for a in attachments %}
+                        {% set asset = craft.assets().id(a.assetId).one() %}
+                        <li>
+                            {% if asset %}
+                                <a href="{{ asset.url }}" target="_blank" rel="noopener">{{ asset.filename }}</a>
+                            {% else %}
+                                <span class="bozp-attachments__missing">{{ 'Súbor nie je dostupný'|t('bozp') }}</span>
+                            {% endif %}
+                            <span class="bozp-attachments__meta">
+                                · {{ a.uploadedByName ?: '—' }} · {{ a.dateCreated|date('d.m.Y H:i') }}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+
         {# ---- Audit trail ---- #}
         {% if auditEntries|length > 0 %}
             <section class="bozp-audit">

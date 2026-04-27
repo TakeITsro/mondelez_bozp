@@ -14,6 +14,7 @@ use craft\web\twig\variables\Cp;
 use craft\web\UrlManager;
 use craft\web\View;
 use modules\bozp\services\AuditLogger;
+use modules\bozp\services\PermitMailer;
 use modules\bozp\services\PermitNumberGenerator;
 use modules\bozp\services\PermitWorkflow;
 use yii\base\Event;
@@ -28,6 +29,7 @@ use yii\base\Module as BaseModule;
  * @property-read PermitNumberGenerator $permitNumberGenerator
  * @property-read PermitWorkflow $permitWorkflow
  * @property-read AuditLogger $auditLogger
+ * @property-read PermitMailer $permitMailer
  */
 class Module extends BaseModule
 {
@@ -43,6 +45,7 @@ class Module extends BaseModule
             'permitNumberGenerator' => PermitNumberGenerator::class,
             'permitWorkflow' => PermitWorkflow::class,
             'auditLogger' => AuditLogger::class,
+            'permitMailer' => PermitMailer::class,
         ]);
 
         parent::init();
@@ -99,6 +102,8 @@ class Module extends BaseModule
                 $event->rules['bozp/queue'] = 'bozp/queue/index';
                 $event->rules['bozp/all'] = 'bozp/queue/all';
                 $event->rules['bozp/permit/<id:\d+>'] = 'bozp/queue/view';
+                $event->rules['POST bozp/permit/<id:\d+>/resend'] = 'bozp/queue/resend';
+                $event->rules['POST bozp/permit/<id:\d+>/delete'] = 'bozp/queue/delete';
             }
         );
     }
@@ -120,6 +125,11 @@ class Module extends BaseModule
                 $event->rules['bozp/permits/new'] = 'bozp/permits/new';
                 $event->rules['POST bozp/permits/save'] = 'bozp/permits/save';
                 $event->rules['bozp/permits/<id:\d+>'] = 'bozp/permits/view';
+
+                // Contractor (token-gated, password-protected)
+                $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>'] = 'bozp/contractor/view';
+                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/auth'] = 'bozp/contractor/auth';
+                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/upload'] = 'bozp/contractor/upload';
             }
         );
     }
@@ -183,6 +193,9 @@ class Module extends BaseModule
                         ],
                         'bozp:manageZones' => [
                             'label' => Craft::t('bozp', 'Spravovať zóny'),
+                        ],
+                        'bozp:deletePermit' => [
+                            'label' => Craft::t('bozp', 'Mazať permity'),
                         ],
                     ],
                 ];

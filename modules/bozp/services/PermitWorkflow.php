@@ -68,6 +68,14 @@ class PermitWorkflow extends Component
         $approvedAt = $now->format('Y-m-d H:i:s');
         $validTo = $now->modify('+7 days')->format('Y-m-d H:i:s');
 
+        // Generate the contractor's per-permit access credentials. The
+        // plaintext password is held in memory just long enough to email
+        // it; only the hash is persisted.
+        $security = Craft::$app->getSecurity();
+        $accessToken = $security->generateRandomString(48);
+        $plaintextPassword = $this->generateContractorPassword();
+        $accessPasswordHash = $security->hashPassword($plaintextPassword);
+
         $this->transition(
             $permit,
             PermitStatus::Approved,
@@ -77,10 +85,65 @@ class PermitWorkflow extends Component
                 'approvedAt' => $approvedAt,
                 'approvalComment' => $comment !== '' ? $comment : null,
                 'validTo' => $validTo,
+                'accessToken' => $accessToken,
+                'accessPasswordHash' => $accessPasswordHash,
+                'accessExpiresAt' => $validTo,
             ],
             'approved',
             $comment,
         );
+
+        $this->mailer()->notifyParticipantsOfApproval($permit, $plaintextPassword);
+    }
+
+    /**
+     * Regenerate the contractor's access credentials for an already-approved
+     * permit (used by the "resend approval" action). Updates accessToken,
+     * accessPasswordHash, and accessExpiresAt = validTo. Returns the new
+     * plaintext password — caller must hand it to the mailer immediately.
+     *
+     * Throws if the permit isn't in a state where contractor access makes
+     * sense (i.e. not approved / signed / active).
+     */
+    public function regenerateContractorAccess(PermitRecord $permit): string
+    {
+        if (!in_array($permit->status, ['approved', 'signed', 'active'], true)) {
+            throw new InvalidArgumentException(
+                "Cannot regenerate contractor access for permit in status '{$permit->status}'."
+            );
+        }
+
+        $security = Craft::$app->getSecurity();
+        $accessToken = $security->generateRandomString(48);
+        $plaintext = $this->generateContractorPassword();
+
+        $permit->accessToken = $accessToken;
+        $permit->accessPasswordHash = $security->hashPassword($plaintext);
+        $permit->accessExpiresAt = $permit->validTo;
+
+        if (!$permit->save()) {
+            throw new \RuntimeException(
+                'Failed to save permit during access regeneration: ' . print_r($permit->getErrors(), true)
+            );
+        }
+
+        return $plaintext;
+    }
+
+    /**
+     * Generate an 8-character readable password for the contractor.
+     * Avoids visually-similar characters (0/O, 1/l/I) so the contractor
+     * can type it from the email without confusion.
+     */
+    private function generateContractorPassword(): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $out = '';
+        $max = strlen($alphabet) - 1;
+        for ($i = 0; $i < 8; $i++) {
+            $out .= $alphabet[random_int(0, $max)];
+        }
+        return $out;
     }
 
     /**
@@ -105,6 +168,8 @@ class PermitWorkflow extends Component
             'rejected',
             $comment,
         );
+
+        $this->mailer()->notifyParticipantsOfRejection($permit, $comment);
     }
 
     /**
@@ -165,5 +230,12 @@ class PermitWorkflow extends Component
         /** @var Module $module */
         $module = Craft::$app->getModule('bozp');
         return $module->auditLogger;
+    }
+
+    private function mailer(): PermitMailer
+    {
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+        return $module->permitMailer;
     }
 }

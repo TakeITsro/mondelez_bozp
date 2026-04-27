@@ -1,0 +1,14 @@
+{% extends 'bozp/site/contractor/_layout.twig' %}
+
+{% block title %}{{ 'Platnosť odkazu vypršala'|t('bozp') }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--contractor-expired">
+        <div class="bozp-expired">
+            <h1>{{ 'Platnosť odkazu vypršala'|t('bozp') }}</h1>
+            <p>
+                {{ 'Tento permit už nie je platný a odkaz nie je možné použiť. V prípade otázok kontaktujte HSE oddelenie.'|t('bozp') }}
+            </p>
+        </div>
+    </section>
+{% endblock %}

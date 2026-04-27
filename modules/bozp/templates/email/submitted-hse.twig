@@ -1,0 +1,34 @@
+{# HSE notification: a new permit was submitted and is waiting in the queue. #}
+<!doctype html>
+<html lang="{{ craft.app.language }}">
+<head>
+    <meta charset="utf-8">
+    <title>{{ 'Nový permit čaká na schválenie'|t('bozp') }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
+    <p>{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p>
+        {{
+            'Bol odoslaný nový permit {n} a čaká na vaše schválenie.'|t('bozp', {
+                n: permit.permitNumber
+            })
+        }}
+    </p>
+
+    {% if permit.contractorCompany %}
+        <p>
+            <strong>{{ 'Dodávateľ'|t('bozp') }}:</strong>
+            {{ permit.contractorCompany }}{% if permit.contractorPersonName %} ({{ permit.contractorPersonName }}){% endif %}
+        </p>
+    {% endif %}
+
+    <p>
+        <a href="{{ permitUrl }}">{{ 'Otvoriť permit'|t('bozp') }}</a>
+    </p>
+
+    <p style="color: #888; font-size: 12px;">
+        {{ 'Toto je automatická správa zo systému BOZP Permity.'|t('bozp') }}
+    </p>
+</body>
+</html>

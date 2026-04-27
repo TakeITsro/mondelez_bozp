@@ -1,0 +1,34 @@
+{# Rejection notification: contractor + issuer. Includes the HSE reason. #}
+<!doctype html>
+<html lang="{{ craft.app.language }}">
+<head>
+    <meta charset="utf-8">
+    <title>{{ 'Permit bol zamietnutý'|t('bozp') }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
+    <p>{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p>
+        {{
+            'Permit {n} bol zamietnutý oddelením HSE.'|t('bozp', {
+                n: permit.permitNumber
+            })
+        }}
+    </p>
+
+    {% if reason %}
+        <p>
+            <strong>{{ 'Dôvod'|t('bozp') }}:</strong><br>
+            {{ reason|nl2br }}
+        </p>
+    {% endif %}
+
+    <p>
+        <a href="{{ permitUrl }}">{{ 'Zobraziť permit'|t('bozp') }}</a>
+    </p>
+
+    <p style="color: #888; font-size: 12px;">
+        {{ 'Toto je automatická správa zo systému BOZP Permity.'|t('bozp') }}
+    </p>
+</body>
+</html>

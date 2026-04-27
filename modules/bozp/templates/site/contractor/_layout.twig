@@ -1,0 +1,37 @@
+{# Stripped-down layout for the contractor-facing pages. No login link,
+   no navigation — the contractor isn't a Craft user and doesn't have a
+   way (or reason) to navigate around the rest of the site. #}
+<!DOCTYPE html>
+<html lang="{{ craft.app.language }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ 'Permit'|t('bozp') }}{% endblock %} — Mondelez</title>
+    {% block head %}{% endblock %}
+</head>
+<body class="bozp bozp--contractor">
+    <header class="bozp-header bozp-header--contractor">
+        <div class="bozp-header__inner">
+            <span class="bozp-header__brand">{{ 'BOZP Permity'|t('bozp') }}</span>
+        </div>
+    </header>
+
+    <main class="bozp-main">
+        {% set notice = craft.app.session.getFlash('notice') %}
+        {% set error = craft.app.session.getFlash('error') %}
+
+        {% if notice %}
+            <div class="bozp-flash bozp-flash--notice" role="status">{{ notice }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="bozp-flash bozp-flash--error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bozp-footer">
+        <small>Mondelez SR Production · BOZP Permity</small>
+    </footer>
+</body>
+</html>

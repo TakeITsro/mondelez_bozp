@@ -43,6 +43,27 @@ class AuthController extends Controller
             return $this->redirect($this->postLoginUrl());
         }
 
+        // Language switcher (?lang=sk|en). Persisted in a 30-day cookie
+        // so the contractor / issuer doesn't have to re-toggle on each
+        // visit. The cookie name is 'bozp_lang'.
+        $langParam = (string) $request->getQueryParam('lang', '');
+        if (in_array($langParam, ['sk', 'en'], true)) {
+            Craft::$app->getResponse()->getCookies()->add(new \yii\web\Cookie([
+                'name' => 'bozp_lang',
+                'value' => $langParam,
+                'expire' => time() + 30 * 24 * 60 * 60,
+                'httpOnly' => true,
+                'secure' => $request->getIsSecureConnection(),
+                'sameSite' => \yii\web\Cookie::SAME_SITE_LAX,
+            ]));
+            Craft::$app->language = $langParam;
+        } else {
+            $cookieLang = (string) $request->getCookies()->getValue('bozp_lang', '');
+            if (in_array($cookieLang, ['sk', 'en'], true)) {
+                Craft::$app->language = $cookieLang;
+            }
+        }
+
         $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
 
         if ($request->getIsGet()) {
@@ -50,6 +71,7 @@ class AuthController extends Controller
                 'loginName' => '',
                 'rememberMe' => false,
                 'errors' => [],
+                'currentLang' => Craft::$app->language,
             ]);
         }
 
@@ -110,6 +132,7 @@ class AuthController extends Controller
             'loginName' => $loginName,
             'rememberMe' => $rememberMe,
             'errors' => $errors,
+            'currentLang' => Craft::$app->language,
         ]);
     }
 

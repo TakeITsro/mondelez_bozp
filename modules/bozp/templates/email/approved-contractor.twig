@@ -1,0 +1,51 @@
+{# Approval email to the contractor. Includes the access link, the
+   one-time password (also delivered in the same message), and a QR
+   code that encodes the same link for phone scanning. #}
+<!doctype html>
+<html lang="{{ craft.app.language }}">
+<head>
+    <meta charset="utf-8">
+    <title>{{ 'Permit bol schválený'|t('bozp') }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
+    <p>{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p>
+        {{
+            'Permit {n} bol schválený. Pre prístup k detailu permitu použite nasledujúci odkaz alebo naskenujte QR kód.'|t('bozp', {
+                n: permit.permitNumber
+            })
+        }}
+    </p>
+
+    {% if permit.validTo %}
+        <p>
+            <strong>{{ 'Platnosť do'|t('bozp') }}:</strong>
+            {{ permit.validTo|date('d.m.Y H:i') }}
+        </p>
+    {% endif %}
+
+    <p>
+        <a href="{{ permitUrl }}">{{ permitUrl }}</a>
+    </p>
+
+    <p>
+        <strong>{{ 'Heslo pre prístup'|t('bozp') }}:</strong>
+        <span style="font-family: monospace; font-size: 16px;">{{ password }}</span>
+    </p>
+
+    {% if qrDataUri %}
+        <p>
+            <img src="{{ qrDataUri }}" alt="QR" width="220" height="220">
+        </p>
+    {% endif %}
+
+    <p style="color: #555; font-size: 13px;">
+        {{ 'Odkaz a heslo platia do dátumu skončenia platnosti permitu.'|t('bozp') }}
+    </p>
+
+    <p style="color: #888; font-size: 12px;">
+        {{ 'Toto je automatická správa zo systému BOZP Permity.'|t('bozp') }}
+    </p>
+</body>
+</html>

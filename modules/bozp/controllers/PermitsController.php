@@ -12,6 +12,7 @@ use modules\bozp\enums\PermitStatus;
 use modules\bozp\enums\PermitType;
 use modules\bozp\Module;
 use modules\bozp\records\AuditLogRecord;
+use modules\bozp\records\PermitAttachmentRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\ZoneRecord;
@@ -83,6 +84,10 @@ class PermitsController extends BaseSiteController
             'auditEntries' => $auditEntries,
             'hazardCategories' => HazardCategory::pdfOrder(),
             'hazards' => $this->loadHazardsFor((int) $permit->id),
+            'attachments' => PermitAttachmentRecord::find()
+                ->where(['permitId' => $permit->id])
+                ->orderBy(['dateCreated' => SORT_DESC])
+                ->all(),
         ]);
     }
 
@@ -137,7 +142,10 @@ class PermitsController extends BaseSiteController
         $hazards = [];
         foreach (HazardCategory::pdfOrder() as $cat) {
             $hazards[$cat->value] = [
-                'exposed' => '',
+                // Default to "no" so the issuer only has to flip the rows
+                // that actually apply. They can still change to "yes" or
+                // unset before submitting.
+                'exposed' => 'no',
                 'measure' => $cat->defaultMeasure(),
                 'control' => '',
                 'controlOther' => '',
@@ -262,6 +270,13 @@ class PermitsController extends BaseSiteController
             return $this->redirect('bozp/permits/new');
         }
 
+        // Notifications fire AFTER the transaction has committed, and OUTSIDE
+        // the try/catch — the mailer swallows its own failures, so a delivery
+        // problem won't bubble up as "save failed" to the user.
+        if ($intent === 'submit') {
+            $module->permitMailer->notifyHseOfSubmission($permit);
+        }
+
         $msg = $intent === 'submit'
             ? Craft::t('bozp', 'Permit {n} bol odoslaný na schválenie HSE.', ['n' => $permit->permitNumber])
             : Craft::t('bozp', 'Permit {n} bol uložený ako koncept.', ['n' => $permit->permitNumber]);
@@ -298,6 +313,11 @@ class PermitsController extends BaseSiteController
         if ($intent === 'submit') {
             if ($values['validFrom'] === '') {
                 $errors['validFrom'] = (string) Craft::t('bozp', 'Plánovaný začiatok je povinný pri odoslaní.');
+            }
+            // Contractor email is required at submit so the contractor can
+            // receive approval / rejection notifications.
+            if ($values['contractorEmail'] === '' && !isset($errors['contractorEmail'])) {
+                $errors['contractorEmail'] = (string) Craft::t('bozp', 'E-mail dodávateľa je povinný pri odoslaní.');
             }
         }
 

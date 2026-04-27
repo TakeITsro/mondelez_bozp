@@ -1,0 +1,170 @@
+{% extends 'bozp/site/contractor/_layout.twig' %}
+
+{# Read-only contractor view of the permit + an upload form for
+   supplementary documents (risk assessments, photos, evidence). #}
+
+{% set controlLabels = {
+    'used': 'V používaní'|t('bozp'),
+    'not_used': 'Nepoužíva sa'|t('bozp'),
+    'other': 'Iné'|t('bozp'),
+} %}
+
+{% macro yn(value) %}
+    {% if value is null %}
+        —
+    {% elseif value %}{{ 'Áno'|t('bozp') }}{% else %}{{ 'Nie'|t('bozp') }}{% endif %}
+{% endmacro %}
+
+{% block title %}{{ 'Permit {n}'|t('bozp', {n: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--contractor-detail">
+
+        <header class="bozp-detail__header">
+            <h1>{{ 'Permit {n}'|t('bozp', {n: permit.permitNumber}) }}</h1>
+            <p class="bozp-detail__status">
+                <strong>{{ 'Stav'|t('bozp') }}:</strong> {{ permit.status }}
+            </p>
+        </header>
+
+        <dl class="bozp-detail__meta">
+            <dt>{{ 'Dodávateľ'|t('bozp') }}</dt>
+            <dd>
+                {{ permit.contractorCompany ?: '—' }}
+                {% if permit.contractorPersonName %}({{ permit.contractorPersonName }}){% endif %}
+            </dd>
+
+            <dt>{{ 'Miesto výkonu'|t('bozp') }}</dt>
+            <dd>{{ permit.workLocation ?: '—' }}</dd>
+
+            <dt>{{ 'Platnosť od'|t('bozp') }}</dt>
+            <dd>{{ permit.validFrom ? permit.validFrom|date('d.m.Y') : '—' }}</dd>
+
+            <dt>{{ 'Platnosť do'|t('bozp') }}</dt>
+            <dd>{{ permit.validTo ? permit.validTo|date('d.m.Y H:i') : '—' }}</dd>
+        </dl>
+
+        {% if permit.workOverview %}
+            <section class="bozp-detail__section">
+                <h2>{{ 'Popis prác'|t('bozp') }}</h2>
+                <p>{{ permit.workOverview|nl2br }}</p>
+            </section>
+        {% endif %}
+
+        {% if zones is not empty %}
+            <section class="bozp-detail__section">
+                <h2>{{ 'Zóny'|t('bozp') }}</h2>
+                <ul>
+                    {% for z in zones %}
+                        <li>{{ z.name }}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+
+        <section class="bozp-detail__section">
+            <h2>{{ 'Príprava pracoviska'|t('bozp') }}</h2>
+            <dl>
+                <dt>{{ 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp') }}</dt>
+                <dd>{{ _self.yn(permit.conditionsSuitable) }}</dd>
+                <dt>{{ 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp') }}</dt>
+                <dd>{{ _self.yn(permit.toolsInGoodCondition) }}</dd>
+                <dt>{{ 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp') }}</dt>
+                <dd>{{ _self.yn(permit.hasStopConditions) }}</dd>
+                {% if permit.stopConditionsDescription %}
+                    <dt>{{ 'Popis podmienok pre zastavenie prác'|t('bozp') }}</dt>
+                    <dd>{{ permit.stopConditionsDescription|nl2br }}</dd>
+                {% endif %}
+                <dt>{{ 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp') }}</dt>
+                <dd>{{ _self.yn(permit.lotoImplemented) }}</dd>
+                {% if permit.emergencyPlan %}
+                    <dt>{{ 'Núdzový plán / postup v prípade mimoriadnej udalosti'|t('bozp') }}</dt>
+                    <dd>{{ permit.emergencyPlan|nl2br }}</dd>
+                {% endif %}
+            </dl>
+        </section>
+
+        <section class="bozp-detail__section">
+            <h2>{{ 'Riziká a OOPP'|t('bozp') }}</h2>
+            <table class="bozp-hazards">
+                <thead>
+                    <tr>
+                        <th>{{ 'Kategória'|t('bozp') }}</th>
+                        <th>{{ 'Vystavený'|t('bozp') }}</th>
+                        <th>{{ 'Opatrenie / OOPP'|t('bozp') }}</th>
+                        <th>{{ 'Kontrola počas činnosti'|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in hazardCategories %}
+                        {% set h = hazards[cat.value] ?? null %}
+                        <tr>
+                            <th scope="row">{{ cat.label()|t('bozp') }}</th>
+                            <td>{{ h ? _self.yn(h.exposed) : '—' }}</td>
+                            <td>{{ h and h.measure ? h.measure|nl2br : '—' }}</td>
+                            <td>
+                                {% if h and h.controlDuringActivity %}
+                                    {{ controlLabels[h.controlDuringActivity] ?? h.controlDuringActivity }}
+                                    {% if h.controlDuringActivity == 'other' and h.controlDuringActivityOther %}
+                                        — {{ h.controlDuringActivityOther }}
+                                    {% endif %}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        {# ---------- Attachments: list + upload --------------------------- #}
+        <section class="bozp-detail__section bozp-detail__section--uploads">
+            <h2>{{ 'Prílohy dodávateľa'|t('bozp') }}</h2>
+
+            {% if attachments is not empty %}
+                <ul class="bozp-attachments">
+                    {% for a in attachments %}
+                        {% set asset = craft.assets().id(a.assetId).one() %}
+                        <li>
+                            {% if asset %}
+                                <a href="{{ asset.url }}" target="_blank" rel="noopener">{{ asset.filename }}</a>
+                                <span class="bozp-attachments__meta">
+                                    · {{ a.dateCreated|date('d.m.Y H:i') }}
+                                </span>
+                            {% else %}
+                                <span class="bozp-attachments__missing">{{ 'Súbor nie je dostupný'|t('bozp') }}</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="bozp-attachments__empty">{{ 'Zatiaľ neboli nahrané žiadne prílohy.'|t('bozp') }}</p>
+            {% endif %}
+
+            <form method="post"
+                  action="{{ url('bozp/c/' ~ token ~ '/upload') }}"
+                  enctype="multipart/form-data"
+                  class="bozp-form bozp-form--upload"
+                  novalidate>
+                {{ csrfInput() }}
+
+                <div class="bozp-form__field">
+                    <label for="attachment">{{ 'Nahrať súbor (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp') }}</label>
+                    <input type="file"
+                           id="attachment"
+                           name="attachment"
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
+                           required>
+                </div>
+
+                <div class="bozp-form__actions">
+                    <button type="submit" class="bozp-btn bozp-btn--primary">
+                        {{ 'Nahrať'|t('bozp') }}
+                    </button>
+                </div>
+            </form>
+        </section>
+
+    </section>
+{% endblock %}

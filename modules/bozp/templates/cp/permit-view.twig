@@ -245,6 +245,76 @@
             </form>
         {% endif %}
 
+        {# ---------- Attachments (read-only list) ---------------------- #}
+        <h3 style="margin-top:32px;">{{ 'Prílohy'|t('bozp') }}</h3>
+        {% if attachments is not defined or attachments|length == 0 %}
+            <p class="light">{{ 'Žiadne prílohy.'|t('bozp') }}</p>
+        {% else %}
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Súbor'|t('bozp') }}</th>
+                        <th>{{ 'Typ'|t('bozp') }}</th>
+                        <th>{{ 'Nahral'|t('bozp') }}</th>
+                        <th>{{ 'Kedy'|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in attachments %}
+                        {% set asset = craft.assets().id(a.assetId).one() %}
+                        <tr>
+                            <td>
+                                {% if asset %}
+                                    <a href="{{ asset.url }}" target="_blank" rel="noopener">{{ asset.filename }}</a>
+                                {% else %}
+                                    <span class="light">{{ 'Súbor nie je dostupný'|t('bozp') }}</span>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ a.attachmentType }}</code></td>
+                            <td>{{ a.uploadedByName ?: '—' }}</td>
+                            <td>{{ a.dateCreated|date('d.m.Y H:i') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {# ---------- Resend / Delete actions --------------------------- #}
+        {% set canResend = canApprove and permit.status in ['approved','signed','active','rejected'] %}
+        {% if canResend or canDelete %}
+            <h3 style="margin-top:32px;">{{ 'Akcie'|t('bozp') }}</h3>
+
+            <div class="flex" style="gap:12px;flex-wrap:wrap;">
+
+                {% if canResend %}
+                    <form method="post"
+                          action="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/resend') }}"
+                          accept-charset="UTF-8">
+                        {{ csrfInput() }}
+                        <button type="submit" class="btn">
+                            {% if permit.status == 'rejected' %}
+                                {{ 'Znova odoslať e-mail o zamietnutí'|t('bozp') }}
+                            {% else %}
+                                {{ 'Znova odoslať schválenie (nové heslo)'|t('bozp') }}
+                            {% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+
+                {% if canDelete %}
+                    <form method="post"
+                          action="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/delete') }}"
+                          accept-charset="UTF-8"
+                          onsubmit="return confirm('{{ 'Naozaj zmazať tento permit? Operáciu nie je možné vrátiť.'|t('bozp')|e('js') }}');">
+                        {{ csrfInput() }}
+                        <button type="submit" class="btn submit" style="background-color:#cf2929;border-color:#cf2929;">
+                            {{ 'Zmazať permit'|t('bozp') }}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endif %}
+
         <h3 style="margin-top:32px;">{{ 'Audit'|t('bozp') }}</h3>
         {% if auditEntries|length == 0 %}
             <p class="light">{{ 'Žiadne záznamy.'|t('bozp') }}</p>
