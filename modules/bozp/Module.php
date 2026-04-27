@@ -130,6 +130,7 @@ class Module extends BaseModule
                 $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>'] = 'bozp/contractor/view';
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/auth'] = 'bozp/contractor/auth';
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/upload'] = 'bozp/contractor/upload';
+                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/sign'] = 'bozp/contractor/sign';
             }
         );
     }

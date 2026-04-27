@@ -13,10 +13,13 @@ use craft\web\Controller;
 use craft\web\UploadedFile;
 use craft\web\View;
 use modules\bozp\enums\HazardCategory;
+use modules\bozp\enums\PermitStatus;
+use modules\bozp\enums\SignatureRole;
 use modules\bozp\Module;
 use modules\bozp\records\PermitAttachmentRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
+use modules\bozp\records\PermitSignatureRecord;
 use modules\bozp\records\PermitZoneRecord;
 use modules\bozp\records\ZoneRecord;
 use Throwable;
@@ -215,6 +218,159 @@ class ContractorController extends Controller
         return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
     }
 
+    /**
+     * Capture the contractor's signature (RecipientIssuance role).
+     * The PNG comes in as a data: URI from signature_pad.toDataURL().
+     * On success the permit transitions from "approved" → "signed".
+     */
+    public function actionSign(string $token): Response
+    {
+        $this->requirePostRequest();
+
+        $permit = $this->lookupPermit($token);
+
+        if ($this->isExpired($permit)) {
+            return $this->renderExpired();
+        }
+
+        if (!$this->isAuthedFor($token)) {
+            return $this->renderPasswordPrompt($permit, []);
+        }
+
+        // Only sign-able when the permit is in "approved" state and
+        // hasn't already received a recipient-issuance signature.
+        if ($permit->status !== PermitStatus::Approved->value) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Permit nie je v stave, v ktorom je možné podpísať.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+        if (PermitSignatureRecord::find()->where([
+            'permitId' => $permit->id,
+            'role' => SignatureRole::RecipientIssuance->value,
+        ])->exists()) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Permit už bol podpísaný.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        $request = Craft::$app->getRequest();
+        $signerName = trim((string) $request->getBodyParam('signerName', ''));
+        $signerEmployer = trim((string) $request->getBodyParam('signerEmployer', ''));
+        $signatureDate = trim((string) $request->getBodyParam('signatureDate', ''));
+        $signatureDataUri = (string) $request->getBodyParam('signatureData', '');
+
+        $errors = [];
+        if ($signerName === '') {
+            $errors['signerName'] = (string) Craft::t('bozp', 'Meno podpisujúceho je povinné.');
+        }
+        if ($signatureDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $signatureDate)) {
+            $errors['signatureDate'] = (string) Craft::t('bozp', 'Dátum podpisu je povinný.');
+        }
+        $pngBytes = $this->decodeSignatureDataUri($signatureDataUri);
+        if ($pngBytes === null || strlen($pngBytes) < 100) {
+            $errors['signatureData'] = (string) Craft::t('bozp', 'Podpis je povinný.');
+        }
+
+        if ($errors !== []) {
+            // Re-render the detail page with the errors. (We could push
+            // to flash and redirect, but inline errors next to the form
+            // are friendlier.)
+            return $this->renderDetail($permit, $errors, [
+                'signerName' => $signerName,
+                'signerEmployer' => $signerEmployer,
+                'signatureDate' => $signatureDate,
+            ]);
+        }
+
+        $volume = Craft::$app->getVolumes()->getVolumeByHandle(self::ASSET_VOLUME_HANDLE);
+        if (!$volume) {
+            Craft::error("BOZP sign: missing asset volume '" . self::ASSET_VOLUME_HANDLE . "'", __METHOD__);
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Úložisko súborov nie je nastavené. Kontaktujte HSE.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        try {
+            $rootFolder = Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id);
+            if (!$rootFolder) {
+                throw new \RuntimeException("No root folder for volume '" . self::ASSET_VOLUME_HANDLE . "'");
+            }
+
+            $tempPath = Craft::$app->getPath()->getTempPath() . '/sig-' . bin2hex(random_bytes(8)) . '.png';
+            file_put_contents($tempPath, $pngBytes);
+
+            $asset = new Asset();
+            $asset->tempFilePath = $tempPath;
+            $asset->filename = Assets::prepareAssetName(
+                'signature-' . $permit->permitNumber . '-recipient-issuance.png'
+            );
+            $asset->newFolderId = $rootFolder->id;
+            $asset->volumeId = $volume->id;
+            $asset->avoidFilenameConflicts = true;
+            $asset->setScenario(Asset::SCENARIO_CREATE);
+
+            if (!Craft::$app->getElements()->saveElement($asset)) {
+                throw new \RuntimeException('Asset save failed: ' . print_r($asset->getErrors(), true));
+            }
+
+            $sig = new PermitSignatureRecord();
+            $sig->permitId = (int) $permit->id;
+            $sig->role = SignatureRole::RecipientIssuance->value;
+            $sig->signerName = $signerName;
+            $sig->signerEmployer = $signerEmployer !== '' ? $signerEmployer : null;
+            $sig->signatureAssetId = (int) $asset->id;
+            $sig->signatureDate = $signatureDate;
+            $sig->signedAt = date('Y-m-d H:i:s');
+            $sig->ipAddress = substr((string) $request->getUserIP(), 0, 45) ?: null;
+            $sig->userAgent = substr((string) $request->getUserAgent(), 0, 255) ?: null;
+
+            if (!$sig->save()) {
+                throw new \RuntimeException('Signature save failed: ' . print_r($sig->getErrors(), true));
+            }
+
+            // Move the permit forward: approved → signed.
+            /** @var Module $module */
+            $module = Craft::$app->getModule('bozp');
+            $module->permitWorkflow->transition(
+                $permit,
+                PermitStatus::Signed,
+                actorUserId: null, // anonymous contractor
+                extraColumns: ['signedAt' => date('Y-m-d H:i:s')],
+                auditAction: 'recipient_issuance_signed',
+                note: $signerName,
+            );
+
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Permit bol úspešne podpísaný.')
+            );
+        } catch (Throwable $e) {
+            Craft::error('BOZP sign failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Podpis sa nepodarilo uložiť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+        }
+
+        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+    }
+
+    /**
+     * Decode a "data:image/png;base64,..." URI to raw bytes.
+     * Returns null on malformed input.
+     */
+    private function decodeSignatureDataUri(string $uri): ?string
+    {
+        if (!preg_match('#^data:image/png;base64,(.+)$#', $uri, $m)) {
+            return null;
+        }
+        $bytes = base64_decode(strtr($m[1], "\r\n\t ", ''), true);
+        return $bytes === false ? null : $bytes;
+    }
+
     // -- internals -------------------------------------------------------
 
     private function lookupPermit(string $token): PermitRecord
@@ -282,8 +438,15 @@ class ContractorController extends Controller
         ]);
     }
 
-    private function renderDetail(PermitRecord $permit): Response
-    {
+    /**
+     * @param array<string, string> $signErrors
+     * @param array<string, string> $signValues
+     */
+    private function renderDetail(
+        PermitRecord $permit,
+        array $signErrors = [],
+        array $signValues = [],
+    ): Response {
         $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
 
         $zoneIds = PermitZoneRecord::find()
@@ -305,6 +468,13 @@ class ContractorController extends Controller
             ->orderBy(['dateCreated' => SORT_DESC])
             ->all();
 
+        $recipientSignature = PermitSignatureRecord::find()
+            ->where([
+                'permitId' => $permit->id,
+                'role' => SignatureRole::RecipientIssuance->value,
+            ])
+            ->one();
+
         return $this->renderTemplate('bozp/site/contractor/detail', [
             'permit' => $permit,
             'token' => $permit->accessToken,
@@ -312,6 +482,14 @@ class ContractorController extends Controller
             'hazards' => $hazards,
             'hazardCategories' => HazardCategory::pdfOrder(),
             'attachments' => $attachments,
+            'recipientSignature' => $recipientSignature,
+            'canSign' => $permit->status === PermitStatus::Approved->value && !$recipientSignature,
+            'signErrors' => $signErrors,
+            'signValues' => array_merge([
+                'signerName' => $permit->contractorPersonName ?: '',
+                'signerEmployer' => $permit->contractorCompany ?: '',
+                'signatureDate' => date('Y-m-d'),
+            ], $signValues),
         ]);
     }
 

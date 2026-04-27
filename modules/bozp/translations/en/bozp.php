@@ -308,4 +308,36 @@ return [
 
     // ----- Login language switcher ---------------------------------------
     'Jazyk' => 'Language',
+
+    // ----- Contractor signature ------------------------------------------
+    'Podpis prijímateľa' => 'Recipient signature',
+    'Meno podpisujúceho' => 'Signer name',
+    'Zamestnávateľ' => 'Employer',
+    'Dátum podpisu' => 'Signature date',
+    'Podpis' => 'Signature',
+    'Vyčistiť' => 'Clear',
+    'Podpísať a potvrdiť' => 'Sign and confirm',
+    'Podpísal' => 'Signed by',
+    'Zaznamenané' => 'Recorded at',
+    'Permit nie je v stave, v ktorom je možné podpísať.' =>
+        'The permit is not in a state where it can be signed.',
+    'Permit už bol podpísaný.' => 'The permit has already been signed.',
+    'Meno podpisujúceho je povinné.' => 'Signer name is required.',
+    'Dátum podpisu je povinný.' => 'Signature date is required.',
+    'Podpis je povinný.' => 'Signature is required.',
+    'Permit bol úspešne podpísaný.' => 'Permit signed successfully.',
+    'Podpis sa nepodarilo uložiť. Skúste znova.' => 'Could not save the signature. Please try again.',
+
+    // ----- Sign dialog ---------------------------------------------------
+    'Permit je pripravený na podpis dodávateľom.' => 'The permit is ready for the contractor to sign.',
+    'Podpísať permit' => 'Sign permit',
+    'Pred podpisom' => 'Before signing',
+    'Podpisom potvrdzujete, že ste sa oboznámili s podmienkami permitu a so všetkými uvedenými rizikami a opatreniami, a zaväzujete sa ich pri vykonávaní prác dodržiavať.' =>
+        'By signing, you confirm that you have reviewed the permit conditions and all listed hazards and controls, and you commit to following them while the work is performed.',
+    'Upozornenie' => 'Warning',
+    'Po podpise sa permit uzamkne a údaje nie je možné meniť.' =>
+        'After signing, the permit will be locked and the data cannot be changed.',
+    'Pokračovať k podpisu' => 'Continue to signing',
+    'Zrušiť' => 'Cancel',
+    'Späť' => 'Back',
 ];

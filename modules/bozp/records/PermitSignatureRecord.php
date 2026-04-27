@@ -13,6 +13,7 @@ use craft\db\ActiveRecord;
  * @property string $signerName
  * @property string|null $signerEmployer
  * @property int|null $signatureAssetId
+ * @property string|null $signatureDate
  * @property string $signedAt
  * @property string|null $ipAddress
  * @property string|null $userAgent

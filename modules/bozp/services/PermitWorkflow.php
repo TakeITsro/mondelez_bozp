@@ -180,7 +180,7 @@ class PermitWorkflow extends Component
     public function transition(
         PermitRecord $permit,
         PermitStatus $to,
-        int $actorUserId,
+        ?int $actorUserId,
         array $extraColumns = [],
         ?string $auditAction = null,
         ?string $note = null,
