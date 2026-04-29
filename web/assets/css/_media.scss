@@ -1,0 +1,29 @@
+// w - width
+// h - height
+@mixin media($size, $type: 'w') {
+  @if ($type == 'w') {
+    @media (max-width: #{$size}px) {
+      @content;
+    }
+  }
+  @if ($type == 'h') {
+    @media (max-height: #{$size}px) {
+      @content
+    }
+  }
+}
+
+// w - width
+// h - height
+@mixin min-media($size, $type: 'w') {
+  @if ($type == 'w') {
+    @media (min-width: #{$size}px) {
+      @content;
+    }
+  }
+  @if ($type == 'h') {
+    @media (min-height: #{$size}px) {
+      @content
+    }
+  }
+}

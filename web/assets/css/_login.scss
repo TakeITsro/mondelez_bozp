@@ -1,0 +1,180 @@
+.bozp-page--login {
+  min-height: calc(100vh - 3.75em);
+  justify-content: center;
+  background-color: var(--main-color);
+  padding: 5em;
+
+  .bozp-login {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .bozp-login__logo {
+      width: 100%;
+
+      svg {
+        width: 100%;
+
+        path {
+          fill: var(--main-color-light);
+        }
+      }
+    }
+
+    .bozp-login__lang {
+      display: flex;
+      align-items: center;
+      gap: 5em;
+      margin: 5em 0;
+
+      a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+
+        svg {
+          width: 48px;
+          border-radius: 50%;
+        }
+
+        span {
+          color: var(--main-color-light);
+          font-size: 1.25em;
+          font-weight: 400;
+          line-height: 1.2em;
+          text-transform: uppercase;
+        }
+      }
+    }
+
+    .bozp-login__header {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.625em;
+
+      h1 {
+        color: var(--main-color-light);
+        font-size: 3.75em;
+        font-weight: 400;
+        line-height: 1.2em;
+        text-transform: uppercase;
+      }
+
+      p {
+        color: var(--main-color-light);
+      }
+    }
+
+    .bozp-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25em;
+      margin-top: 2.5em;
+
+      .bozp-form__field {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.625em;
+
+        > label {
+          color: var(--main-color-light);
+          font-size: 1.25em;
+          font-weight: 400;
+          line-height: 1.2em;
+          text-transform: uppercase;
+        }
+
+        > input {
+          width: 100%;
+          height: 4em;
+          color: var(--main-color-light) !important;
+          font-size: 1.25em;
+          font-weight: 400;
+          line-height: 1.2em;
+          border: 1px solid var(--form-input-border) !important;
+          border-radius: 8px;
+          background-color: var(--form-input-bg) !important;
+          padding: 1em;
+        }
+
+        .bozp-form__error {
+          color: red;
+          font-size: 1.25em;
+          font-weight: 400;
+          line-height: 1.2em;
+        }
+
+        &.bozp-form__field--error {
+          input {
+            border: 1px solid red;
+          }
+        }
+
+        &.bozp-form__field--checkbox {
+          flex-direction: row;
+
+          label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            input {
+              width: 20px;
+              height: 20px;
+              padding: 0;
+            }
+
+            span {
+              width: calc(100% - 30px);
+              color: var(--main-color-light);
+              font-size: 1em;
+              font-weight: 400;
+              line-height: 1.2em;
+              text-transform: uppercase;
+            }
+          }
+        }
+      }
+
+      .bozp-form__actions {
+        width: 100%;
+        margin-top: 1.25em;
+
+        .bozp-btn {
+          width: 100%;
+          height: 3.75em;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: var(--main-color-dark);
+          border-radius: 6.25em;
+
+          span {
+            color: var(--main-color-light);
+            font-size: 1.25em;
+            font-weight: 400;
+            line-height: 1.2em;
+            text-transform: uppercase;
+          }
+        }
+      }
+    }
+
+    .bozp-login__help {
+      color: var(--form-input-bg);
+      font-size: 1.25em;
+      font-weight: 400;
+      line-height: 1.2em;
+      text-transform: uppercase;
+      margin-top: 2em;
+    }
+  }
+}

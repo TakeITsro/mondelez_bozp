@@ -1,0 +1,58 @@
+.bozp-header {
+  width: 100%;
+
+  .bozp-header__user {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1.25em;
+    padding: 0.625em 5em;
+  }
+
+  .bozp-header__inner {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25em;
+    background-image: url("/assets/svg/header_bg.svg");
+    background-size: cover;
+    background-position: center;
+    padding: 2.5em 5em;
+
+    //.header__bg {
+    //  position: absolute;
+    //  top: 0;
+    //  left: 0;
+    //  width: 100%;
+    //  height: 100%;
+    //  object-fit: cover;
+    //  object-position: center;
+    //}
+
+    .bozp-header__brand {
+      svg {
+        height: 3.75em;
+
+        path {
+          fill: var(--main-color-light);
+        }
+      }
+    }
+
+    .bozp-header__nav {
+      display: flex;
+      align-items: center;
+      gap: 2.5em;
+
+      a {
+        color: var(--main-color-light);
+        font-size: 1.75em;
+        font-weight: 400;
+        line-height: 1.2em;
+        text-transform: uppercase;
+      }
+    }
+  }
+}
