@@ -350,28 +350,36 @@
                 <p class="bozp-attachments__empty">{{ 'Zatiaľ neboli nahrané žiadne prílohy.'|t('bozp') }}</p>
             {% endif %}
 
-            <form method="post"
-                  action="{{ url('bozp/c/' ~ token ~ '/upload') }}"
-                  enctype="multipart/form-data"
-                  class="bozp-form bozp-form--upload"
-                  novalidate>
-                {{ csrfInput() }}
+            {# Upload form is locked once the contractor has signed the permit
+               (either complete or cancel). Server-side check mirrors this. #}
+            {% if recipientClosureSignature %}
+                <p class="bozp-empty">
+                    {{ 'Permit je uzamknutý — ďalšie prílohy už nie je možné pridávať.'|t('bozp') }}
+                </p>
+            {% else %}
+                <form method="post"
+                      action="{{ url('bozp/c/' ~ token ~ '/upload') }}"
+                      enctype="multipart/form-data"
+                      class="bozp-form bozp-form--upload"
+                      novalidate>
+                    {{ csrfInput() }}
 
-                <div class="bozp-form__field">
-                    <label for="attachment">{{ 'Nahrať súbor (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp') }}</label>
-                    <input type="file"
-                           id="attachment"
-                           name="attachment"
-                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
-                           required>
-                </div>
+                    <div class="bozp-form__field">
+                        <label for="attachment">{{ 'Nahrať súbor (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp') }}</label>
+                        <input type="file"
+                               id="attachment"
+                               name="attachment"
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
+                               required>
+                    </div>
 
-                <div class="bozp-form__actions">
-                    <button type="submit" class="bozp-btn bozp-btn--primary">
-                        {{ 'Nahrať'|t('bozp') }}
-                    </button>
-                </div>
-            </form>
+                    <div class="bozp-form__actions">
+                        <button type="submit" class="bozp-btn bozp-btn--primary">
+                            {{ 'Nahrať'|t('bozp') }}
+                        </button>
+                    </div>
+                </form>
+            {% endif %}
         </section>
 
     </section>

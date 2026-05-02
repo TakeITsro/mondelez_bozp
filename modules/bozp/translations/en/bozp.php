@@ -413,4 +413,6 @@ return [
         'The permit is not in a state where it can be cancelled.',
     'Permit bol zrušený dodávateľom.' => 'Permit was cancelled by the contractor.',
     'Zrušenie sa nepodarilo uložiť. Skúste znova.' => 'Could not save the cancellation. Please try again.',
+    'Permit je uzamknutý — ďalšie prílohy už nie je možné pridávať.' =>
+        'The permit is locked — no further attachments can be added.',
 ];

@@ -115,6 +115,15 @@ class ContractorController extends Controller
             return $this->renderPasswordPrompt($permit, []);
         }
 
+        // Once the contractor has signed (complete or cancel) the permit
+        // is locked and no further attachments can be added.
+        if ($this->signatures()->findSignature((int) $permit->id, SignatureRole::RecipientClosure)) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Permit je uzamknutý — ďalšie prílohy už nie je možné pridávať.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
         $uploaded = UploadedFile::getInstanceByName('attachment');
 
         if (!$uploaded || $uploaded->getHasError()) {
