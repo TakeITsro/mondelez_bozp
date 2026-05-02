@@ -1,0 +1,98 @@
+{# Reusable two-stage signature dialog.
+   Required vars (passed via include … with {…} only):
+     id           — DOM id of the <dialog>
+     action       — POST URL
+     openOnLoad   — bool: open with stage=form on load (validation re-render)
+     title        — modal heading on stage 1
+     intro        — confirmation paragraph on stage 1
+     warning      — amber warning text on stage 1
+     submitLabel  — label for the submit button on stage 2
+     showEmployer — bool: include employer field
+     errors       — assoc array of field → message
+     values       — assoc array of field → current value
+     extraFields  — pre-rendered HTML inserted at top of stage-2 form (e.g. checkboxes)
+#}
+
+<dialog id="{{ id }}" class="bozp-sign-dialog"
+        style="border:none;padding:0;border-radius:8px;max-width:560px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.25);"
+        {% if openOnLoad %}data-open-on-load="form"{% endif %}>
+    <form method="post" action="{{ action }}"
+          class="bozp-form bozp-form--sign"
+          style="margin:0;padding:24px;" novalidate>
+        {{ csrfInput() }}
+
+        {# Stage 1 — confirmation + warning #}
+        <div class="bozp-dialog__stage" data-stage="warning">
+            <h3 style="margin-top:0;">{{ title }}</h3>
+            <p>{{ intro }}</p>
+            <p class="bozp-warning"
+               style="background:#fff4e0;border-left:4px solid #d97706;padding:10px 14px;margin:16px 0;color:#7a3e00;">
+                <strong>{{ 'Upozornenie'|t('bozp') }}:</strong> {{ warning }}
+            </p>
+            <div class="bozp-dialog__actions"
+                 style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+                <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="cancel">
+                    {{ 'Zrušiť'|t('bozp') }}
+                </button>
+                <button type="button" class="bozp-btn bozp-btn--primary" data-bozp-action="proceed">
+                    {{ 'Pokračovať k podpisu'|t('bozp') }}
+                </button>
+            </div>
+        </div>
+
+        {# Stage 2 — form #}
+        <div class="bozp-dialog__stage" data-stage="form" hidden>
+            <h3 style="margin-top:0;">{{ title }}</h3>
+
+            {{ extraFields|raw }}
+
+            <div class="bozp-form__field{% if errors.signerName is defined %} bozp-form__field--error{% endif %}">
+                <label>{{ 'Meno podpisujúceho'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <input type="text" name="signerName" value="{{ values.signerName ?? '' }}" required>
+                {% if errors.signerName is defined %}
+                    <p class="bozp-form__error">{{ errors.signerName }}</p>
+                {% endif %}
+            </div>
+
+            {% if showEmployer %}
+                <div class="bozp-form__field">
+                    <label>{{ 'Zamestnávateľ'|t('bozp') }}</label>
+                    <input type="text" name="signerEmployer" value="{{ values.signerEmployer ?? '' }}">
+                </div>
+            {% endif %}
+
+            <div class="bozp-form__field{% if errors.signatureDate is defined %} bozp-form__field--error{% endif %}">
+                <label>{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <input type="date" name="signatureDate" value="{{ values.signatureDate ?? '' }}" required>
+                {% if errors.signatureDate is defined %}
+                    <p class="bozp-form__error">{{ errors.signatureDate }}</p>
+                {% endif %}
+            </div>
+
+            <div class="bozp-form__field{% if errors.signatureData is defined %} bozp-form__field--error{% endif %}">
+                <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <div class="bozp-sigpad" style="border:1px solid #ccc;background:#fff;width:100%;">
+                    <canvas data-bozp-sigpad width="520" height="180"
+                            style="display:block;width:100%;height:180px;touch-action:none;"></canvas>
+                </div>
+                <div class="bozp-sigpad__actions" style="margin-top:8px;">
+                    <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-sigpad-clear>
+                        {{ 'Vyčistiť'|t('bozp') }}
+                    </button>
+                </div>
+                <input type="hidden" name="signatureData">
+                {% if errors.signatureData is defined %}
+                    <p class="bozp-form__error">{{ errors.signatureData }}</p>
+                {% endif %}
+            </div>
+
+            <div class="bozp-dialog__actions"
+                 style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;">
+                <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="back">
+                    {{ 'Späť'|t('bozp') }}
+                </button>
+                <button type="submit" class="bozp-btn bozp-btn--primary">{{ submitLabel }}</button>
+            </div>
+        </div>
+    </form>
+</dialog>

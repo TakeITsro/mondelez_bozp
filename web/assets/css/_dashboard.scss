@@ -1,0 +1,46 @@
+.bozp-page--dashboard {
+  min-height: calc(100vh - 3.75em);
+  gap: 5em;
+  padding: 5em;
+
+  .bozp-page__header {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2.5em;
+  }
+
+  .bozp-empty {
+    width: 100%;
+    max-width: 980px;
+    color: var(--main-color);
+    font-size: 1.25em;
+    font-weight: 400;
+    line-height: 1.2em;
+    text-transform: uppercase;
+  }
+
+  .bozp-table {
+    width: 100%;
+    max-width: 980px;
+
+    th {
+      color: var(--main-color);
+      font-size: 1.75em;
+      font-weight: 400;
+      line-height: 1.2em;
+      text-transform: uppercase;
+    }
+
+    td {
+      color: var(--main-color);
+      font-size: 1.25em;
+      font-weight: 400;
+      line-height: 1.2em;
+      text-transform: uppercase;
+      padding: 0.5em 1em;
+    }
+  }
+}

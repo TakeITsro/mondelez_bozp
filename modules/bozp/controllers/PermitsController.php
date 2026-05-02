@@ -10,6 +10,7 @@ use craft\web\View;
 use modules\bozp\enums\HazardCategory;
 use modules\bozp\enums\PermitStatus;
 use modules\bozp\enums\PermitType;
+use modules\bozp\enums\SignatureRole;
 use modules\bozp\Module;
 use modules\bozp\records\AuditLogRecord;
 use modules\bozp\records\PermitAttachmentRecord;
@@ -45,7 +46,7 @@ use yii\web\Response;
  */
 class PermitsController extends BaseSiteController
 {
-    protected array|bool|int $allowAnonymous = ['view', 'new', 'save'];
+    protected array|bool|int $allowAnonymous = ['view', 'new', 'save', 'cancel', 'close'];
 
     public function actionView(int $id): Response
     {
@@ -61,12 +62,148 @@ class PermitsController extends BaseSiteController
         $user = Craft::$app->getUser();
         $userId = $user->getId();
 
-        // Issuer can always see their own permit; otherwise bozp:viewAll is required.
         $isIssuer = (int) $permit->issuerId === (int) $userId;
         if (!$isIssuer && !$user->checkPermission('bozp:viewAll')) {
             throw new ForbiddenHttpException();
         }
 
+        return $this->renderDetail($permit, $isIssuer);
+    }
+
+    /**
+     * Issuer cancels the permit (with their IssuerClosure signature).
+     * Allowed any time after approval.
+     */
+    public function actionCancel(int $id): ?Response
+    {
+        $this->requirePostRequest();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+        $permit = PermitRecord::findOne(['id' => $id]);
+        if (!$permit) {
+            throw new NotFoundHttpException('Permit not found.');
+        }
+        $userId = (int) Craft::$app->getUser()->getId();
+        if ((int) $permit->issuerId !== $userId) {
+            throw new ForbiddenHttpException();
+        }
+
+        $request = Craft::$app->getRequest();
+        $reason = trim((string) $request->getBodyParam('reason', ''));
+
+        [$values, $errors] = $this->collectIssuerSignatureFields(false);
+        if ($reason === '') {
+            $errors['reason'] = (string) Craft::t('bozp', 'Dôvod zrušenia je povinný.');
+        }
+        if ($errors !== []) {
+            return $this->renderDetail($permit, true, cancelErrors: $errors, cancelValues: $values + ['reason' => $reason]);
+        }
+
+        try {
+            /** @var Module $module */
+            $module = Craft::$app->getModule('bozp');
+            $module->signatureService->capture(
+                $permit,
+                SignatureRole::IssuerClosure,
+                $values['signerName'],
+                null,
+                $values['signatureDate'],
+                $values['signatureData'],
+            );
+            $module->permitWorkflow->cancelByIssuer($permit, $userId, $reason);
+
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Permit bol zrušený.')
+            );
+        } catch (Throwable $e) {
+            Craft::error('BOZP issuer cancel failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Permit sa nepodarilo zrušiť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+        }
+
+        return $this->redirect("bozp/permits/{$permit->id}");
+    }
+
+    /**
+     * Issuer final closure (with IssuerClosure signature).
+     * Only allowed once contractor has signed RecipientClosure
+     * (status === pending_closure).
+     */
+    public function actionClose(int $id): ?Response
+    {
+        $this->requirePostRequest();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+        $permit = PermitRecord::findOne(['id' => $id]);
+        if (!$permit) {
+            throw new NotFoundHttpException('Permit not found.');
+        }
+        $userId = (int) Craft::$app->getUser()->getId();
+        if ((int) $permit->issuerId !== $userId) {
+            throw new ForbiddenHttpException();
+        }
+        if ($permit->status !== PermitStatus::PendingClosure->value) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Permit nie je v stave, v ktorom je možné dokončiť. Dodávateľ ho musí najprv podpísať.')
+            );
+            return $this->redirect("bozp/permits/{$permit->id}");
+        }
+
+        $request = Craft::$app->getRequest();
+        $requiresTrial = $request->getBodyParam('requiresTrialOperation', '') === 'yes';
+
+        [$values, $errors] = $this->collectIssuerSignatureFields(false);
+        if ($errors !== []) {
+            return $this->renderDetail($permit, true, closeErrors: $errors, closeValues: $values + ['requiresTrialOperation' => $requiresTrial ? 'yes' : 'no']);
+        }
+
+        try {
+            /** @var Module $module */
+            $module = Craft::$app->getModule('bozp');
+            $module->signatureService->capture(
+                $permit,
+                SignatureRole::IssuerClosure,
+                $values['signerName'],
+                null,
+                $values['signatureDate'],
+                $values['signatureData'],
+            );
+            $module->permitWorkflow->closeByIssuer($permit, $userId, $requiresTrial);
+
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Permit bol uzavretý.')
+            );
+        } catch (Throwable $e) {
+            Craft::error('BOZP issuer close failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Permit sa nepodarilo uzavrieť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+        }
+
+        return $this->redirect("bozp/permits/{$permit->id}");
+    }
+
+    /**
+     * @param array<string, string> $cancelErrors
+     * @param array<string, string> $cancelValues
+     * @param array<string, string> $closeErrors
+     * @param array<string, string> $closeValues
+     */
+    private function renderDetail(
+        PermitRecord $permit,
+        bool $isIssuer,
+        array $cancelErrors = [],
+        array $cancelValues = [],
+        array $closeErrors = [],
+        array $closeValues = [],
+    ): Response {
         $zones = $this->loadZonesFor((int) $permit->id);
         $approver = $permit->approverId ? User::find()->id($permit->approverId)->one() : null;
         $auditEntries = AuditLogRecord::find()
@@ -74,6 +211,26 @@ class PermitsController extends BaseSiteController
             ->orderBy(['dateCreated' => SORT_DESC])
             ->limit(20)
             ->all();
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        $recipientClosure = $module->signatureService->findSignature((int) $permit->id, SignatureRole::RecipientClosure);
+        $issuerClosure = $module->signatureService->findSignature((int) $permit->id, SignatureRole::IssuerClosure);
+
+        $statusOpenForCancel = in_array($permit->status, [
+            PermitStatus::Approved->value, PermitStatus::Signed->value,
+            PermitStatus::Active->value, PermitStatus::PendingClosure->value,
+        ], true);
+        $statusReadyForClose = $permit->status === PermitStatus::PendingClosure->value;
+
+        $issuerUser = Craft::$app->getUser()->getIdentity();
+        $defaultName = $issuerUser?->getFullName() ?: ($issuerUser?->username ?: '');
+
+        $defaultIssuerSign = [
+            'signerName' => $defaultName,
+            'signatureDate' => date('Y-m-d'),
+        ];
 
         $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
 
@@ -88,7 +245,42 @@ class PermitsController extends BaseSiteController
                 ->where(['permitId' => $permit->id])
                 ->orderBy(['dateCreated' => SORT_DESC])
                 ->all(),
+            'recipientClosureSignature' => $recipientClosure,
+            'issuerClosureSignature' => $issuerClosure,
+            'isIssuer' => $isIssuer,
+            'canCancel' => $isIssuer && $statusOpenForCancel && !$issuerClosure,
+            'canClose' => $isIssuer && $statusReadyForClose && !$issuerClosure,
+            'cancelErrors' => $cancelErrors,
+            'cancelValues' => array_merge($defaultIssuerSign, ['reason' => ''], $cancelValues),
+            'closeErrors' => $closeErrors,
+            'closeValues' => array_merge($defaultIssuerSign, ['requiresTrialOperation' => 'no'], $closeValues),
         ]);
+    }
+
+    /**
+     * Pull + validate the signature fields from the request (issuer side).
+     *
+     * @return array{0: array<string,string>, 1: array<string,string>}
+     */
+    private function collectIssuerSignatureFields(bool $requireEmployer): array
+    {
+        $request = Craft::$app->getRequest();
+        $values = [
+            'signerName' => trim((string) $request->getBodyParam('signerName', '')),
+            'signatureDate' => trim((string) $request->getBodyParam('signatureDate', '')),
+            'signatureData' => (string) $request->getBodyParam('signatureData', ''),
+        ];
+        $errors = [];
+        if ($values['signerName'] === '') {
+            $errors['signerName'] = (string) Craft::t('bozp', 'Meno podpisujúceho je povinné.');
+        }
+        if ($values['signatureDate'] === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $values['signatureDate'])) {
+            $errors['signatureDate'] = (string) Craft::t('bozp', 'Dátum podpisu je povinný.');
+        }
+        if (!preg_match('#^data:image/png;base64,#', $values['signatureData'])) {
+            $errors['signatureData'] = (string) Craft::t('bozp', 'Podpis je povinný.');
+        }
+        return [$values, $errors];
     }
 
     /**

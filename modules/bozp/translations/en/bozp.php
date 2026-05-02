@@ -340,4 +340,77 @@ return [
     'Pokračovať k podpisu' => 'Continue to signing',
     'Zrušiť' => 'Cancel',
     'Späť' => 'Back',
+
+    // ----- Closure (recipient + issuer) ---------------------------------
+    'Dokončenie permitu' => 'Permit closure',
+    'Dokončenie / zrušenie' => 'Closure / cancellation',
+    'Dokončiť práce' => 'Mark work as done',
+    'Označte aktuálny stav po dokončení prác a podpíšte uzavretie.' =>
+        'Mark the current state after the work is done and sign the closure.',
+    'Po podpise dokončenia sa už údaje nedajú meniť.' =>
+        'After signing the closure the data can no longer be changed.',
+    'Stav po dokončení' => 'Closure status',
+    'Vyberte aspoň jednu možnosť.' => 'Pick at least one option.',
+    'Práce boli dokončené' => 'Work has been completed',
+    'Zariadenie je prevádzkyschopné' => 'Equipment is operational',
+    'Zariadenie nie je prevádzkyschopné' => 'Equipment is not operational',
+    'Všetky osoby opustili oblasť a materiály a zariadenia boli z oblasti odstránené' =>
+        'All persons have left the area and materials and equipment have been removed',
+    'Práce boli pozastavené' => 'Work has been suspended',
+    'Permit nie je v stave, v ktorom je možné dokončiť.' =>
+        'The permit is not in a state where it can be closed.',
+    'Dokončenie už bolo podpísané.' => 'Closure has already been signed.',
+    'Dokončenie bolo zaznamenané.' => 'Closure recorded.',
+    'Dokončenie sa nepodarilo uložiť. Skúste znova.' => 'Could not save the closure. Please try again.',
+    'Dokončenie zatiaľ nie je možné.' => 'Closure is not yet possible.',
+    'Dokončenie dodávateľa' => 'Contractor closure',
+
+    // ----- Issuer cancel / close ----------------------------------------
+    'Uzavretie permitu' => 'Permit completion',
+    'Zrušiť permit' => 'Cancel permit',
+    'Uzavrieť permit' => 'Close permit',
+    'Dôvod zrušenia' => 'Reason for cancellation',
+    'Dôvod zrušenia je povinný.' => 'Reason for cancellation is required.',
+    'Vyžaduje sa skúšobná prevádzka?' => 'Trial operation required?',
+    'Vyžaduje sa skúšobná prevádzka' => 'Trial operation required',
+    'Práca zrušená / pozastavená' => 'Work canceled / suspended',
+    'Práce dokončené, LOTO odstránené' => 'Work completed, LOTO removed',
+    'Zrušenie permitu' => 'Permit cancellation',
+    'Permit bude označený ako zrušený. Práca, na ktorú sa vzťahuje, je zrušená alebo pozastavená a zariadenie zostáva izolované.' =>
+        'The permit will be marked as cancelled. The work covered is cancelled or suspended and equipment stays isolated.',
+    'Po podpise sa permit uzamkne ako zrušený a údaje nie je možné meniť.' =>
+        'After signing the permit will be locked as cancelled and the data cannot be changed.',
+    'Zrušiť a podpísať' => 'Cancel and sign',
+    'Práce, na ktoré sa vzťahuje toto povolenie, sú dokončené. Všetky LOTO zámky a štítky, izolácie atď. boli odstránené a zariadenie je vhodné na návrat do prevádzky.' =>
+        'The work covered by this permit is completed. All LOTO locks/tags, isolations etc. have been removed and the equipment is fit to return to service.',
+    'Po podpise sa permit uzamkne ako uzavretý a údaje nie je možné meniť.' =>
+        'After signing the permit will be locked as closed and the data cannot be changed.',
+    'Uzavrieť a podpísať' => 'Close and sign',
+    'Permit nie je v stave, v ktorom je možné dokončiť. Dodávateľ ho musí najprv podpísať.' =>
+        'The permit is not in a state where it can be closed. The contractor must sign it first.',
+    'Permit bol zrušený.' => 'Permit cancelled.',
+    'Permit bol uzavretý.' => 'Permit closed.',
+    'Permit sa nepodarilo zrušiť. Skúste znova.' => 'Could not cancel the permit. Please try again.',
+    'Permit sa nepodarilo uzavrieť. Skúste znova.' => 'Could not close the permit. Please try again.',
+    'Dodávateľ ešte nepodpísal dokončenie. Permit bude možné uzavrieť po jeho podpise.' =>
+        'The contractor has not signed closure yet. The permit can be closed after that signature.',
+
+    // ----- Contractor: done vs cancel split ------------------------------
+    'Vyberte jednu z možností: dokončenie alebo zrušenie prác.' =>
+        'Choose one option: complete the work or cancel it.',
+    'Práce dokončené' => 'Work completed',
+    'Práce zrušené' => 'Work cancelled',
+    'Potvrdzujete, že práce na tomto permite boli ukončené. Označte aktuálny stav pracoviska.' =>
+        'You confirm the work on this permit has been completed. Mark the current state of the workplace.',
+    'Zrušenie prác' => 'Cancellation of work',
+    'Potvrdzujete, že práce nemôžu byť vykonané za týchto podmienok a permit má byť zrušený.' =>
+        'You confirm the work cannot be performed under these conditions and the permit is to be cancelled.',
+    'Po podpise zrušenia sa permit uzamkne ako zrušený a nedá sa znova otvoriť.' =>
+        'After signing the cancellation the permit is locked as cancelled and cannot be reopened.',
+    'Krátko popíšte, prečo nie je možné práce vykonať.' =>
+        'Briefly describe why the work cannot be performed.',
+    'Permit nie je v stave, v ktorom je možné zrušiť.' =>
+        'The permit is not in a state where it can be cancelled.',
+    'Permit bol zrušený dodávateľom.' => 'Permit was cancelled by the contractor.',
+    'Zrušenie sa nepodarilo uložiť. Skúste znova.' => 'Could not save the cancellation. Please try again.',
 ];

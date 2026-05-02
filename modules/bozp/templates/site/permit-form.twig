@@ -79,26 +79,24 @@
                     {{ _self.field_error(errors, 'contractorCompany') }}
                 </div>
 
-                <div class="bozp-form__row">
-                    <div class="bozp-form__field">
-                        <label for="contractorPersonName">{{ 'Kontaktná osoba'|t('bozp') }}</label>
-                        <input type="text"
-                               id="contractorPersonName"
-                               name="contractorPersonName"
-                               value="{{ values.contractorPersonName ?? '' }}"
-                               maxlength="255">
-                    </div>
+                <div class="bozp-form__field">
+                    <label for="contractorPersonName">{{ 'Kontaktná osoba'|t('bozp') }}</label>
+                    <input type="text"
+                           id="contractorPersonName"
+                           name="contractorPersonName"
+                           value="{{ values.contractorPersonName ?? '' }}"
+                           maxlength="255">
+                </div>
 
-                    <div class="bozp-form__field{% if errors.contractorEmail is defined %} bozp-form__field--error{% endif %}">
-                        <label for="contractorEmail">{{ 'E-mail'|t('bozp') }}</label>
-                        <input type="email"
-                               id="contractorEmail"
-                               name="contractorEmail"
-                               value="{{ values.contractorEmail ?? '' }}"
-                               maxlength="255"
-                               {% if errors.contractorEmail is defined %}aria-invalid="true" aria-describedby="err-contractorEmail"{% endif %}>
-                        {{ _self.field_error(errors, 'contractorEmail') }}
-                    </div>
+                <div class="bozp-form__field{% if errors.contractorEmail is defined %} bozp-form__field--error{% endif %}">
+                    <label for="contractorEmail">{{ 'E-mail'|t('bozp') }}</label>
+                    <input type="email"
+                           id="contractorEmail"
+                           name="contractorEmail"
+                           value="{{ values.contractorEmail ?? '' }}"
+                           maxlength="255"
+                           {% if errors.contractorEmail is defined %}aria-invalid="true" aria-describedby="err-contractorEmail"{% endif %}>
+                    {{ _self.field_error(errors, 'contractorEmail') }}
                 </div>
             </fieldset>
 
@@ -275,11 +273,11 @@
             </fieldset>
 
             <div class="bozp-form__actions">
-                <a href="{{ url('bozp') }}" class="bozp-btn bozp-btn--ghost">{{ 'Zrušiť'|t('bozp') }}</a>
-                <button type="submit" name="intent" value="save" class="bozp-btn">
+                <a href="{{ url('bozp') }}" class="bozp-btn bozp-btn--cancel">{{ 'Zrušiť'|t('bozp') }}</a>
+                <button type="submit" name="intent" value="save" class="bozp-btn bozp-btn--primary">
                     {{ 'Uložiť ako koncept'|t('bozp') }}
                 </button>
-                <button type="submit" name="intent" value="submit" class="bozp-btn bozp-btn--primary">
+                <button type="submit" name="intent" value="submit" class="bozp-btn bozp-btn--approve">
                     {{ 'Odoslať na schválenie'|t('bozp') }}
                 </button>
             </div>

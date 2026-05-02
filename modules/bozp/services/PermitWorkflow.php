@@ -32,11 +32,11 @@ class PermitWorkflow extends Component
     private const TRANSITIONS = [
         'draft'           => ['submitted', 'cancelled'],
         'submitted'       => ['approved', 'rejected', 'cancelled'],
-        'approved'        => ['signed', 'cancelled'],
+        'approved'        => ['signed', 'cancelled', 'pending_closure'],
         'rejected'        => ['draft', 'cancelled'],
         'signed'          => ['active', 'cancelled'],
         'active'          => ['pending_closure', 'expired', 'cancelled'],
-        'pending_closure' => ['closed', 'active'],
+        'pending_closure' => ['closed', 'cancelled', 'active'],
         'closed'          => [],
         'cancelled'       => [],
         'expired'         => [],
@@ -170,6 +170,134 @@ class PermitWorkflow extends Component
         );
 
         $this->mailer()->notifyParticipantsOfRejection($permit, $comment);
+    }
+
+    /**
+     * Contractor (recipient) closure — sets recipientClosure* columns
+     * and transitions the permit to "pending_closure". Status flags is
+     * an array of checkbox keys from the contractor closure form
+     * (work_completed, equipment_operational, etc.). The actual close
+     * vs cancel decision is taken later by the issuer.
+     *
+     * @param string[] $statusFlags
+     */
+    public function closeByRecipient(
+        PermitRecord $permit,
+        array $statusFlags,
+        string $signerName,
+    ): void {
+        $allowed = ['approved', 'signed', 'active'];
+        if (!in_array($permit->status, $allowed, true)) {
+            throw new InvalidArgumentException(
+                "Cannot close as recipient from status '{$permit->status}'."
+            );
+        }
+
+        $this->transition(
+            $permit,
+            PermitStatus::PendingClosure,
+            actorUserId: null,
+            extraColumns: [
+                'recipientClosureStatus' => $statusFlags !== [] ? $statusFlags : null,
+                'recipientClosureSignedAt' => date('Y-m-d H:i:s'),
+                'recipientClosureBy' => $signerName,
+            ],
+            auditAction: 'recipient_closure_signed',
+            note: $signerName,
+        );
+    }
+
+    /**
+     * Contractor (recipient) cancellation — they sign that the work
+     * cannot be done / is being suspended. Permit goes straight to
+     * "cancelled"; no further issuer action is required.
+     */
+    public function cancelByRecipient(
+        PermitRecord $permit,
+        ?string $reason,
+        string $signerName,
+    ): void {
+        $allowed = ['approved', 'signed', 'active'];
+        if (!in_array($permit->status, $allowed, true)) {
+            throw new InvalidArgumentException(
+                "Cannot cancel as recipient from status '{$permit->status}'."
+            );
+        }
+
+        $this->transition(
+            $permit,
+            PermitStatus::Cancelled,
+            actorUserId: null,
+            extraColumns: [
+                'recipientClosureStatus' => ['work_suspended'],
+                'recipientClosureSignedAt' => date('Y-m-d H:i:s'),
+                'recipientClosureBy' => $signerName,
+                'cancelledAt' => date('Y-m-d H:i:s'),
+            ],
+            auditAction: 'recipient_cancelled',
+            note: $reason !== null && $reason !== '' ? $reason : $signerName,
+        );
+    }
+
+    /**
+     * Issuer cancellation — final close path that marks the permit as
+     * cancelled instead of completed. Allowed at any point after
+     * approval (including during/after contractor closure).
+     */
+    public function cancelByIssuer(
+        PermitRecord $permit,
+        int $actorUserId,
+        ?string $reason = null,
+    ): void {
+        $allowed = ['approved', 'signed', 'active', 'pending_closure'];
+        if (!in_array($permit->status, $allowed, true)) {
+            throw new InvalidArgumentException(
+                "Cannot cancel from status '{$permit->status}'."
+            );
+        }
+
+        $this->transition(
+            $permit,
+            PermitStatus::Cancelled,
+            $actorUserId,
+            extraColumns: [
+                'issuerClosureStatus' => 'work_canceled_equipment_isolated',
+                'issuerClosureSignedAt' => date('Y-m-d H:i:s'),
+                'cancelledAt' => date('Y-m-d H:i:s'),
+            ],
+            auditAction: 'issuer_cancelled',
+            note: $reason,
+        );
+    }
+
+    /**
+     * Issuer final closure — only allowed once the contractor has
+     * signed RecipientClosure (i.e. status is "pending_closure").
+     */
+    public function closeByIssuer(
+        PermitRecord $permit,
+        int $actorUserId,
+        bool $requiresTrialOperation,
+    ): void {
+        if ($permit->status !== 'pending_closure') {
+            throw new InvalidArgumentException(
+                "Cannot close as issuer from status '{$permit->status}'. "
+                . 'Contractor closure must be signed first.'
+            );
+        }
+
+        $this->transition(
+            $permit,
+            PermitStatus::Closed,
+            $actorUserId,
+            extraColumns: [
+                'issuerClosureStatus' => 'work_completed_loto_removed',
+                'issuerClosureSignedAt' => date('Y-m-d H:i:s'),
+                'requiresTrialOperation' => $requiresTrialOperation,
+                'closedAt' => date('Y-m-d H:i:s'),
+            ],
+            auditAction: 'issuer_closed',
+        );
     }
 
     /**

@@ -118,13 +118,32 @@
             </table>
         </section>
 
-        {# ---------- Signature: capture or display ------------------------ #}
-        <section class="bozp-detail__section bozp-detail__section--signature">
-            <h2>{{ 'Podpis prijímateľa'|t('bozp') }}</h2>
+        {# ---------- Closure status labels (reused below) ----------------- #}
+        {% set completionLabels = {
+            'work_completed': 'Práce boli dokončené'|t('bozp'),
+            'equipment_operational': 'Zariadenie je prevádzkyschopné'|t('bozp'),
+            'equipment_not_operational': 'Zariadenie nie je prevádzkyschopné'|t('bozp'),
+            'personnel_and_materials_removed': 'Všetky osoby opustili oblasť a materiály a zariadenia boli z oblasti odstránené'|t('bozp'),
+        } %}
+        {% set closureLabels = completionLabels|merge({
+            'work_suspended': 'Práce boli pozastavené'|t('bozp'),
+        }) %}
 
-            {% if recipientSignature %}
-                {% set sigAsset = craft.assets().id(recipientSignature.signatureAssetId).one() %}
+        {# ---------- Contractor signature (single step): Done or Cancel -- #}
+        <section class="bozp-detail__section bozp-detail__section--closure">
+            <h2>{{ 'Dokončenie permitu'|t('bozp') }}</h2>
+
+            {% if recipientClosureSignature %}
+                {% set sigAsset = craft.assets().id(recipientClosureSignature.signatureAssetId).one() %}
                 <div class="bozp-signature bozp-signature--signed">
+                    {% set flags = permit.recipientClosureStatus ?? [] %}
+                    {% if flags is iterable and flags|length > 0 %}
+                        <ul class="bozp-closure__flags">
+                            {% for f in flags %}
+                                <li>✓ {{ closureLabels[f] ?? f }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
                     {% if sigAsset %}
                         <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
                              class="bozp-signature__image"
@@ -132,140 +151,127 @@
                     {% endif %}
                     <dl class="bozp-signature__meta">
                         <dt>{{ 'Podpísal'|t('bozp') }}</dt>
-                        <dd>{{ recipientSignature.signerName }}</dd>
-                        {% if recipientSignature.signerEmployer %}
-                            <dt>{{ 'Zamestnávateľ'|t('bozp') }}</dt>
-                            <dd>{{ recipientSignature.signerEmployer }}</dd>
-                        {% endif %}
+                        <dd>{{ recipientClosureSignature.signerName }}</dd>
                         <dt>{{ 'Dátum podpisu'|t('bozp') }}</dt>
-                        <dd>{{ recipientSignature.signatureDate ? recipientSignature.signatureDate|date('d.m.Y') : '—' }}</dd>
+                        <dd>{{ recipientClosureSignature.signatureDate ? recipientClosureSignature.signatureDate|date('d.m.Y') : '—' }}</dd>
                         <dt>{{ 'Zaznamenané'|t('bozp') }}</dt>
-                        <dd>{{ recipientSignature.signedAt|date('d.m.Y H:i') }}</dd>
+                        <dd>{{ recipientClosureSignature.signedAt|date('d.m.Y H:i') }}</dd>
                     </dl>
                 </div>
-            {% elseif canSign %}
-                {% set se = signErrors ?? {} %}
-                {% set sv = signValues ?? {} %}
-                {% set hasErrors = se|length > 0 %}
+            {% elseif canClose or canCancel %}
+                {% set ce = closeErrors ?? {} %}
+                {% set cv = closeValues ?? {} %}
+                {% set checked = cv.closureStatus ?? [] %}
+                {% set xe = cancelErrors ?? {} %}
+                {% set xv = cancelValues ?? {} %}
 
-                <p class="bozp-sign-prompt">
-                    {{ 'Permit je pripravený na podpis dodávateľom.'|t('bozp') }}
+                <p class="bozp-empty">
+                    {{ 'Vyberte jednu z možností: dokončenie alebo zrušenie prác.'|t('bozp') }}
                 </p>
 
-                <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-sign-open">
-                    {{ 'Podpísať permit'|t('bozp') }}
-                </button>
+                <div class="bozp-recipient-actions" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+                    {% if canClose %}
+                        <button type="button" class="bozp-btn bozp-btn--primary"
+                                data-bozp-dialog-open="bozp-dialog-close">
+                            {{ 'Práce dokončené'|t('bozp') }}
+                        </button>
+                    {% endif %}
+                    {% if canCancel %}
+                        <button type="button" class="bozp-btn bozp-btn--secondary"
+                                data-bozp-dialog-open="bozp-dialog-cancel"
+                                style="background:#cf2929;color:#fff;border-color:#cf2929;">
+                            {{ 'Práce zrušené'|t('bozp') }}
+                        </button>
+                    {% endif %}
+                </div>
 
-                <dialog id="bozp-sign-dialog" class="bozp-dialog"
-                        style="border:none;padding:0;border-radius:8px;max-width:560px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.25);"
-                        {% if hasErrors %}data-open-on-load="form"{% endif %}>
-                    <form method="post"
-                          action="{{ url('bozp/c/' ~ token ~ '/sign') }}"
-                          class="bozp-form bozp-form--sign"
-                          style="margin:0;padding:24px;"
-                          novalidate>
-                        {{ csrfInput() }}
-
-                        {# Stage 1 — confirmation + warning #}
-                        <div class="bozp-dialog__stage" data-stage="warning">
-                            <h3 style="margin-top:0;">{{ 'Pred podpisom'|t('bozp') }}</h3>
-
-                            <p>
-                                {{ 'Podpisom potvrdzujete, že ste sa oboznámili s podmienkami permitu a so všetkými uvedenými rizikami a opatreniami, a zaväzujete sa ich pri vykonávaní prác dodržiavať.'|t('bozp') }}
-                            </p>
-
-                            <p class="bozp-warning"
-                               style="background:#fff4e0;border-left:4px solid #d97706;padding:10px 14px;margin:16px 0;color:#7a3e00;">
-                                <strong>{{ 'Upozornenie'|t('bozp') }}:</strong>
-                                {{ 'Po podpise sa permit uzamkne a údaje nie je možné meniť.'|t('bozp') }}
-                            </p>
-
-                            <div class="bozp-dialog__actions"
-                                 style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
-                                <button type="button" class="bozp-btn bozp-btn--secondary" id="bozp-sign-cancel">
-                                    {{ 'Zrušiť'|t('bozp') }}
-                                </button>
-                                <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-sign-proceed">
-                                    {{ 'Pokračovať k podpisu'|t('bozp') }}
-                                </button>
-                            </div>
-                        </div>
-
-                        {# Stage 2 — name / employer / date / signature pad #}
-                        <div class="bozp-dialog__stage" data-stage="form" hidden>
-                            <h3 style="margin-top:0;">{{ 'Podpis prijímateľa'|t('bozp') }}</h3>
-
-                            <div class="bozp-form__field{% if se.signerName is defined %} bozp-form__field--error{% endif %}">
-                                <label for="signerName">
-                                    {{ 'Meno podpisujúceho'|t('bozp') }} <span class="bozp-form__req">*</span>
+                {# Modal A: Work done — completion checkboxes #}
+                {% if canClose %}
+                    {% set completionExtra %}
+                        <div class="bozp-form__field{% if ce.closureStatus is defined %} bozp-form__field--error{% endif %}">
+                            <label>{{ 'Stav po dokončení'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                            {% for key, label in completionLabels %}
+                                <label class="bozp-form__check" style="display:flex;gap:8px;align-items:center;margin:6px 0;">
+                                    <input type="checkbox" name="closureStatus[]" value="{{ key }}"
+                                           {% if key in checked %}checked{% endif %}>
+                                    <span>{{ label }}</span>
                                 </label>
-                                <input type="text" id="signerName" name="signerName"
-                                       value="{{ sv.signerName ?? '' }}" required>
-                                {% if se.signerName is defined %}
-                                    <p class="bozp-form__error">{{ se.signerName }}</p>
-                                {% endif %}
-                            </div>
-
-                            <div class="bozp-form__field">
-                                <label for="signerEmployer">{{ 'Zamestnávateľ'|t('bozp') }}</label>
-                                <input type="text" id="signerEmployer" name="signerEmployer"
-                                       value="{{ sv.signerEmployer ?? '' }}">
-                            </div>
-
-                            <div class="bozp-form__field{% if se.signatureDate is defined %} bozp-form__field--error{% endif %}">
-                                <label for="signatureDate">
-                                    {{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form__req">*</span>
-                                </label>
-                                <input type="date" id="signatureDate" name="signatureDate"
-                                       value="{{ sv.signatureDate ?? '' }}" required>
-                                {% if se.signatureDate is defined %}
-                                    <p class="bozp-form__error">{{ se.signatureDate }}</p>
-                                {% endif %}
-                            </div>
-
-                            <div class="bozp-form__field{% if se.signatureData is defined %} bozp-form__field--error{% endif %}">
-                                <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>
-                                <div class="bozp-sigpad"
-                                     style="border:1px solid #ccc;background:#fff;width:100%;">
-                                    <canvas id="bozp-sigpad-canvas" width="520" height="180"
-                                            style="display:block;width:100%;height:180px;touch-action:none;"></canvas>
-                                </div>
-                                <div class="bozp-sigpad__actions" style="margin-top:8px;">
-                                    <button type="button" id="bozp-sigpad-clear" class="bozp-btn bozp-btn--secondary">
-                                        {{ 'Vyčistiť'|t('bozp') }}
-                                    </button>
-                                </div>
-                                <input type="hidden" name="signatureData" id="bozp-sigpad-data">
-                                {% if se.signatureData is defined %}
-                                    <p class="bozp-form__error">{{ se.signatureData }}</p>
-                                {% endif %}
-                            </div>
-
-                            <div class="bozp-dialog__actions"
-                                 style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;">
-                                <button type="button" class="bozp-btn bozp-btn--secondary" id="bozp-sign-back">
-                                    {{ 'Späť'|t('bozp') }}
-                                </button>
-                                <button type="submit" class="bozp-btn bozp-btn--primary">
-                                    {{ 'Podpísať a potvrdiť'|t('bozp') }}
-                                </button>
-                            </div>
+                            {% endfor %}
+                            {% if ce.closureStatus is defined %}
+                                <p class="bozp-form__error">{{ ce.closureStatus }}</p>
+                            {% endif %}
                         </div>
-                    </form>
-                </dialog>
+                    {% endset %}
 
-                <script src="https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js"></script>
-                <script>
-                    (function () {
-                        var dialog = document.getElementById('bozp-sign-dialog');
-                        var openBtn = document.getElementById('bozp-sign-open');
-                        var cancelBtn = document.getElementById('bozp-sign-cancel');
-                        var proceedBtn = document.getElementById('bozp-sign-proceed');
-                        var backBtn = document.getElementById('bozp-sign-back');
+                    {% include 'bozp/site/_sign-dialog.twig' with {
+                        id: 'bozp-dialog-close',
+                        action: url('bozp/c/' ~ token ~ '/close'),
+                        openOnLoad: ce|length > 0,
+                        title: 'Práce dokončené'|t('bozp'),
+                        intro: 'Potvrdzujete, že práce na tomto permite boli ukončené. Označte aktuálny stav pracoviska.'|t('bozp'),
+                        warning: 'Po podpise dokončenia sa už údaje nedajú meniť.'|t('bozp'),
+                        submitLabel: 'Podpísať a potvrdiť'|t('bozp'),
+                        showEmployer: false,
+                        errors: ce,
+                        values: cv,
+                        extraFields: completionExtra,
+                    } only %}
+                {% endif %}
+
+                {# Modal B: Work cancelled — reason textarea #}
+                {% if canCancel %}
+                    {% set cancelExtra %}
+                        <div class="bozp-form__field{% if xe.reason is defined %} bozp-form__field--error{% endif %}">
+                            <label>{{ 'Dôvod zrušenia'|t('bozp') }}</label>
+                            <textarea name="reason" rows="3"
+                                      placeholder="{{ 'Krátko popíšte, prečo nie je možné práce vykonať.'|t('bozp') }}">{{ xv.reason ?? '' }}</textarea>
+                            {% if xe.reason is defined %}
+                                <p class="bozp-form__error">{{ xe.reason }}</p>
+                            {% endif %}
+                        </div>
+                    {% endset %}
+
+                    {% include 'bozp/site/_sign-dialog.twig' with {
+                        id: 'bozp-dialog-cancel',
+                        action: url('bozp/c/' ~ token ~ '/cancel'),
+                        openOnLoad: xe|length > 0,
+                        title: 'Zrušenie prác'|t('bozp'),
+                        intro: 'Potvrdzujete, že práce nemôžu byť vykonané za týchto podmienok a permit má byť zrušený.'|t('bozp'),
+                        warning: 'Po podpise zrušenia sa permit uzamkne ako zrušený a nedá sa znova otvoriť.'|t('bozp'),
+                        submitLabel: 'Zrušiť a podpísať'|t('bozp'),
+                        showEmployer: false,
+                        errors: xe,
+                        values: xv,
+                        extraFields: cancelExtra,
+                    } only %}
+                {% endif %}
+            {% else %}
+                <p class="bozp-empty">
+                    {{ 'Dokončenie zatiaľ nie je možné.'|t('bozp') }}
+                </p>
+            {% endif %}
+        </section>
+
+        {# ---------- Shared signature_pad runtime (binds all dialogs) ---- #}
+        {% if canClose or canCancel %}
+            <script src="https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js"></script>
+            <script>
+                (function () {
+                    document.querySelectorAll('[data-bozp-dialog-open]').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var d = document.getElementById(btn.getAttribute('data-bozp-dialog-open'));
+                            if (d) bozpOpenDialog(d, 'warning');
+                        });
+                    });
+
+                    document.querySelectorAll('.bozp-sign-dialog').forEach(function (dialog) {
                         var stages = dialog.querySelectorAll('.bozp-dialog__stage');
-                        var canvas = document.getElementById('bozp-sigpad-canvas');
-                        var hidden = document.getElementById('bozp-sigpad-data');
-                        var clearBtn = document.getElementById('bozp-sigpad-clear');
+                        var canvas = dialog.querySelector('canvas[data-bozp-sigpad]');
+                        var hidden = dialog.querySelector('input[name="signatureData"]');
+                        var clearBtn = dialog.querySelector('[data-bozp-sigpad-clear]');
+                        var cancelBtn = dialog.querySelector('[data-bozp-action="cancel"]');
+                        var proceedBtn = dialog.querySelector('[data-bozp-action="proceed"]');
+                        var backBtn = dialog.querySelector('[data-bozp-action="back"]');
                         var pad = null;
 
                         function showStage(name) {
@@ -292,38 +298,33 @@
                             pad.clear();
                         }
 
-                        function openDialog(initialStage) {
-                            showStage(initialStage || 'warning');
-                            if (typeof dialog.showModal === 'function') {
-                                dialog.showModal();
-                            } else {
-                                dialog.setAttribute('open', '');
-                            }
+                        if (cancelBtn) cancelBtn.addEventListener('click', function () { dialog.close(); });
+                        if (proceedBtn) proceedBtn.addEventListener('click', function () { showStage('form'); });
+                        if (backBtn) backBtn.addEventListener('click', function () { showStage('warning'); });
+                        if (clearBtn) clearBtn.addEventListener('click', function () { if (pad) pad.clear(); });
+
+                        dialog.bozpShowStage = showStage;
+
+                        var form = dialog.querySelector('form');
+                        if (form) {
+                            form.addEventListener('submit', function () {
+                                if (hidden) hidden.value = (pad && !pad.isEmpty()) ? pad.toDataURL('image/png') : '';
+                            });
                         }
 
-                        openBtn.addEventListener('click', function () { openDialog('warning'); });
-                        cancelBtn.addEventListener('click', function () { dialog.close(); });
-                        proceedBtn.addEventListener('click', function () { showStage('form'); });
-                        backBtn.addEventListener('click', function () { showStage('warning'); });
-                        clearBtn.addEventListener('click', function () { if (pad) pad.clear(); });
-
-                        // Serialize signature on submit.
-                        var form = dialog.querySelector('form');
-                        form.addEventListener('submit', function () {
-                            hidden.value = (pad && !pad.isEmpty()) ? pad.toDataURL('image/png') : '';
-                        });
-
-                        // Re-open the dialog on validation failure.
                         var openOnLoad = dialog.getAttribute('data-open-on-load');
-                        if (openOnLoad) { openDialog(openOnLoad); }
-                    })();
-                </script>
-            {% else %}
-                <p class="bozp-empty">
-                    {{ 'Permit nie je v stave, v ktorom je možné podpísať.'|t('bozp') }}
-                </p>
-            {% endif %}
-        </section>
+                        if (openOnLoad) bozpOpenDialog(dialog, openOnLoad);
+                    });
+
+                    function bozpOpenDialog(dialog, initialStage) {
+                        if (dialog.bozpShowStage) dialog.bozpShowStage(initialStage || 'warning');
+                        if (typeof dialog.showModal === 'function') dialog.showModal();
+                        else dialog.setAttribute('open', '');
+                    }
+                    window.bozpOpenDialog = bozpOpenDialog;
+                })();
+            </script>
+        {% endif %}
 
         {# ---------- Attachments: list + upload --------------------------- #}
         <section class="bozp-detail__section bozp-detail__section--uploads">

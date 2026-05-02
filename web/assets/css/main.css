@@ -160,6 +160,38 @@ p {
   text-transform: uppercase;
 }
 
+.bozp-btn {
+  width: fit-content;
+  height: fit-content;
+  min-height: 3.75em;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5em;
+  padding: 1em 2.5em;
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1.2em;
+  text-align: center;
+  z-index: 5;
+}
+.bozp-btn.bozp-btn--primary {
+  background-color: var(--main-color);
+  color: var(--main-color-light);
+  border: 2px solid var(--main-color-light);
+}
+.bozp-btn.bozp-btn--cancel {
+  background-color: red;
+  color: var(--main-color-light);
+  border: 2px solid var(--main-color-light);
+}
+.bozp-btn.bozp-btn--approve {
+  background-color: green;
+  color: var(--main-color-light);
+  border: 2px solid var(--main-color-light);
+}
+
 .bozp-page--login {
   min-height: calc(100vh - 3.75em);
   justify-content: center;
@@ -312,6 +344,226 @@ p {
   line-height: 1.2em;
   text-transform: uppercase;
   margin-top: 2em;
+}
+
+.bozp-page--dashboard {
+  min-height: calc(100vh - 3.75em);
+  gap: 5em;
+  padding: 5em;
+}
+.bozp-page--dashboard .bozp-page__header {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5em;
+}
+.bozp-page--dashboard .bozp-empty {
+  width: 100%;
+  max-width: 980px;
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--dashboard .bozp-table {
+  width: 100%;
+  max-width: 980px;
+}
+.bozp-page--dashboard .bozp-table th {
+  color: var(--main-color);
+  font-size: 1.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--dashboard .bozp-table td {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  padding: 0.5em 1em;
+}
+
+.bozp-page--permit-form {
+  min-height: calc(100vh - 3.75em);
+  gap: 5em;
+  padding: 5em;
+}
+.bozp-page--permit-form .bozp-page__header {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5em;
+}
+.bozp-page--permit-form .bozp-form {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25em;
+  padding: 1.25em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section legend {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.25em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > label {
+  width: calc(50% - 0.625em);
+  min-width: 300px;
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > input {
+  width: calc(50% - 0.625em);
+  min-width: 300px;
+  color: var(--main-color-light) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 1px solid var(--form-input-border) !important;
+  border-radius: 8px;
+  background-color: var(--form-input-bg) !important;
+  padding: 0.5em 1em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > textarea {
+  width: calc(50% - 0.625em);
+  color: var(--main-color-light) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 1px solid var(--form-input-border) !important;
+  border-radius: 8px;
+  background-color: var(--form-input-bg) !important;
+  padding: 0.5em 1em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field .bozp-form__hint {
+  width: 100%;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards {
+  width: 100%;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards {
+  width: 100%;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards th {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards td {
+  color: var(--main-color);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  padding: 0.5em 1em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2.5em;
+}
+
+.bozp-page--permit-detail {
+  min-height: calc(100vh - 3.75em);
+  gap: 5em;
+  padding: 5em;
+}
+.bozp-page--permit-detail .bozp-page__header {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-page__back {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.bozp-page--permit-detail .bozp-decision {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--permit-detail .bozp-detail {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25em 0.625em;
+  flex-wrap: wrap;
+}
+.bozp-page--permit-detail .bozp-detail dt {
+  width: calc(50% - 0.625em);
+}
+.bozp-page--permit-detail .bozp-detail dd {
+  width: calc(50% - 0.625em);
+  color: var(--main-color);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 1px solid var(--form-input-border);
+  border-radius: 8px;
+  padding: 0.5em 1em;
+}
+.bozp-page--permit-detail .bozp-section {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards {
+  width: 100%;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards th {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards td {
+  color: var(--main-color);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  padding: 0.5em 1em;
 }
 
 /*# sourceMappingURL=main.css.map */
