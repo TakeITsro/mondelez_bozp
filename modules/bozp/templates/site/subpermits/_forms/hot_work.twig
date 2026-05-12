@@ -1,0 +1,87 @@
+{# Appendix 2 — Permit for work with increased fire risk #}
+
+{% set ck = values.checklist ?? [] %}
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Informácie o práci'|t('bozp') }}</legend>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="issuedBy">{{ 'Permit vydal (meno a priezvisko)'|t('bozp') }}</label>
+            <input type="text" id="issuedBy" name="issuedBy"
+                   value="{{ values.issuedBy ?? '' }}" maxlength="255">
+        </div>
+        <div class="bozp-form__field">
+            <label for="jobOrderNumber">{{ 'Číslo pracovného príkazu / smena'|t('bozp') }}</label>
+            <input type="text" id="jobOrderNumber" name="jobOrderNumber"
+                   value="{{ values.jobOrderNumber ?? '' }}" maxlength="100">
+        </div>
+    </div>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="workStartTime">{{ 'Čas začiatku prác'|t('bozp') }}</label>
+            <input type="time" id="workStartTime" name="workStartTime"
+                   value="{{ values.workStartTime ?? '' }}">
+        </div>
+        <div class="bozp-form__field">
+            <label for="workExpiryTime">{{ 'Čas expirácie'|t('bozp') }}</label>
+            <input type="time" id="workExpiryTime" name="workExpiryTime"
+                   value="{{ values.workExpiryTime ?? '' }}">
+        </div>
+    </div>
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Kontrolný zoznam preventívnych opatrení'|t('bozp') }}</legend>
+    <p class="bozp-form__hint">{{ 'Označte všetky opatrenia platné na pracovisku.'|t('bozp') }}</p>
+
+    {% set items = {
+        'sprinklers':       'Sprinklery, požiarne hydranty a hasiace prístroje sú na mieste a funkčné.'|t('bozp'),
+        'equipment':        'Pracovné zariadenia sú v dobrom technickom stave.'|t('bozp'),
+        'dustEquip':        'Zariadenia produkujúce horľavý prach sú vypnuté.'|t('bozp'),
+        'conveyors':        'Dopravníky, vzduchové kanály a ventilátory sú izolované alebo vypnuté.'|t('bozp'),
+        'combustibles':     'Horľavé materiály boli odstránené (prach, olej, obaly, kvapaliny).'|t('bozp'),
+        'explosive':        'Výbušná atmosféra v oblasti bola eliminovaná.'|t('bozp'),
+        'floor':            'Podlaha bola pozametaná.'|t('bozp'),
+        'floorWet':         'Horľavá podlaha bola navlhčená alebo pokrytá pieskom / protipožiarnou fóliou.'|t('bozp'),
+        'openings':         'Všetky otvory v stenách a podlahe sú zakryté.'|t('bozp'),
+        'tarpaulins':       'Protipožiarne plachty sú zavesené pod pracoviskom.'|t('bozp'),
+        'nonCombustible':   'Konštrukcia je nehorľavá. Bez horľavého obkladu alebo izolácie.'|t('bozp'),
+        'otherSide':        'Horľavé materiály na druhej strane steny boli presunuté.'|t('bozp'),
+        'enclosed':         'Uzavreté zariadenia boli vyčistené od horľavín.'|t('bozp'),
+        'containers':       'Nádrže boli zbavené horľavých kvapalín / pár.'|t('bozp'),
+        'bucket':           'Vedro s vodou pripravené.'|t('bozp'),
+    } %}
+
+    <div class="bozp-form__checklist">
+        {% for key, label in items %}
+            <label class="bozp-form__check">
+                <input type="checkbox" name="checklist[]" value="{{ key }}"
+                       {% if key in ck %}checked{% endif %}>
+                <span>{{ label }}</span>
+            </label>
+        {% endfor %}
+    </div>
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Požiarna hliadka a monitoring'|t('bozp') }}</legend>
+
+    <div class="bozp-form__field">
+        <label for="firePatrolName">{{ 'Meno a priezvisko člena požiarnej hliadky'|t('bozp') }}</label>
+        <input type="text" id="firePatrolName" name="firePatrolName"
+               value="{{ values.firePatrolName ?? '' }}" maxlength="255">
+    </div>
+
+    <div class="bozp-form__field">
+        <label for="monitoringHours">{{ 'Počet hodín monitoringu po práci (min. 2)'|t('bozp') }}</label>
+        <input type="number" id="monitoringHours" name="monitoringHours"
+               value="{{ values.monitoringHours ?? '2' }}" min="2" max="24" style="width:100px">
+    </div>
+
+    <div class="bozp-form__field">
+        <label for="additionalMeasures">{{ 'Ďalšie bezpečnostné / protipožiarne opatrenia'|t('bozp') }}</label>
+        <textarea id="additionalMeasures" name="additionalMeasures" rows="3">{{ values.additionalMeasures ?? '' }}</textarea>
+    </div>
+</fieldset>

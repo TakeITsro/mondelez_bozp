@@ -1,0 +1,272 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{# ---------------------------------------------------------------------------
+   Subpermit creation form.
+   Common fields rendered here; type-specific fields pulled from _forms/<type>.twig.
+   POST → bozp/permits/<permitId>/subpermits/save
+--------------------------------------------------------------------------- #}
+
+{% set values = values ?? {} %}
+{% set errors = errors ?? {} %}
+
+{% macro field_error(errors, key) %}
+    {% if errors[key] is defined %}
+        <p class="bozp-form__error" id="err-{{ key }}">{{ errors[key] }}</p>
+    {% endif %}
+{% endmacro %}
+
+{% macro yes_no(name, value, label) %}
+    <div class="bozp-form__yesno">
+        <label class="bozp-form__yesno-opt">
+            <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+            <span>{{ 'Áno'|t('bozp') }}</span>
+        </label>
+        <label class="bozp-form__yesno-opt">
+            <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+            <span>{{ 'Nie'|t('bozp') }}</span>
+        </label>
+    </div>
+{% endmacro %}
+
+{% block title %}
+    {{ 'Príloha č. {n}'|t('bozp', {n: subpermitType.appendixNumber()}) }} — {{ subpermitType.label() }}
+{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--subpermit-form">
+        <header class="bozp-page__header">
+            <p class="bozp-page__back">
+                <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/new') }}">← {{ 'Výber typu'|t('bozp') }}</a>
+            </p>
+            <h1>
+                {{ 'Príloha č. {n}'|t('bozp', {n: subpermitType.appendixNumber()}) }}
+                — {{ subpermitType.label() }}
+            </h1>
+            <p class="bozp-page__lede">
+                {{ 'Permit'|t('bozp') }}: <strong>{{ permit.permitNumber }}</strong>
+                · {{ 'Platnosť subpermitu je 8 hodín od schválenia HSE.'|t('bozp') }}
+            </p>
+        </header>
+
+        <form method="post" action="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/save') }}"
+              class="bozp-form" novalidate>
+            {{ csrfInput() }}
+            <input type="hidden" name="action" value="bozp/subpermits/save">
+            <input type="hidden" name="permitId" value="{{ permit.id }}">
+            <input type="hidden" name="subpermitType" value="{{ subpermitType.value }}">
+
+            {# --- Common fields --- #}
+            <fieldset class="bozp-form__section">
+                <legend>{{ 'Základné informácie'|t('bozp') }}</legend>
+
+                <div class="bozp-form__row bozp-form__row--2col">
+                    <div class="bozp-form__field{% if errors.date is defined %} bozp-form__field--error{% endif %}">
+                        <label for="date">{{ 'Dátum'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                        <input type="date" id="date" name="date"
+                               value="{{ values.date ?? '' }}"
+                               {% if errors.date is defined %}aria-invalid="true"{% endif %}>
+                        {{ _self.field_error(errors, 'date') }}
+                    </div>
+
+                    <div class="bozp-form__field{% if errors.placeOfWork is defined %} bozp-form__field--error{% endif %}">
+                        <label for="placeOfWork">{{ 'Miesto výkonu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                        <input type="text" id="placeOfWork" name="placeOfWork"
+                               value="{{ values.placeOfWork ?? '' }}"
+                               maxlength="500"
+                               {% if errors.placeOfWork is defined %}aria-invalid="true"{% endif %}>
+                        {{ _self.field_error(errors, 'placeOfWork') }}
+                    </div>
+                </div>
+
+                <div class="bozp-form__field{% if errors.responsiblePerson is defined %} bozp-form__field--error{% endif %}">
+                    <label for="responsiblePerson">{{ 'Zodpovedná osoba MDLZ'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <input type="text" id="responsiblePerson" name="responsiblePerson"
+                           value="{{ values.responsiblePerson ?? '' }}"
+                           maxlength="255"
+                           {% if errors.responsiblePerson is defined %}aria-invalid="true"{% endif %}>
+                    {{ _self.field_error(errors, 'responsiblePerson') }}
+                </div>
+
+                <div class="bozp-form__field">
+                    <label for="participants">{{ 'Zúčastnení dodávatelia / osoby'|t('bozp') }}</label>
+                    <textarea id="participants" name="participants" rows="2">{{ values.participants ?? '' }}</textarea>
+                </div>
+
+                <div class="bozp-form__field">
+                    <label for="workDescription">{{ 'Popis vykonávanej práce'|t('bozp') }}</label>
+                    <textarea id="workDescription" name="workDescription" rows="3">{{ values.workDescription ?? '' }}</textarea>
+                </div>
+
+                <div class="bozp-form__field">
+                    <p class="bozp-form__label">{{ 'Hlavné kroky'|t('bozp') }}</p>
+                    {% for i in 1..5 %}
+                        <div class="bozp-form__step-row">
+                            <span class="bozp-form__step-num">{{ i }}.</span>
+                            <input type="text" name="workStep{{ i }}"
+                                   value="{{ attribute(values, 'workStep' ~ i) ?? '' }}"
+                                   maxlength="500"
+                                   aria-label="{{ 'Krok {n}'|t('bozp', {n: i}) }}">
+                        </div>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            {# --- Type-specific fields --- #}
+            {% include 'bozp/site/subpermits/_forms/' ~ subpermitType.value ~ '.twig' with {
+                values: values,
+                errors: errors,
+            } only %}
+
+            {# Hidden signature fields — populated by the dialog JS before main form submit #}
+            <input type="hidden" name="signerName" id="bozp-sig-name">
+            <input type="hidden" name="signatureDate" id="bozp-sig-date">
+            <input type="hidden" name="signatureData" id="bozp-sig-data">
+
+            {% if errors.signature is defined or errors.signerName is defined %}
+                <div class="bozp-alert bozp-alert--danger" style="margin:0 0 16px;">
+                    {{ errors.signature ?? errors.signerName }}
+                </div>
+            {% endif %}
+
+            <div class="bozp-form__actions">
+                <a href="{{ url('bozp/permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--cancel">
+                    {{ 'Zrušiť'|t('bozp') }}
+                </a>
+                <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-open-sign-dialog">
+                    {{ 'Podpísať a uložiť subpermit'|t('bozp') }}
+                </button>
+            </div>
+        </form>
+
+        {# --- Signature dialog (same structure as _sign-dialog.twig, feeds back into main form) --- #}
+        <dialog id="bozp-subpermit-sign-dialog"
+                style="border:none;padding:0;border-radius:8px;max-width:560px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+            <div class="bozp-form bozp-form--sign" style="margin:0;padding:24px;">
+
+                {# Stage 1 — warning #}
+                <div class="bozp-dialog__stage" data-stage="warning">
+                    <h3 style="margin-top:0;">{{ 'Podpis vydavateľa'|t('bozp') }}</h3>
+                    <p>{{ 'Podpíšte subpermit ako vydavateľ povolenia. Po uložení bude odoslaný HSE na schválenie.'|t('bozp') }}</p>
+                    <p class="bozp-warning"
+                       style="background:#fff4e0;border-left:4px solid #d97706;padding:10px 14px;margin:16px 0;color:#7a3e00;">
+                        <strong>{{ 'Upozornenie'|t('bozp') }}:</strong>
+                        {{ 'Skontrolujte, že všetky polia sú správne vyplnené pred podpisom.'|t('bozp') }}
+                    </p>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+                        <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="cancel">
+                            {{ 'Zrušiť'|t('bozp') }}
+                        </button>
+                        <button type="button" class="bozp-btn bozp-btn--primary" data-bozp-action="proceed">
+                            {{ 'Pokračovať k podpisu'|t('bozp') }}
+                        </button>
+                    </div>
+                </div>
+
+                {# Stage 2 — signature fields #}
+                <div class="bozp-dialog__stage" data-stage="form" hidden>
+                    <h3 style="margin-top:0;">{{ 'Podpis vydavateľa'|t('bozp') }}</h3>
+
+                    <div class="bozp-form__field">
+                        <label>{{ 'Meno podpisujúceho'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                        <input type="text" id="bozp-dlg-signer-name"
+                               value="{{ currentUser.fullName ?? '' }}" required>
+                    </div>
+
+                    <div class="bozp-form__field">
+                        <label>{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                        <input type="date" id="bozp-dlg-sig-date"
+                               value="{{ 'now'|date('Y-m-d') }}" required>
+                    </div>
+
+                    <div class="bozp-form__field">
+                        <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                        <div class="bozp-sigpad" style="border:1px solid #ccc;background:#fff;width:100%;">
+                            <canvas id="bozp-dlg-canvas" data-bozp-sigpad width="520" height="180"
+                                    style="display:block;width:100%;height:180px;touch-action:none;"></canvas>
+                        </div>
+                        <div style="margin-top:8px;">
+                            <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-sigpad-clear>
+                                {{ 'Vyčistiť'|t('bozp') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;">
+                        <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="back">
+                            {{ 'Späť'|t('bozp') }}
+                        </button>
+                        <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-dlg-submit">
+                            {{ 'Podpísať a odoslať'|t('bozp') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </dialog>
+
+        <script src="https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js"></script>
+        <script>
+            (function () {
+                var dialog   = document.getElementById('bozp-subpermit-sign-dialog');
+                var openBtn  = document.getElementById('bozp-open-sign-dialog');
+                var mainForm = openBtn ? openBtn.closest('form') : null;
+                var stages   = dialog ? dialog.querySelectorAll('.bozp-dialog__stage') : [];
+                var canvas   = document.getElementById('bozp-dlg-canvas');
+                var clearBtn = dialog ? dialog.querySelector('[data-bozp-sigpad-clear]') : null;
+                var submitBtn = document.getElementById('bozp-dlg-submit');
+                var pad      = null;
+
+                function showStage(name) {
+                    stages.forEach(function (s) {
+                        s.hidden = s.getAttribute('data-stage') !== name;
+                    });
+                    if (name === 'form') initPad();
+                }
+
+                function initPad() {
+                    if (!window.SignaturePad || !canvas || pad) return;
+                    var ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    canvas.width  = canvas.offsetWidth  * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    canvas.getContext('2d').scale(ratio, ratio);
+                    pad = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,1)', penColor: '#000' });
+                }
+
+                if (openBtn) {
+                    openBtn.addEventListener('click', function () {
+                        showStage('warning');
+                        dialog.showModal ? dialog.showModal() : dialog.setAttribute('open', '');
+                    });
+                }
+
+                if (dialog) {
+                    dialog.addEventListener('click', function (e) {
+                        var action = e.target.closest('[data-bozp-action]');
+                        if (!action) return;
+                        var a = action.getAttribute('data-bozp-action');
+                        if (a === 'cancel') { dialog.close(); }
+                        if (a === 'proceed') { showStage('form'); }
+                        if (a === 'back')    { showStage('warning'); }
+                    });
+
+                    if (clearBtn) clearBtn.addEventListener('click', function () { if (pad) pad.clear(); });
+                }
+
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', function () {
+                        var nameVal = document.getElementById('bozp-dlg-signer-name').value.trim();
+                        var dateVal = document.getElementById('bozp-dlg-sig-date').value.trim();
+                        if (!nameVal) { alert('{{ 'Zadajte meno podpisujúceho.'|t('bozp') }}'); return; }
+                        if (!pad || pad.isEmpty()) { alert('{{ 'Podpis je povinný.'|t('bozp') }}'); return; }
+
+                        document.getElementById('bozp-sig-name').value = nameVal;
+                        document.getElementById('bozp-sig-date').value = dateVal;
+                        document.getElementById('bozp-sig-data').value = pad.toDataURL('image/png');
+
+                        dialog.close();
+                        mainForm.submit();
+                    });
+                }
+            })();
+        </script>
+    </section>
+{% endblock %}

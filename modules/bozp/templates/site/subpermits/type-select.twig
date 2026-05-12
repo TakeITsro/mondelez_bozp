@@ -1,0 +1,45 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{% block title %}{{ 'Pridať subpermit'|t('bozp') }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--subpermit-select">
+        <header class="bozp-page__header">
+            <p class="bozp-page__back">
+                <a href="{{ url('bozp/permits/' ~ permit.id) }}">← {{ permit.permitNumber }}</a>
+            </p>
+            <h1>{{ 'Pridať subpermit'|t('bozp') }}</h1>
+            <p class="bozp-page__lede">
+                {{ 'Vyberte typ subpermitu, ktorý chcete vytvoriť.'|t('bozp') }}
+            </p>
+        </header>
+
+        <div class="bozp-subpermit-types">
+            {% for type in subpermitTypes %}
+                <div class="bozp-subpermit-type-card{% if type.value in requiredTypes %} bozp-subpermit-type-card--required{% endif %}">
+                    <div class="bozp-subpermit-type-card__info">
+                        <span class="bozp-subpermit-type-card__appendix">
+                            {{ 'Príloha č. {n}'|t('bozp', {n: type.appendixNumber()}) }}
+                        </span>
+                        <span class="bozp-subpermit-type-card__label">{{ type.label() }}</span>
+                        {% if type.value in requiredTypes %}
+                            <span class="bozp-subpermit-type-card__required-badge">
+                                {{ 'Vyžadovaný'|t('bozp') }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/new/' ~ type.value) }}"
+                       class="bozp-btn bozp-btn--primary bozp-btn--sm">
+                        {{ 'Pridať'|t('bozp') }}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+
+        <p style="margin-top: 24px;">
+            <a href="{{ url('bozp/permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--cancel">
+                {{ 'Späť na permit'|t('bozp') }}
+            </a>
+        </p>
+    </section>
+{% endblock %}

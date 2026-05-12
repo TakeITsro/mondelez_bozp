@@ -1,0 +1,105 @@
+{# Appendix 5 — Command "B" / LOTO permit #}
+
+{% set lo = values.lotoDevices ?? [] %}
+
+{% macro yn_row(name, value, label) %}
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ label }}</span>
+        <div class="bozp-form__yesno">
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <span>{{ 'Áno'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <span>{{ 'Nie'|t('bozp') }}</span>
+            </label>
+        </div>
+    </div>
+{% endmacro %}
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Identifikácia zariadenia'|t('bozp') }}</legend>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="equipmentId">{{ 'Identifikácia zariadenia / stroja'|t('bozp') }}</label>
+            <input type="text" id="equipmentId" name="equipmentId"
+                   value="{{ values.equipmentId ?? '' }}" maxlength="255">
+        </div>
+        <div class="bozp-form__field">
+            <label for="equipmentLocation">{{ 'Umiestnenie zariadenia'|t('bozp') }}</label>
+            <input type="text" id="equipmentLocation" name="equipmentLocation"
+                   value="{{ values.equipmentLocation ?? '' }}" maxlength="255">
+        </div>
+    </div>
+
+    <div class="bozp-form__field">
+        <label for="energySources">{{ 'Zdroje energie (elektrina, hydraulika, pneumatika, teplo, chemická, gravitácia)'|t('bozp') }}</label>
+        <textarea id="energySources" name="energySources" rows="3">{{ values.energySources ?? '' }}</textarea>
+    </div>
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Postup LOTO'|t('bozp') }}</legend>
+
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ 'Použité LOTO zariadenia'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set loOptions = {
+                'padlock':       'Visací zámok (Lock Out)'|t('bozp'),
+                'tag':           'Štítok (Tag Out)'|t('bozp'),
+                'hasp':          'Skupinový zámok (Hasp)'|t('bozp'),
+                'valve_lockout': 'Uzáver ventilu'|t('bozp'),
+                'cb_lockout':    'Uzáver ističa'|t('bozp'),
+                'plug_lockout':  'Uzáver zástrčky'|t('bozp'),
+                'other':         'Iné'|t('bozp'),
+            } %}
+            {% for key, label in loOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="lotoDevices[]" value="{{ key }}"
+                           {% if key in lo %}checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        <input type="text" name="lotoDevicesOther"
+               value="{{ values.lotoDevicesOther ?? '' }}"
+               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+               maxlength="255" style="margin-top:6px">
+    </div>
+
+    {{ _self.yn_row('energyIsolated', values.energyIsolated ?? '', 'Všetky zdroje energie sú izolované / odstavené?'|t('bozp')) }}
+    {{ _self.yn_row('residualEnergyReleased', values.residualEnergyReleased ?? '', 'Reziduálna energia bola uvoľnená (dekomprimácia, vybíjanie kapacitorov, vypustenie)?'|t('bozp')) }}
+    {{ _self.yn_row('zeroEnergyVerified', values.zeroEnergyVerified ?? '', 'Stav nulovej energie bol overený (skúšobník, tlakomer)?'|t('bozp')) }}
+
+    <div class="bozp-form__field">
+        <label for="verificationMethod">{{ 'Spôsob overenia nulovej energie'|t('bozp') }}</label>
+        <input type="text" id="verificationMethod" name="verificationMethod"
+               value="{{ values.verificationMethod ?? '' }}" maxlength="255">
+    </div>
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Zodpovedná osoba a kľúče'|t('bozp') }}</legend>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="lotoResponsiblePerson">{{ 'Osoba zodpovedná za LOTO'|t('bozp') }}</label>
+            <input type="text" id="lotoResponsiblePerson" name="lotoResponsiblePerson"
+                   value="{{ values.lotoResponsiblePerson ?? '' }}" maxlength="255">
+        </div>
+        <div class="bozp-form__field">
+            <label for="lockSerialNumber">{{ 'Sériové číslo zámku / štítku'|t('bozp') }}</label>
+            <input type="text" id="lockSerialNumber" name="lockSerialNumber"
+                   value="{{ values.lockSerialNumber ?? '' }}" maxlength="100">
+        </div>
+    </div>
+
+    {{ _self.yn_row('workerInformedLoto', values.workerInformedLoto ?? '', 'Pracovník bol oboznámený s postupom LOTO?'|t('bozp')) }}
+
+    <div class="bozp-form__field">
+        <label for="removalConditions">{{ 'Podmienky na odstránenie LOTO po skončení práce'|t('bozp') }}</label>
+        <textarea id="removalConditions" name="removalConditions" rows="3">{{ values.removalConditions ?? '' }}</textarea>
+    </div>
+</fieldset>

@@ -15,14 +15,17 @@ use craft\web\View;
 use modules\bozp\enums\HazardCategory;
 use modules\bozp\enums\PermitStatus;
 use modules\bozp\enums\SignatureRole;
+use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
 use modules\bozp\records\PermitAttachmentRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\PermitSignatureRecord;
 use modules\bozp\records\PermitZoneRecord;
+use modules\bozp\records\SubpermitRecord;
 use modules\bozp\records\ZoneRecord;
 use modules\bozp\services\SignatureService;
+use modules\bozp\services\SubpermitSignatureService;
 use Throwable;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -470,6 +473,84 @@ class ContractorController extends Controller
     }
 
     /**
+     * Contractor signs an approved subpermit before starting work.
+     * Route: POST bozp/c/<token>/subpermits/<id>/sign
+     */
+    public function actionSignSubpermit(): Response
+    {
+        $this->requirePostRequest();
+
+        $token = Craft::$app->getRequest()->getRequiredBodyParam('token');
+        $permit = $this->lookupPermit($token);
+
+        if ($this->isExpired($permit)) {
+            return $this->renderExpired();
+        }
+
+        if (!$this->isAuthedFor($token)) {
+            return $this->renderPasswordPrompt($permit, []);
+        }
+
+        $request = Craft::$app->getRequest();
+        $id = (int) $request->getRequiredBodyParam('id');
+
+        $subpermit = SubpermitRecord::findOne(['id' => $id, 'parentPermitId' => $permit->id]);
+        if (!$subpermit) {
+            throw new NotFoundHttpException('Subpermit not found.');
+        }
+
+        if ($subpermit->status !== 'approved') {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Subpermit musí byť schválený pred podpísom.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        // Check not already signed by contractor
+        if ($module->subpermitSignatureService->findSignature($id, SubpermitSignatureService::ROLE_CONTRACTOR)) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Subpermit bol už podpísaný dodávateľom.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        $signatureData = trim((string) $request->getBodyParam('signatureData', ''));
+        $signerName = trim((string) $request->getBodyParam('signerName', $permit->contractorPersonName ?? ''));
+        $signerEmployer = trim((string) $request->getBodyParam('signerEmployer', $permit->contractorCompany ?? ''));
+        $signatureDate = trim((string) $request->getBodyParam('signatureDate', date('Y-m-d')));
+
+        if ($signatureData === '' || !str_starts_with($signatureData, 'data:image/png;base64,')) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis dodávateľa je povinný.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+        if ($signerName === '') {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Meno podpisujúceho je povinné.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        try {
+            $module->subpermitSignatureService->capture(
+                $subpermit,
+                SubpermitSignatureService::ROLE_CONTRACTOR,
+                $signerName,
+                $signerEmployer ?: null,
+                $signatureDate,
+                $signatureData,
+            );
+        } catch (Throwable $e) {
+            Craft::error('Subpermit contractor sign failed: ' . $e->getMessage(), __METHOD__);
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis sa nepodarilo uložiť. Skúste znova.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol podpísaný.'));
+        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+    }
+
+    /**
      * @param array<string, string> $closeErrors
      * @param array<string, mixed>  $closeValues
      * @param array<string, string> $cancelErrors
@@ -505,6 +586,24 @@ class ContractorController extends Controller
 
         $recipientClosure = $this->signatures()->findSignature((int) $permit->id, SignatureRole::RecipientClosure);
 
+        // Load approved subpermits with their signatures
+        $subpermits = SubpermitRecord::find()
+            ->where(['parentPermitId' => $permit->id, 'status' => 'approved'])
+            ->orderBy(['dateCreated' => SORT_ASC])
+            ->all();
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+        $subpermitSignatures = [];
+        $allSubpermitsSigned = true;
+        foreach ($subpermits as $sp) {
+            $sigs = $module->subpermitSignatureService->findAllForSubpermit((int) $sp->id);
+            $subpermitSignatures[(int) $sp->id] = $sigs;
+            if (!isset($sigs[SubpermitSignatureService::ROLE_CONTRACTOR])) {
+                $allSubpermitsSigned = false;
+            }
+        }
+
         $defaultSign = [
             'signerName' => $permit->contractorPersonName ?: '',
             'signerEmployer' => $permit->contractorCompany ?: '',
@@ -525,12 +624,17 @@ class ContractorController extends Controller
             'hazardCategories' => HazardCategory::pdfOrder(),
             'attachments' => $attachments,
             'recipientClosureSignature' => $recipientClosure,
-            'canClose' => $actionable && !$recipientClosure,
+            'canClose' => $actionable && !$recipientClosure && $allSubpermitsSigned,
             'canCancel' => $actionable && !$recipientClosure,
+            'allSubpermitsSigned' => $allSubpermitsSigned,
+            'unsignedSubpermitCount' => count(array_filter($subpermits, fn($sp) => !isset($subpermitSignatures[(int)$sp->id][SubpermitSignatureService::ROLE_CONTRACTOR]))),
             'closeErrors' => $closeErrors,
             'closeValues' => array_merge($defaultSign, ['closureStatus' => []], $closeValues),
             'cancelErrors' => $cancelErrors,
             'cancelValues' => array_merge($defaultSign, ['reason' => ''], $cancelValues),
+            'subpermits' => $subpermits,
+            'subpermitSignatures' => $subpermitSignatures,
+            'subpermitTypes' => SubpermitType::cases(),
         ]);
     }
 

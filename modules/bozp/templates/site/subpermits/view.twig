@@ -1,0 +1,163 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{# ---------------------------------------------------------------------------
+   Subpermit detail — read-only view for the issuer.
+   Variables from SubpermitsController::actionView():
+     permit, subpermit (SubpermitRecord), subpermitType (SubpermitType|null),
+     values (decoded data array), isIssuer, canCancel, signatures
+--------------------------------------------------------------------------- #}
+
+{% set appendixN = subpermitType ? subpermitType.appendixNumber() : '?' %}
+{% set typeLabel = subpermitType ? subpermitType.label() : subpermit.type %}
+
+{% block title %}{{ 'Príloha č. {n}'|t('bozp', {n: appendixN}) }} — {{ typeLabel }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--subpermit-view">
+        <header class="bozp-page__header">
+            <p class="bozp-page__back">
+                <a href="{{ url('bozp/permits/' ~ permit.id) }}">← {{ permit.permitNumber }}</a>
+            </p>
+            <h1>{{ 'Príloha č. {n}'|t('bozp', {n: appendixN}) }} — {{ typeLabel }}</h1>
+            <div class="bozp-page__meta">
+                <span class="bozp-status bozp-status--{{ subpermit.status }}">
+                    {{ subpermit.status|t('bozp') }}
+                </span>
+                {% if subpermit.status == 'approved' and subpermit.expiresAt %}
+                    <span class="bozp-page__expires">
+                        {{ 'Platný do'|t('bozp') }}:
+                        <strong>{{ subpermit.expiresAt|date('d.m.Y H:i') }}</strong>
+                    </span>
+                {% endif %}
+                <span class="bozp-page__created">
+                    {{ 'Vytvorené'|t('bozp') }}: {{ subpermit.dateCreated|date('d.m.Y H:i') }}
+                </span>
+            </div>
+        </header>
+
+        {# Rejection note #}
+        {% if subpermit.status == 'rejected' and subpermit.rejectionNote %}
+            <div class="bozp-alert bozp-alert--danger">
+                <strong>{{ 'Dôvod zamietnutia'|t('bozp') }}:</strong>
+                {{ subpermit.rejectionNote }}
+            </div>
+        {% endif %}
+
+        {# --- Common fields --- #}
+        <div class="bozp-view__section">
+            <h2>{{ 'Základné informácie'|t('bozp') }}</h2>
+            <dl class="bozp-view__dl">
+                <dt>{{ 'Dátum'|t('bozp') }}</dt>
+                <dd>{{ values.date ? values.date|date('d.m.Y') : '—' }}</dd>
+
+                <dt>{{ 'Miesto výkonu'|t('bozp') }}</dt>
+                <dd>{{ values.placeOfWork ?: '—' }}</dd>
+
+                <dt>{{ 'Zodpovedná osoba MDLZ'|t('bozp') }}</dt>
+                <dd>{{ values.responsiblePerson ?: '—' }}</dd>
+
+                {% if values.participants ?? '' %}
+                    <dt>{{ 'Zúčastnení dodávatelia / osoby'|t('bozp') }}</dt>
+                    <dd>{{ values.participants }}</dd>
+                {% endif %}
+
+                {% if values.workDescription ?? '' %}
+                    <dt>{{ 'Popis vykonávanej práce'|t('bozp') }}</dt>
+                    <dd>{{ values.workDescription }}</dd>
+                {% endif %}
+            </dl>
+
+            {% set hasSteps = false %}
+            {% for i in 1..5 %}{% if attribute(values, 'workStep' ~ i) ?? '' %}{% set hasSteps = true %}{% endif %}{% endfor %}
+            {% if hasSteps %}
+                <ol class="bozp-view__steps">
+                    {% for i in 1..5 %}
+                        {% set step = attribute(values, 'workStep' ~ i) ?? '' %}
+                        {% if step %}<li>{{ step }}</li>{% endif %}
+                    {% endfor %}
+                </ol>
+            {% endif %}
+        </div>
+
+        {# --- Type-specific fields (generic key-value display) --- #}
+        {% set commonKeys = ['date','placeOfWork','responsiblePerson','participants','workDescription',
+            'workStep1','workStep2','workStep3','workStep4','workStep5'] %}
+        {% set typeValues = {} %}
+        {% for k, v in values %}
+            {% if k not in commonKeys and v is not empty %}
+                {% set typeValues = typeValues|merge({(k): v}) %}
+            {% endif %}
+        {% endfor %}
+
+        {% if typeValues|length > 0 %}
+            <div class="bozp-view__section">
+                <h2>{{ 'Špecifické podmienky'|t('bozp') }}</h2>
+                <dl class="bozp-view__dl">
+                    {% for k, v in typeValues %}
+                        <dt>{{ k }}</dt>
+                        <dd>
+                            {% if v is iterable %}
+                                {{ v|join(', ') }}
+                            {% elseif v == 'yes' %}
+                                {{ 'Áno'|t('bozp') }}
+                            {% elseif v == 'no' %}
+                                {{ 'Nie'|t('bozp') }}
+                            {% else %}
+                                {{ v }}
+                            {% endif %}
+                        </dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        {% endif %}
+
+        {# --- Signatures --- #}
+        <div class="bozp-view__section bozp-view__section--signatures">
+            <h2>{{ 'Podpisy'|t('bozp') }}</h2>
+            <div class="bozp-signatures-grid" style="display:flex;gap:24px;flex-wrap:wrap;">
+                {% for role, label in {'issuer': 'Vydavateľ'|t('bozp'), 'contractor': 'Dodávateľ'|t('bozp')} %}
+                    {% set sig = signatures[role] ?? null %}
+                    <div class="bozp-signature-slot" style="flex:1;min-width:220px;border:1px solid #ddd;border-radius:4px;padding:12px;">
+                        <h3 style="margin-top:0;font-size:14px;">{{ label }}</h3>
+                        {% if sig %}
+                            {% set sigAsset = craft.assets().id(sig.signatureAssetId).one() %}
+                            {% if sigAsset %}
+                                <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                     style="max-width:280px;max-height:110px;border:1px solid #eee;background:#fff;display:block;margin-bottom:8px;">
+                            {% endif %}
+                            <dl class="bozp-view__dl" style="font-size:13px;">
+                                <dt>{{ 'Podpísal'|t('bozp') }}</dt><dd>{{ sig.signerName }}</dd>
+                                {% if sig.signerEmployer %}
+                                    <dt>{{ 'Firma'|t('bozp') }}</dt><dd>{{ sig.signerEmployer }}</dd>
+                                {% endif %}
+                                <dt>{{ 'Dátum'|t('bozp') }}</dt>
+                                <dd>{{ sig.signatureDate ? sig.signatureDate|date('d.m.Y') : '—' }}</dd>
+                            </dl>
+                        {% else %}
+                            <p class="bozp-empty" style="font-size:13px;">{{ 'Nepodpísané'|t('bozp') }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# --- Actions --- #}
+        <div class="bozp-form__actions">
+            <a href="{{ url('bozp/permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--cancel">
+                {{ 'Späť'|t('bozp') }}
+            </a>
+            {% if canCancel %}
+                <form method="post" style="display:inline;"
+                      onsubmit="return confirm('{{ 'Naozaj chcete zrušiť tento subpermit?'|t('bozp') }}')">
+                    {{ csrfInput() }}
+                    <input type="hidden" name="action" value="bozp/subpermits/cancel">
+                    <input type="hidden" name="permitId" value="{{ permit.id }}">
+                    <input type="hidden" name="id" value="{{ subpermit.id }}">
+                    <button type="submit" class="bozp-btn bozp-btn--danger">
+                        {{ 'Zrušiť subpermit'|t('bozp') }}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

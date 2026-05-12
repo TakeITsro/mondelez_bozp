@@ -190,6 +190,105 @@
             {% endif %}
         </section>
 
+        {# ---- High-risk subpermits ---- #}
+        {# Build lookup maps from the SubpermitType enum cases passed by the controller #}
+        {% set spLabelMap = {} %}
+        {% set spAppendixMap = {} %}
+        {% if subpermitTypes is defined %}
+            {% for t in subpermitTypes %}
+                {% set spLabelMap = spLabelMap|merge({(t.value): t.label()}) %}
+                {% set spAppendixMap = spAppendixMap|merge({(t.value): t.appendixNumber()}) %}
+            {% endfor %}
+        {% endif %}
+
+        {% if requiredSubpermitTypes|length > 0 or subpermits|length > 0 %}
+            <section class="bozp-section bozp-section--subpermits">
+                <div class="bozp-section__header">
+                    <h2>{{ 'Subpermity zvýšeného rizika'|t('bozp') }}</h2>
+                    {% if isIssuer is defined and isIssuer %}
+                        <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/new') }}"
+                           class="bozp-btn bozp-btn--primary bozp-btn--sm">
+                            + {{ 'Pridať subpermit'|t('bozp') }}
+                        </a>
+                    {% endif %}
+                </div>
+
+                {% if subpermits|length == 0 %}
+                    <p class="bozp-empty">{{ 'Zatiaľ neboli pridané žiadne subpermity.'|t('bozp') }}</p>
+                {% else %}
+                    <table class="bozp-table bozp-subpermits-table">
+                        <thead>
+                            <tr>
+                                <th>{{ 'Príloha'|t('bozp') }}</th>
+                                <th>{{ 'Typ'|t('bozp') }}</th>
+                                <th>{{ 'Miesto'|t('bozp') }}</th>
+                                <th>{{ 'Dátum'|t('bozp') }}</th>
+                                <th>{{ 'Stav'|t('bozp') }}</th>
+                                <th>{{ 'Platnosť do'|t('bozp') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sp in subpermits %}
+                                {% set spData = sp.data is string ? sp.data|json_decode : (sp.data ?? {}) %}
+                                <tr>
+                                    <td>
+                                        {% if spAppendixMap[sp.type] is defined %}
+                                            {{ 'č. {n}'|t('bozp', {n: spAppendixMap[sp.type]}) }}
+                                        {% else %}
+                                            {{ sp.type }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ spLabelMap[sp.type] ?? sp.type }}</td>
+                                    <td>{{ spData.placeOfWork ?? '—' }}</td>
+                                    <td>{{ spData.date ? spData.date|date('d.m.Y') : sp.dateCreated|date('d.m.Y') }}</td>
+                                    <td>
+                                        <span class="bozp-status bozp-status--{{ sp.status }}">
+                                            {{ sp.status|t('bozp') }}
+                                        </span>
+                                        {% if sp.type in requiredSubpermitTypes and sp.status != 'approved' %}
+                                            <span class="bozp-badge bozp-badge--required" title="{{ 'Vyžadovaný'|t('bozp') }}">!</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if sp.status == 'approved' and sp.expiresAt %}
+                                            {{ sp.expiresAt|date('d.m.Y H:i') }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/' ~ sp.id) }}"
+                                           class="bozp-link">{{ 'Detail'|t('bozp') }}</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+
+                {# Missing required subpermits warning #}
+                {% set missingTypes = [] %}
+                {% for typeValue in requiredSubpermitTypes %}
+                    {% set hasApproved = false %}
+                    {% for sp in subpermits %}
+                        {% if sp.type == typeValue and sp.status == 'approved' %}
+                            {% set hasApproved = true %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if not hasApproved %}
+                        {% set missingTypes = missingTypes|merge([spLabelMap[typeValue] ?? typeValue]) %}
+                    {% endif %}
+                {% endfor %}
+                {% if missingTypes|length > 0 %}
+                    <div class="bozp-alert bozp-alert--warning" style="margin-top:12px">
+                        <strong>{{ 'Chýbajúce schválené subpermity'|t('bozp') }}:</strong>
+                        {{ missingTypes|join(', ') }}
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+
         {# ---- Attachments (read-only list) ---- #}
         <section class="bozp-section bozp-section--attachments">
             <h2>{{ 'Prílohy'|t('bozp') }}</h2>

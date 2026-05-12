@@ -22,6 +22,9 @@
      preparation[stopConditionsDescription] free text
      preparation[lotoImplemented]           "yes" | "no" | ""
      preparation[emergencyPlan]             free text
+
+   High-risk subpermits:
+     requiresHighRisk[]                     SubpermitType values (multi-checkbox)
 --------------------------------------------------------------------------- #}
 
 {% set values = values ?? {} %}
@@ -269,6 +272,29 @@
                     <textarea id="emergencyPlan"
                               name="preparation[emergencyPlan]"
                               rows="3">{{ preparation.emergencyPlan ?? '' }}</textarea>
+                </div>
+            </fieldset>
+
+            {# ----- High-risk subpermits ----- #}
+            <fieldset class="bozp-form__section bozp-form__section--highrisk">
+                <legend>{{ 'Subpermity zvýšeného rizika'|t('bozp') }}</legend>
+                <p class="bozp-form__hint">
+                    {{ 'Označte typy subpermitov, ktoré budú potrebné pre tento permit. Subpermity sa vytvárajú a schvaľujú samostatne po vytvorení permitu.'|t('bozp') }}
+                </p>
+
+                <div class="bozp-form__highrisk-types">
+                    {% for type in subpermitTypes %}
+                        <label class="bozp-form__highrisk-opt">
+                            <input type="checkbox"
+                                   name="requiresHighRisk[]"
+                                   value="{{ type.value }}"
+                                   {% if type.value in (values.requiresHighRisk ?? []) %}checked{% endif %}>
+                            <span>
+                                <strong>{{ 'Príloha č. {n}'|t('bozp', {n: type.appendixNumber()}) }}</strong>
+                                — {{ type.label() }}
+                            </span>
+                        </label>
+                    {% endfor %}
                 </div>
             </fieldset>
 

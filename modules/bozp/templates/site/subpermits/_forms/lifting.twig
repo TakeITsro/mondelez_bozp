@@ -1,0 +1,111 @@
+{# Appendix 8 — Permit for lifting and crane work #}
+
+{% set lq = values.liftingEquipment ?? [] %}
+
+{% macro yn_row(name, value, label) %}
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ label }}</span>
+        <div class="bozp-form__yesno">
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <span>{{ 'Áno'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <span>{{ 'Nie'|t('bozp') }}</span>
+            </label>
+        </div>
+    </div>
+{% endmacro %}
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Zdvíhacie zariadenie'|t('bozp') }}</legend>
+
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ 'Typ zdvíhacieho zariadenia'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set lqOptions = {
+                'mobile_crane':    'Mobilný žeriav'|t('bozp'),
+                'overhead_crane':  'Mostový žeriav'|t('bozp'),
+                'forklift':        'Vysokozdvižný vozík'|t('bozp'),
+                'telehandler':     'Teleskopický manipulátor'|t('bozp'),
+                'chain_hoist':     'Reťazový zdvihák'|t('bozp'),
+                'pallet_truck':    'Paletový vozík (elektrický)'|t('bozp'),
+                'other':           'Iné'|t('bozp'),
+            } %}
+            {% for key, label in lqOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="liftingEquipment[]" value="{{ key }}"
+                           {% if key in lq %}checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        <input type="text" name="liftingEquipmentOther"
+               value="{{ values.liftingEquipmentOther ?? '' }}"
+               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+               maxlength="255" style="margin-top:6px">
+    </div>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="craneId">{{ 'Identifikácia žeriava / zariadenia'|t('bozp') }}</label>
+            <input type="text" id="craneId" name="craneId"
+                   value="{{ values.craneId ?? '' }}" maxlength="100">
+        </div>
+        <div class="bozp-form__field">
+            <label for="liftingCapacity">{{ 'Nosnosť zariadenia (t)'|t('bozp') }}</label>
+            <input type="text" id="liftingCapacity" name="liftingCapacity"
+                   value="{{ values.liftingCapacity ?? '' }}" maxlength="50" style="width:120px">
+        </div>
+    </div>
+
+    {{ _self.yn_row('craneInspectionValid', values.craneInspectionValid ?? '', 'Zariadenie má platnú revíznu správu?'|t('bozp')) }}
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Bremeno a plán zdvihu'|t('bozp') }}</legend>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="loadWeight">{{ 'Hmotnosť bremena (kg)'|t('bozp') }}</label>
+            <input type="text" id="loadWeight" name="loadWeight"
+                   value="{{ values.loadWeight ?? '' }}" maxlength="50" style="width:140px">
+        </div>
+        <div class="bozp-form__field">
+            <label for="loadDescription">{{ 'Popis bremena'|t('bozp') }}</label>
+            <input type="text" id="loadDescription" name="loadDescription"
+                   value="{{ values.loadDescription ?? '' }}" maxlength="255">
+        </div>
+    </div>
+
+    {{ _self.yn_row('liftPlanPrepared', values.liftPlanPrepared ?? '', 'Plán zdvihu bol pripravený a schválený?'|t('bozp')) }}
+    {{ _self.yn_row('exclusionZoneMarked', values.exclusionZoneMarked ?? '', 'Vylučovacia zóna pod bremenom je vyznačená?'|t('bozp')) }}
+    {{ _self.yn_row('riggingInspected', values.riggingInspected ?? '', 'Zdvíhacie príslušenstvo (laná, háky, závesy) bolo skontrolované?'|t('bozp')) }}
+    {{ _self.yn_row('overheadObstaclesClear', values.overheadObstaclesClear ?? '', 'Trasa zdvihu je voľná (bez prekážok, vedenia, konštrukcií)?'|t('bozp')) }}
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Personál'|t('bozp') }}</legend>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="operatorName">{{ 'Meno operátora žeriava / zariadenia'|t('bozp') }}</label>
+            <input type="text" id="operatorName" name="operatorName"
+                   value="{{ values.operatorName ?? '' }}" maxlength="255">
+        </div>
+        <div class="bozp-form__field">
+            <label for="riggerName">{{ 'Meno väzača bremien'|t('bozp') }}</label>
+            <input type="text" id="riggerName" name="riggerName"
+                   value="{{ values.riggerName ?? '' }}" maxlength="255">
+        </div>
+    </div>
+
+    {{ _self.yn_row('operatorCertified', values.operatorCertified ?? '', 'Operátor má platné oprávnenie na obsluhu zdvíhacieho zariadenia?'|t('bozp')) }}
+    {{ _self.yn_row('signallerAssigned', values.signallerAssigned ?? '', 'Je pridelený signalista / navádzač?'|t('bozp')) }}
+
+    <div class="bozp-form__field">
+        <label for="liftingAdditionalMeasures">{{ 'Ďalšie bezpečnostné opatrenia'|t('bozp') }}</label>
+        <textarea id="liftingAdditionalMeasures" name="liftingAdditionalMeasures" rows="3">{{ values.liftingAdditionalMeasures ?? '' }}</textarea>
+    </div>
+</fieldset>

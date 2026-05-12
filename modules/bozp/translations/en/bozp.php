@@ -415,4 +415,51 @@ return [
     'Zrušenie sa nepodarilo uložiť. Skúste znova.' => 'Could not save the cancellation. Please try again.',
     'Permit je uzamknutý — ďalšie prílohy už nie je možné pridávať.' =>
         'The permit is locked — no further attachments can be added.',
+
+    // ----- Subpermit types --------------------------------------------------
+    'Zvýšené nebezpečenstvo požiaru'          => 'Increased fire risk (hot work)',
+    'Vstup do stiesnených priestorov'         => 'Confined space entry',
+    'Práce vo výškach'                        => 'Work at heights',
+    'Príkaz „B"'                              => 'Command "B"',
+    'Vysokorizikové elektrické práce'         => 'High-risk electrical work',
+    'Výkopové práce'                          => 'Excavation work',
+    'Zdvíhacie práce a práce so žeriavom'     => 'Lifting and crane work',
+    'Práce v prostredí ATEX'                  => 'Work in ATEX environments',
+
+    // ----- Subpermit statuses -----------------------------------------------
+    'Čaká na schválenie'  => 'Pending approval',
+    'Expirované'          => 'Expired',
+
+    // ----- Subpermit UI strings ---------------------------------------------
+    'Subpermity'                              => 'Subpermits',
+    'Pridať subpermit'                        => 'Add subpermit',
+    'Vybrať typ subpermitu'                   => 'Select subpermit type',
+    'Príloha č. {n}'                          => 'Appendix no. {n}',
+    'Platný do'                               => 'Valid until',
+    'Platnosť subpermitu je 8 hodín od schválenia HSE.' =>
+        'The subpermit is valid for 8 hours from HSE approval.',
+    'Schváliť subpermit'                      => 'Approve subpermit',
+    'Zamietnuť subpermit'                     => 'Reject subpermit',
+    'Subpermit bol schválený.'                => 'Subpermit approved.',
+    'Subpermit bol zamietnutý.'               => 'Subpermit rejected.',
+    'Subpermit sa nepodarilo schváliť. Skúste znova.' =>
+        'Could not approve the subpermit. Please try again.',
+    'Subpermit sa nepodarilo zamietnuť. Skúste znova.' =>
+        'Could not reject the subpermit. Please try again.',
+    'Subpermit sa nepodarilo uložiť. Skúste znova.' =>
+        'Could not save the subpermit. Please try again.',
+    'Subpermit bol uložený.'                  => 'Subpermit saved.',
+    'Subpermit bol zrušený.'                  => 'Subpermit cancelled.',
+    'Žiadne subpermity.'                      => 'No subpermits.',
+    'Vyžaduje subpermit(y) zvýšeného rizika'  => 'Requires high-risk subpermit(s)',
+    'Chýbajúce subpermity'                    => 'Missing subpermits',
+    'Chýba subpermit'                         => 'Missing subpermit',
+    'Tento permit vyžaduje nasledujúce subpermity, ktoré ešte neboli vytvorené: {types}.' =>
+        'This permit requires the following subpermits that have not been created yet: {types}.',
+
+    // ----- Permit form — subpermit section ----------------------------------
+    'Subpermity zvýšeného rizika'             => 'High-risk subpermits',
+    'Označte typy subpermitov, ktoré budú potrebné pre tento permit. Subpermity sa vytvárajú a schvaľujú samostatne po vytvorení permitu.' =>
+        'Mark the subpermit types that will be required for this permit. Subpermits are created and approved separately after the permit is created.',
+    'Príloha č. {n}'                          => 'Appendix no. {n}',
 ];

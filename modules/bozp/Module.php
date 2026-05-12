@@ -18,6 +18,7 @@ use modules\bozp\services\PermitMailer;
 use modules\bozp\services\PermitNumberGenerator;
 use modules\bozp\services\PermitWorkflow;
 use modules\bozp\services\SignatureService;
+use modules\bozp\services\SubpermitSignatureService;
 use yii\base\Event;
 use yii\base\Module as BaseModule;
 
@@ -32,6 +33,7 @@ use yii\base\Module as BaseModule;
  * @property-read AuditLogger $auditLogger
  * @property-read PermitMailer $permitMailer
  * @property-read SignatureService $signatureService
+ * @property-read SubpermitSignatureService $subpermitSignatureService
  */
 class Module extends BaseModule
 {
@@ -49,6 +51,7 @@ class Module extends BaseModule
             'auditLogger' => AuditLogger::class,
             'permitMailer' => PermitMailer::class,
             'signatureService' => SignatureService::class,
+            'subpermitSignatureService' => SubpermitSignatureService::class,
         ]);
 
         parent::init();
@@ -107,6 +110,8 @@ class Module extends BaseModule
                 $event->rules['bozp/permit/<id:\d+>'] = 'bozp/queue/view';
                 $event->rules['POST bozp/permit/<id:\d+>/resend'] = 'bozp/queue/resend';
                 $event->rules['POST bozp/permit/<id:\d+>/delete'] = 'bozp/queue/delete';
+                $event->rules['POST bozp/permit/<permitId:\d+>/subpermits/<id:\d+>/approve'] = 'bozp/queue/approve-subpermit';
+                $event->rules['POST bozp/permit/<permitId:\d+>/subpermits/<id:\d+>/reject'] = 'bozp/queue/reject-subpermit';
             }
         );
     }
@@ -135,10 +140,18 @@ class Module extends BaseModule
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/upload'] = 'bozp/contractor/upload';
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/close'] = 'bozp/contractor/close';
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/cancel'] = 'bozp/contractor/cancel';
+                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/sign'] = 'bozp/contractor/sign-subpermit';
 
                 // Issuer cancel / close (front-end issuer detail page)
                 $event->rules['POST bozp/permits/<id:\d+>/cancel'] = 'bozp/permits/cancel';
                 $event->rules['POST bozp/permits/<id:\d+>/close'] = 'bozp/permits/close';
+
+                // Subpermits (high-risk, attached to a general permit)
+                $event->rules['bozp/permits/<permitId:\d+>/subpermits/new'] = 'bozp/subpermits/new';
+                $event->rules['bozp/permits/<permitId:\d+>/subpermits/new/<type:[a-z_]+>'] = 'bozp/subpermits/form';
+                $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/save'] = 'bozp/subpermits/save';
+                $event->rules['bozp/permits/<permitId:\d+>/subpermits/<id:\d+>'] = 'bozp/subpermits/view';
+                $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/cancel'] = 'bozp/subpermits/cancel';
             }
         );
     }

@@ -35,6 +35,11 @@
                         <tr>
                             <td>
                                 <strong>{{ permit.permitNumber }}</strong>
+                                {% if permit.id in incompletePermitIds|keys %}
+                                    <span class="status orange" title="{{ 'Chýbajúce subpermity'|t('bozp') }}">
+                                        {{ 'Chýba subpermit'|t('bozp') }}
+                                    </span>
+                                {% endif %}
                             </td>
                             <td>{{ permit.contractorCompany ?: '—' }}</td>
                             <td>{{ permit.workLocation ?: '—' }}</td>

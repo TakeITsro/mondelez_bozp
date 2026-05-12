@@ -1,0 +1,92 @@
+{# Appendix 7 — Permit for excavation work #}
+
+{% set ut = values.utilitiesChecked ?? [] %}
+
+{% macro yn_row(name, value, label) %}
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ label }}</span>
+        <div class="bozp-form__yesno">
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <span>{{ 'Áno'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <span>{{ 'Nie'|t('bozp') }}</span>
+            </label>
+        </div>
+    </div>
+{% endmacro %}
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Parametre výkopu'|t('bozp') }}</legend>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="excavationDepth">{{ 'Hĺbka výkopu (m)'|t('bozp') }}</label>
+            <input type="text" id="excavationDepth" name="excavationDepth"
+                   value="{{ values.excavationDepth ?? '' }}" maxlength="20" style="width:120px">
+        </div>
+        <div class="bozp-form__field">
+            <label for="excavationLength">{{ 'Dĺžka / plocha výkopu'|t('bozp') }}</label>
+            <input type="text" id="excavationLength" name="excavationLength"
+                   value="{{ values.excavationLength ?? '' }}" maxlength="50" style="width:160px">
+        </div>
+    </div>
+
+    <div class="bozp-form__field">
+        <label for="soilType">{{ 'Typ zeminy / geologické podmienky'|t('bozp') }}</label>
+        <input type="text" id="soilType" name="soilType"
+               value="{{ values.soilType ?? '' }}" maxlength="255">
+    </div>
+
+    {{ _self.yn_row('excavationOver1m', values.excavationOver1m ?? '', 'Výkop je hlbší ako 1,5 m (vyžaduje paženie)?'|t('bozp')) }}
+    {{ _self.yn_row('shoringInstalled', values.shoringInstalled ?? '', 'Paženie / steny sú zabezpečené proti zosuvom?'|t('bozp')) }}
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Podzemné inžinierske siete'|t('bozp') }}</legend>
+
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ 'Skontrolované podzemné siete'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set utOptions = {
+                'electric':  'Elektrické káble'|t('bozp'),
+                'gas':       'Plynové potrubia'|t('bozp'),
+                'water':     'Vodovod'|t('bozp'),
+                'sewage':    'Kanalizácia'|t('bozp'),
+                'telecom':   'Telekomunikácie'|t('bozp'),
+                'steam':     'Parové potrubia'|t('bozp'),
+            } %}
+            {% for key, label in utOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="utilitiesChecked[]" value="{{ key }}"
+                           {% if key in ut %}checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    {{ _self.yn_row('utilityMapsReviewed', values.utilityMapsReviewed ?? '', 'Výkresy inžinierskych sietí boli preskúmané?'|t('bozp')) }}
+    {{ _self.yn_row('safeDistanceFromUtilities', values.safeDistanceFromUtilities ?? '', 'Bezpečná vzdialenosť od inžinierskych sietí je dodržaná?'|t('bozp')) }}
+
+    <div class="bozp-form__field">
+        <label for="utilitiesNotes">{{ 'Poznámky k inžinierskym sietiam'|t('bozp') }}</label>
+        <textarea id="utilitiesNotes" name="utilitiesNotes" rows="2">{{ values.utilitiesNotes ?? '' }}</textarea>
+    </div>
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Bezpečnosť výkopu'|t('bozp') }}</legend>
+
+    {{ _self.yn_row('areaFenced', values.areaFenced ?? '', 'Oblasť výkopu je ohradená a označená?'|t('bozp')) }}
+    {{ _self.yn_row('safeEntryExit', values.safeEntryExit ?? '', 'Bezpečný vstup a výstup z výkopu je zabezpečený (schody, rebrík)?'|t('bozp')) }}
+    {{ _self.yn_row('atmosphereChecked', values.atmosphereChecked ?? '', 'Atmosféra vo výkope bola skontrolovaná (O₂, toxické / horľavé plyny)?'|t('bozp')) }}
+    {{ _self.yn_row('emergencyEgressClear', values.emergencyEgressClear ?? '', 'Núdzový únik je voľný a prístupný?'|t('bozp')) }}
+
+    <div class="bozp-form__field">
+        <label for="excavationAdditionalMeasures">{{ 'Ďalšie bezpečnostné opatrenia'|t('bozp') }}</label>
+        <textarea id="excavationAdditionalMeasures" name="excavationAdditionalMeasures" rows="3">{{ values.excavationAdditionalMeasures ?? '' }}</textarea>
+    </div>
+</fieldset>

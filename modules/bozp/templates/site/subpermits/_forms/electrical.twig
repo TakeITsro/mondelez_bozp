@@ -1,0 +1,101 @@
+{# Appendix 6 — Permit for high-risk electrical work #}
+
+{% set ppe = values.electricalPpe ?? [] %}
+
+{% macro yn_row(name, value, label) %}
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ label }}</span>
+        <div class="bozp-form__yesno">
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <span>{{ 'Áno'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <span>{{ 'Nie'|t('bozp') }}</span>
+            </label>
+        </div>
+    </div>
+{% endmacro %}
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Elektrická inštalácia'|t('bozp') }}</legend>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="voltageLevel">{{ 'Napätie (V)'|t('bozp') }}</label>
+            <input type="text" id="voltageLevel" name="voltageLevel"
+                   value="{{ values.voltageLevel ?? '' }}" maxlength="50" style="width:120px">
+        </div>
+        <div class="bozp-form__field">
+            <label for="circuitId">{{ 'Označenie obvodu / rozvádzača'|t('bozp') }}</label>
+            <input type="text" id="circuitId" name="circuitId"
+                   value="{{ values.circuitId ?? '' }}" maxlength="100">
+        </div>
+    </div>
+
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ 'Typ práce'|t('bozp') }}</span>
+        <div class="bozp-form__yesno">
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="liveWork" value="live"
+                       {% if (values.liveWork ?? '') == 'live' %}checked{% endif %}>
+                <span>{{ 'Práca pod napätím'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="liveWork" value="dead"
+                       {% if (values.liveWork ?? '') == 'dead' %}checked{% endif %}>
+                <span>{{ 'Práca bez napätia'|t('bozp') }}</span>
+            </label>
+        </div>
+    </div>
+
+    {{ _self.yn_row('circuitDeEnergized', values.circuitDeEnergized ?? '', 'Obvod bol odistený a uzamknutý (LOTO)?'|t('bozp')) }}
+    {{ _self.yn_row('voltageVerified', values.voltageVerified ?? '', 'Absencia napätia bola overená voltmetrom?'|t('bozp')) }}
+    {{ _self.yn_row('earthingApplied', values.earthingApplied ?? '', 'Uzemnenie bolo aplikované na pracovisko?'|t('bozp')) }}
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Oprávnenie a OOPP'|t('bozp') }}</legend>
+
+    <div class="bozp-form__row bozp-form__row--2col">
+        <div class="bozp-form__field">
+            <label for="electricianName">{{ 'Meno elektrikára'|t('bozp') }}</label>
+            <input type="text" id="electricianName" name="electricianName"
+                   value="{{ values.electricianName ?? '' }}" maxlength="255">
+        </div>
+        <div class="bozp-form__field">
+            <label for="electricianCertificate">{{ 'Číslo osvedčenia (vyhláška 508/2009)'|t('bozp') }}</label>
+            <input type="text" id="electricianCertificate" name="electricianCertificate"
+                   value="{{ values.electricianCertificate ?? '' }}" maxlength="100">
+        </div>
+    </div>
+
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ 'Použité OOPP'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set ppeOptions = {
+                'insulated_gloves':  'Izolačné rukavice'|t('bozp'),
+                'insulated_tools':   'Izolačné náradie'|t('bozp'),
+                'face_shield':       'Ochranný štít tváre (oblúk)'|t('bozp'),
+                'arc_flash_suit':    'Oblek na ochranu pred oblúkom'|t('bozp'),
+                'safety_boots':      'Antistatická obuv'|t('bozp'),
+                'voltage_detector':  'Detektor napätia'|t('bozp'),
+            } %}
+            {% for key, label in ppeOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="electricalPpe[]" value="{{ key }}"
+                           {% if key in ppe %}checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    {{ _self.yn_row('safetyObserverPresent', values.safetyObserverPresent ?? '', 'Je prítomný dozorný pracovník počas celej doby práce?'|t('bozp')) }}
+
+    <div class="bozp-form__field">
+        <label for="electricalAdditionalMeasures">{{ 'Ďalšie bezpečnostné opatrenia'|t('bozp') }}</label>
+        <textarea id="electricalAdditionalMeasures" name="electricalAdditionalMeasures" rows="3">{{ values.electricalAdditionalMeasures ?? '' }}</textarea>
+    </div>
+</fieldset>

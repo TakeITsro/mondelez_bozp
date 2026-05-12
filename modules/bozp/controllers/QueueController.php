@@ -10,11 +10,14 @@ use craft\web\Controller;
 use craft\web\View;
 use modules\bozp\enums\HazardCategory;
 use modules\bozp\enums\PermitStatus;
+use modules\bozp\enums\SubpermitStatus;
+use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
 use modules\bozp\records\AuditLogRecord;
 use modules\bozp\records\PermitAttachmentRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
+use modules\bozp\records\SubpermitRecord;
 use modules\bozp\records\ZoneRecord;
 use Throwable;
 use yii\web\NotFoundHttpException;
@@ -50,6 +53,7 @@ class QueueController extends Controller
         return $this->renderTemplate('bozp/cp/queue', [
             'pendingCount' => $pendingCount,
             'pendingPermits' => $pendingPermits,
+            'incompletePermitIds' => $this->computeIncompletePermitIds($pendingPermits),
         ]);
     }
 
@@ -96,6 +100,16 @@ class QueueController extends Controller
             ->limit(50)
             ->all();
 
+        $subpermits = SubpermitRecord::find()
+            ->where(['parentPermitId' => $permit->id])
+            ->orderBy(['dateCreated' => SORT_ASC])
+            ->all();
+
+        $rawRequired = $permit->requiresHighRisk;
+        $requiredTypes = is_string($rawRequired)
+            ? (json_decode($rawRequired, true) ?? [])
+            : ($rawRequired ?? []);
+
         $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
         return $this->renderTemplate('bozp/cp/permit-view', [
@@ -109,7 +123,94 @@ class QueueController extends Controller
             'attachments' => $this->loadAttachmentsFor((int) $permit->id),
             'canApprove' => Craft::$app->getUser()->checkPermission('bozp:approve'),
             'canDelete' => Craft::$app->getUser()->checkPermission('bozp:deletePermit'),
+            'subpermits' => $subpermits,
+            'subpermitTypes' => SubpermitType::cases(),
+            'requiredSubpermitTypes' => $requiredTypes,
         ]);
+    }
+
+    public function actionApproveSubpermit(): ?Response
+    {
+        $this->requirePostRequest();
+        $this->requireLogin();
+        $this->requirePermission('bozp:approve');
+
+        $request = Craft::$app->getRequest();
+        $permitId = (int) $request->getRequiredBodyParam('permitId');
+        $id = (int) $request->getRequiredBodyParam('id');
+
+        $permit = $this->findPermit($permitId);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        if ($subpermit->status !== SubpermitStatus::Pending->value) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit nie je v stave na schválenie.'));
+            return $this->redirect("bozp/permit/{$permitId}");
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+8 hours'));
+
+        $subpermit->status = SubpermitStatus::Approved->value;
+        $subpermit->approverId = Craft::$app->getUser()->getId();
+        $subpermit->approvedAt = $now;
+        $subpermit->expiresAt = $expiresAt;
+
+        if (!$subpermit->save()) {
+            Craft::error('Subpermit approve failed: ' . print_r($subpermit->getErrors(), true), __METHOD__);
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit sa nepodarilo schváliť.'));
+            return $this->redirect("bozp/permit/{$permitId}");
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol schválený. Platnosť 8 hodín.'));
+        return $this->redirect("bozp/permit/{$permitId}");
+    }
+
+    public function actionRejectSubpermit(): ?Response
+    {
+        $this->requirePostRequest();
+        $this->requireLogin();
+        $this->requirePermission('bozp:approve');
+
+        $request = Craft::$app->getRequest();
+        $permitId = (int) $request->getRequiredBodyParam('permitId');
+        $id = (int) $request->getRequiredBodyParam('id');
+        $note = trim((string) $request->getBodyParam('rejectionNote', ''));
+
+        if ($note === '') {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Pri zamietnutí je dôvod povinný.'));
+            return $this->redirect("bozp/permit/{$permitId}");
+        }
+
+        $permit = $this->findPermit($permitId);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        if ($subpermit->status !== SubpermitStatus::Pending->value) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit nie je v stave na zamietnutie.'));
+            return $this->redirect("bozp/permit/{$permitId}");
+        }
+
+        $subpermit->status = SubpermitStatus::Rejected->value;
+        $subpermit->approverId = Craft::$app->getUser()->getId();
+        $subpermit->rejectedAt = date('Y-m-d H:i:s');
+        $subpermit->rejectionNote = $note;
+
+        if (!$subpermit->save()) {
+            Craft::error('Subpermit reject failed: ' . print_r($subpermit->getErrors(), true), __METHOD__);
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit sa nepodarilo zamietnuť.'));
+            return $this->redirect("bozp/permit/{$permitId}");
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol zamietnutý.'));
+        return $this->redirect("bozp/permit/{$permitId}");
+    }
+
+    private function findSubpermit(int $id, int $permitId): SubpermitRecord
+    {
+        $subpermit = SubpermitRecord::findOne(['id' => $id, 'parentPermitId' => $permitId]);
+        if (!$subpermit) {
+            throw new NotFoundHttpException('Subpermit not found.');
+        }
+        return $subpermit;
     }
 
     /** @return PermitAttachmentRecord[] */
@@ -313,6 +414,59 @@ class QueueController extends Controller
             Craft::t('bozp', 'Permit {n} bol zmazaný.', ['n' => $number])
         );
         return $this->redirect('bozp/all');
+    }
+
+    /**
+     * Returns a set of permit IDs that have at least one required subpermit
+     * type without a corresponding approved subpermit.
+     *
+     * @param PermitRecord[] $permits
+     * @return array<int, true>  keyed by permitId
+     */
+    private function computeIncompletePermitIds(array $permits): array
+    {
+        if ($permits === []) {
+            return [];
+        }
+
+        $permitIds = array_map(fn(PermitRecord $p) => (int) $p->id, $permits);
+
+        // Collect all approved subpermit types for these permits in one query.
+        $approvedRows = (new \yii\db\Query())
+            ->select(['parentPermitId', 'type'])
+            ->from('{{%bozp_subpermits}}')
+            ->where(['parentPermitId' => $permitIds, 'status' => SubpermitStatus::Approved->value])
+            ->all();
+
+        // Build map: permitId → [type => true]
+        $approvedByPermit = [];
+        foreach ($approvedRows as $row) {
+            $approvedByPermit[(int) $row['parentPermitId']][$row['type']] = true;
+        }
+
+        $incomplete = [];
+        foreach ($permits as $permit) {
+            $raw = $permit->requiresHighRisk;
+            // JSON column may come back as string or already-decoded array.
+            if (is_string($raw)) {
+                $raw = json_decode($raw, true);
+            }
+            $required = is_array($raw) ? $raw : [];
+
+            if ($required === []) {
+                continue;
+            }
+
+            $approved = $approvedByPermit[(int) $permit->id] ?? [];
+            foreach ($required as $type) {
+                if (!isset($approved[$type])) {
+                    $incomplete[(int) $permit->id] = true;
+                    break;
+                }
+            }
+        }
+
+        return $incomplete;
     }
 
     private function findPermit(int $id): PermitRecord

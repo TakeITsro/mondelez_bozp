@@ -11,11 +11,13 @@ use modules\bozp\enums\HazardCategory;
 use modules\bozp\enums\PermitStatus;
 use modules\bozp\enums\PermitType;
 use modules\bozp\enums\SignatureRole;
+use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
 use modules\bozp\records\AuditLogRecord;
 use modules\bozp\records\PermitAttachmentRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
+use modules\bozp\records\SubpermitRecord;
 use modules\bozp\records\ZoneRecord;
 use Throwable;
 use yii\web\ForbiddenHttpException;
@@ -234,6 +236,16 @@ class PermitsController extends BaseSiteController
 
         $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
 
+        $subpermits = SubpermitRecord::find()
+            ->where(['parentPermitId' => $permit->id])
+            ->orderBy(['dateCreated' => SORT_ASC])
+            ->all();
+
+        $rawRequired = $permit->requiresHighRisk;
+        $requiredTypes = is_string($rawRequired)
+            ? (json_decode($rawRequired, true) ?? [])
+            : ($rawRequired ?? []);
+
         return $this->renderTemplate('bozp/site/permit-detail', [
             'permit' => $permit,
             'zones' => $zones,
@@ -254,6 +266,9 @@ class PermitsController extends BaseSiteController
             'cancelValues' => array_merge($defaultIssuerSign, ['reason' => ''], $cancelValues),
             'closeErrors' => $closeErrors,
             'closeValues' => array_merge($defaultIssuerSign, ['requiresTrialOperation' => 'no'], $closeValues),
+            'subpermits' => $subpermits,
+            'subpermitTypes' => SubpermitType::cases(),
+            'requiredSubpermitTypes' => $requiredTypes,
         ]);
     }
 
@@ -318,6 +333,7 @@ class PermitsController extends BaseSiteController
             'permit' => null,
             'zones' => $zones,
             'hazardCategories' => HazardCategory::pdfOrder(),
+            'subpermitTypes' => SubpermitType::cases(),
             'errors' => [],
             'values' => $this->defaultValues(),
         ]);
@@ -354,6 +370,7 @@ class PermitsController extends BaseSiteController
                 'emergencyPlan' => '',
             ],
             'hazards' => $hazards,
+            'requiresHighRisk' => [],
         ];
     }
 
@@ -381,6 +398,7 @@ class PermitsController extends BaseSiteController
             'zoneIds'              => (array) $request->getBodyParam('zoneIds', []),
             'preparation'          => $this->normalizePreparation((array) $request->getBodyParam('preparation', [])),
             'hazards'              => $this->normalizeHazards((array) $request->getBodyParam('hazards', [])),
+            'requiresHighRisk'     => $this->normalizeRequiresHighRisk((array) $request->getBodyParam('requiresHighRisk', [])),
         ];
 
         $errors = $this->validate($values, $intent);
@@ -397,6 +415,7 @@ class PermitsController extends BaseSiteController
                 'permit' => null,
                 'zones' => $zones,
                 'hazardCategories' => HazardCategory::pdfOrder(),
+                'subpermitTypes' => SubpermitType::cases(),
                 'errors' => $errors,
                 'values' => $values,
             ]);
@@ -430,6 +449,11 @@ class PermitsController extends BaseSiteController
             $permit->stopConditionsDescription = $prep['stopConditionsDescription'] !== '' ? $prep['stopConditionsDescription'] : null;
             $permit->lotoImplemented = $this->ynToBool($prep['lotoImplemented']);
             $permit->emergencyPlan = $prep['emergencyPlan'] !== '' ? $prep['emergencyPlan'] : null;
+
+            // JSON array of SubpermitType values, e.g. ["hot_work","heights"]
+            $permit->requiresHighRisk = $values['requiresHighRisk'] !== []
+                ? json_encode($values['requiresHighRisk'])
+                : null;
 
             if (!$permit->save()) {
                 throw new \RuntimeException('Save failed: ' . print_r($permit->getErrors(), true));
@@ -562,6 +586,21 @@ class PermitsController extends BaseSiteController
         }
 
         return $out;
+    }
+
+    /**
+     * Filters the posted requiresHighRisk[] array to valid SubpermitType values only.
+     *
+     * @param array<mixed> $raw
+     * @return string[]
+     */
+    private function normalizeRequiresHighRisk(array $raw): array
+    {
+        $valid = array_map(fn(SubpermitType $t) => $t->value, SubpermitType::cases());
+        return array_values(array_intersect(
+            array_map('strval', $raw),
+            $valid,
+        ));
     }
 
     private function ynToBool(string $v): ?bool

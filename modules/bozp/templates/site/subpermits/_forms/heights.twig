@@ -1,0 +1,94 @@
+{# Appendix 4 — Permit to work at heights #}
+
+{% set fp = values.fallProtection ?? [] %}
+{% set eu = values.equipmentUsed ?? [] %}
+
+{% macro yn_row(name, value, label) %}
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ label }}</span>
+        <div class="bozp-form__yesno">
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <span>{{ 'Áno'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <span>{{ 'Nie'|t('bozp') }}</span>
+            </label>
+        </div>
+    </div>
+{% endmacro %}
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Ochrana pred pádom'|t('bozp') }}</legend>
+
+    {{ _self.yn_row('avoidFallPossible', values.avoidFallPossible ?? '', 'Je možné vyhnúť sa riziku pádu (predĺžené nástroje, práca na úrovni podlahy)?'|t('bozp')) }}
+
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ 'Použitý systém ochrany pred pádom'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set fpOptions = {
+                'guardrail':          'Zábradlový systém (zabraňuje pádom)'|t('bozp'),
+                'fall_arrest_1360':   'Systém zachytenia pádu — 1 360 kg'|t('bozp'),
+                'fall_arrest_2260':   'Systém zachytenia pádu — 2 260 kg'|t('bozp'),
+                'safety_net':         'Záchytná sieť'|t('bozp'),
+                'other':              'Iné'|t('bozp'),
+            } %}
+            {% for key, label in fpOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="fallProtection[]" value="{{ key }}"
+                           {% if key in fp %}checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        <input type="text" name="fallProtectionOther"
+               value="{{ values.fallProtectionOther ?? '' }}"
+               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+               maxlength="255" style="margin-top:6px">
+    </div>
+
+    {{ _self.yn_row('workerTrained', values.workerTrained ?? '', 'Pracovník je vyškolený, oprávnený a kvalifikovaný na prácu vo výškach?'|t('bozp')) }}
+</fieldset>
+
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Príprava pracoviska'|t('bozp') }}</legend>
+
+    {{ _self.yn_row('constructionSuitable', values.constructionSuitable ?? '', 'Konštrukčné podmienky sú vhodné pre prácu (dostatočná nosnosť)?'|t('bozp')) }}
+    {{ _self.yn_row('fenceRequired', values.fenceRequired ?? '', 'Je potrebné ohradiť priestor kvôli pohybu osôb a zariadení?'|t('bozp')) }}
+    {{ _self.yn_row('anchorPointUsed', values.anchorPointUsed ?? '', 'Bol použitý kotevný bod?'|t('bozp')) }}
+
+    <div class="bozp-form__field">
+        <label for="anchorPointDescription">{{ 'Popis kotevného bodu'|t('bozp') }}</label>
+        <input type="text" id="anchorPointDescription" name="anchorPointDescription"
+               value="{{ values.anchorPointDescription ?? '' }}" maxlength="255">
+    </div>
+
+    <div class="bozp-form__field">
+        <span class="bozp-form__label">{{ 'Použité zariadenia'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set euOptions = {
+                'portable_ladders':      'Prenosné rebríky'|t('bozp'),
+                'scaffolding':           'Lešenie'|t('bozp'),
+                'mobile_platforms':      'Mobilné pracovné plošiny'|t('bozp'),
+                'lifting_platforms':     'Zdvíhacie plošiny'|t('bozp'),
+                'suspended_platforms':   'Závesné plošiny'|t('bozp'),
+                'other':                 'Iné'|t('bozp'),
+            } %}
+            {% for key, label in euOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="equipmentUsed[]" value="{{ key }}"
+                           {% if key in eu %}checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        <input type="text" name="equipmentOther"
+               value="{{ values.equipmentOther ?? '' }}"
+               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+               maxlength="255" style="margin-top:6px">
+    </div>
+
+    {{ _self.yn_row('fallProtectionValidInspection', values.fallProtectionValidInspection ?? '', 'Použité zariadenie na ochranu pred pádom má platnú kontrolu?'|t('bozp')) }}
+    {{ _self.yn_row('workDiscussed', values.workDiscussed ?? '', 'Práca bola skontrolovaná a prerokovaná priamo na pracovisku?'|t('bozp')) }}
+</fieldset>
