@@ -290,8 +290,7 @@
                                    value="{{ type.value }}"
                                    {% if type.value in (values.requiresHighRisk ?? []) %}checked{% endif %}>
                             <span>
-                                <strong>{{ 'Príloha č. {n}'|t('bozp', {n: type.appendixNumber()}) }}</strong>
-                                — {{ type.label() }}
+                                {{ type.label() }}
                             </span>
                         </label>
                     {% endfor %}

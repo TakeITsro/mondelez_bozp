@@ -5,30 +5,26 @@
 <fieldset class="bozp-form__section">
     <legend>{{ 'Informácie o práci'|t('bozp') }}</legend>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
-            <label for="issuedBy">{{ 'Permit vydal (meno a priezvisko)'|t('bozp') }}</label>
-            <input type="text" id="issuedBy" name="issuedBy"
-                   value="{{ values.issuedBy ?? '' }}" maxlength="255">
-        </div>
-        <div class="bozp-form__field">
-            <label for="jobOrderNumber">{{ 'Číslo pracovného príkazu / smena'|t('bozp') }}</label>
-            <input type="text" id="jobOrderNumber" name="jobOrderNumber"
-                   value="{{ values.jobOrderNumber ?? '' }}" maxlength="100">
-        </div>
+    <div class="bozp-form__field">
+        <label for="issuedBy">{{ 'Permit vydal (meno a priezvisko)'|t('bozp') }}</label>
+        <input type="text" id="issuedBy" name="issuedBy"
+               value="{{ values.issuedBy ?? '' }}" maxlength="255">
+    </div>
+    <div class="bozp-form__field">
+        <label for="jobOrderNumber">{{ 'Číslo pracovného príkazu / smena'|t('bozp') }}</label>
+        <input type="text" id="jobOrderNumber" name="jobOrderNumber"
+               value="{{ values.jobOrderNumber ?? '' }}" maxlength="100">
     </div>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
-            <label for="workStartTime">{{ 'Čas začiatku prác'|t('bozp') }}</label>
-            <input type="time" id="workStartTime" name="workStartTime"
-                   value="{{ values.workStartTime ?? '' }}">
-        </div>
-        <div class="bozp-form__field">
-            <label for="workExpiryTime">{{ 'Čas expirácie'|t('bozp') }}</label>
-            <input type="time" id="workExpiryTime" name="workExpiryTime"
-                   value="{{ values.workExpiryTime ?? '' }}">
-        </div>
+    <div class="bozp-form__field">
+        <label for="workStartTime">{{ 'Čas začiatku prác'|t('bozp') }}</label>
+        <input type="time" id="workStartTime" name="workStartTime"
+               value="{{ values.workStartTime ?? '' }}">
+    </div>
+    <div class="bozp-form__field">
+        <label for="workExpiryTime">{{ 'Čas expirácie'|t('bozp') }}</label>
+        <input type="time" id="workExpiryTime" name="workExpiryTime"
+               value="{{ values.workExpiryTime ?? '' }}">
     </div>
 </fieldset>
 

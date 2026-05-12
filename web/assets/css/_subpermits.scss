@@ -1,4 +1,4 @@
-.bozp-page--permit-form {
+.bozp-page--subpermit-select {
   min-height: calc(100vh - 3.75em);
   gap: 5em;
   padding: 5em;
@@ -7,6 +7,66 @@
     width: 100%;
     max-width: 980px;
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25em;
+
+    .bozp-page__back {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+  }
+
+  .bozp-subpermit-types {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.5em;
+
+    .bozp-subpermit-type-card {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 2.5em;
+
+      .bozp-subpermit-type-card__info {
+        width: calc(100% - 150px - 2.5em);
+        display: flex;
+        align-items: center;
+        gap: 1.25em;
+
+        span {
+          font-size: 1.5em;
+
+          &.bozp-subpermit-type-card__required-badge {
+            font-size: 1.5em;
+            background-color: orange;
+            border-radius: 4px;
+            padding: 5px 10px;
+          }
+        }
+      }
+
+      .bozp-btn {
+        width: 150px;
+      }
+    }
+  }
+}
+
+.bozp-page--subpermit-form {
+  min-height: calc(100vh - 3.75em);
+  gap: 5em;
+  padding: 5em;
+
+  .bozp-page__header {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: space-between;
     gap: 2.5em;
@@ -78,6 +138,30 @@
         .bozp-form__hint {
           width: 100%;
         }
+
+        &.bozp-form__field_column {
+          flex-direction: column;
+
+          .bozp-form__step-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            > input {
+              width: calc(100% - 20px);
+              min-width: 300px;
+              color: var(--main-color-light) !important;
+              font-size: 1em;
+              font-weight: 400;
+              line-height: 1.2em;
+              border: 1px solid var(--form-input-border) !important;
+              border-radius: 8px;
+              background-color: var(--form-input-bg) !important;
+              padding: 0.5em 1em;
+            }
+          }
+        }
       }
 
       .bozp-form__hazards {
@@ -127,6 +211,25 @@
             font-weight: 400;
             line-height: 1.2em;
             text-transform: uppercase;
+          }
+        }
+      }
+
+      .bozp-form__checklist {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.25em;
+
+        .bozp-form__check {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.625em;
+
+          input {
+            width: 20px;
+            height: 20px;
           }
         }
       }

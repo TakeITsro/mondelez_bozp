@@ -90,6 +90,12 @@ p {
 .bozp .bozp-main .bozp-flash.bozp-flash--error {
   background-color: red;
 }
+.bozp .bozp-main .bozp-alert {
+  font-size: 1.5em;
+  background-color: red;
+  border-radius: 4px;
+  padding: 5px 10px;
+}
 
 .bozp-header {
   width: 100%;
@@ -190,6 +196,14 @@ p {
   background-color: green;
   color: var(--main-color-light);
   border: 2px solid var(--main-color-light);
+}
+
+#bozp-sp-sign-dialog,
+#bozp-subpermit-sign-dialog,
+#bozp-dialog-close {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .bozp-page--login {
@@ -484,6 +498,27 @@ p {
   text-transform: uppercase;
   padding: 0.5em 1em;
 }
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.625em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt input {
+  width: 20px;
+  height: 20px;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt span {
+  color: var(--main-color);
+  font-size: 1.5em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
 .bozp-page--permit-form .bozp-form .bozp-form__actions {
   width: 100%;
   display: flex;
@@ -564,6 +599,480 @@ p {
   line-height: 1.2em;
   text-transform: uppercase;
   padding: 0.5em 1em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-section__header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-subpermits-table {
+  width: 100%;
+  border-spacing: 1.25em 0.625em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-subpermits-table tr th {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-align: left;
+}
+.bozp-page--permit-detail .bozp-section .bozp-subpermits-table tr td {
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+}
+
+.bozp-page--subpermit-select {
+  min-height: calc(100vh - 3.75em);
+  gap: 5em;
+  padding: 5em;
+}
+.bozp-page--subpermit-select .bozp-page__header {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--subpermit-select .bozp-page__header .bozp-page__back {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.bozp-page--subpermit-select .bozp-subpermit-types {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5em;
+}
+.bozp-page--subpermit-select .bozp-subpermit-types .bozp-subpermit-type-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2.5em;
+}
+.bozp-page--subpermit-select .bozp-subpermit-types .bozp-subpermit-type-card .bozp-subpermit-type-card__info {
+  width: calc(100% - 150px - 2.5em);
+  display: flex;
+  align-items: center;
+  gap: 1.25em;
+}
+.bozp-page--subpermit-select .bozp-subpermit-types .bozp-subpermit-type-card .bozp-subpermit-type-card__info span {
+  font-size: 1.5em;
+}
+.bozp-page--subpermit-select .bozp-subpermit-types .bozp-subpermit-type-card .bozp-subpermit-type-card__info span.bozp-subpermit-type-card__required-badge {
+  font-size: 1.5em;
+  background-color: orange;
+  border-radius: 4px;
+  padding: 5px 10px;
+}
+.bozp-page--subpermit-select .bozp-subpermit-types .bozp-subpermit-type-card .bozp-btn {
+  width: 150px;
+}
+
+.bozp-page--subpermit-form {
+  min-height: calc(100vh - 3.75em);
+  gap: 5em;
+  padding: 5em;
+}
+.bozp-page--subpermit-form .bozp-page__header {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5em;
+}
+.bozp-page--subpermit-form .bozp-form {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25em;
+  padding: 1.25em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section legend {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__field {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.25em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__field > label {
+  width: calc(50% - 0.625em);
+  min-width: 300px;
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__field > input {
+  width: calc(50% - 0.625em);
+  min-width: 300px;
+  color: var(--main-color-light) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 1px solid var(--form-input-border) !important;
+  border-radius: 8px;
+  background-color: var(--form-input-bg) !important;
+  padding: 0.5em 1em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__field > textarea {
+  width: calc(50% - 0.625em);
+  color: var(--main-color-light) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 1px solid var(--form-input-border) !important;
+  border-radius: 8px;
+  background-color: var(--form-input-bg) !important;
+  padding: 0.5em 1em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__field .bozp-form__hint {
+  width: 100%;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__field.bozp-form__field_column {
+  flex-direction: column;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__field.bozp-form__field_column .bozp-form__step-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__field.bozp-form__field_column .bozp-form__step-row > input {
+  width: calc(100% - 20px);
+  min-width: 300px;
+  color: var(--main-color-light) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 1px solid var(--form-input-border) !important;
+  border-radius: 8px;
+  background-color: var(--form-input-bg) !important;
+  padding: 0.5em 1em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__hazards {
+  width: 100%;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards {
+  width: 100%;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards th {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards td {
+  color: var(--main-color);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  padding: 0.5em 1em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.625em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt input {
+  width: 20px;
+  height: 20px;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt span {
+  color: var(--main-color);
+  font-size: 1.5em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__checklist {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__checklist .bozp-form__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625em;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__section .bozp-form__checklist .bozp-form__check input {
+  width: 20px;
+  height: 20px;
+}
+.bozp-page--subpermit-form .bozp-form .bozp-form__actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2.5em;
+}
+
+.bozp-page--contractor-auth {
+  min-height: calc(100vh - 3.75em);
+  justify-content: center;
+  background-color: var(--main-color);
+  padding: 5em;
+}
+.bozp-page--contractor-auth .bozp-login {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__logo {
+  width: 100%;
+  margin-bottom: 2.5em;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__logo svg {
+  width: 100%;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__logo svg path {
+  fill: var(--main-color-light);
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__lang {
+  display: flex;
+  align-items: center;
+  gap: 5em;
+  margin: 5em 0;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__lang a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__lang a svg {
+  width: 48px;
+  border-radius: 50%;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__lang a span {
+  color: var(--main-color-light);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__header h1 {
+  color: var(--main-color-light);
+  font-size: 3.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__header p {
+  color: var(--main-color-light);
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25em;
+  margin-top: 2.5em;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625em;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field > label {
+  color: var(--main-color-light);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field > input {
+  width: 100%;
+  height: 4em;
+  color: var(--main-color-light) !important;
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 1px solid var(--form-input-border) !important;
+  border-radius: 8px;
+  background-color: var(--form-input-bg) !important;
+  padding: 1em;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field .bozp-form__error {
+  color: red;
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field.bozp-form__field--error input {
+  border: 1px solid red;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field.bozp-form__field--checkbox {
+  flex-direction: row;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field.bozp-form__field--checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field.bozp-form__field--checkbox label input {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__field.bozp-form__field--checkbox label span {
+  width: calc(100% - 30px);
+  color: var(--main-color-light);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__actions {
+  width: 100%;
+  margin-top: 1.25em;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__actions .bozp-btn {
+  width: 100%;
+  height: 3.75em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--main-color-dark);
+  border-radius: 6.25em;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-form .bozp-form__actions .bozp-btn span {
+  color: var(--main-color-light);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--contractor-auth .bozp-login .bozp-login__help {
+  color: var(--form-input-bg);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  margin-top: 2em;
+}
+
+.bozp-page--contractor-detail {
+  min-height: calc(100vh - 3.75em);
+  gap: 5em;
+  padding: 5em;
+}
+.bozp-page--contractor-detail .bozp-detail__header {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--contractor-detail dl {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25em 0.625em;
+  flex-wrap: wrap;
+}
+.bozp-page--contractor-detail dl dt {
+  width: calc(50% - 0.625em);
+}
+.bozp-page--contractor-detail dl dd {
+  width: calc(50% - 0.625em);
+  color: var(--main-color);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 1px solid var(--form-input-border);
+  border-radius: 8px;
+  padding: 0.5em 1em;
+}
+.bozp-page--contractor-detail .bozp-detail__section {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--contractor-detail .bozp-detail__section .bozp-hazards {
+  width: 100%;
+}
+.bozp-page--contractor-detail .bozp-detail__section .bozp-hazards th {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--contractor-detail .bozp-detail__section .bozp-hazards td {
+  color: var(--main-color);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  padding: 0.5em 1em;
+}
+.bozp-page--contractor-detail .bozp-detail__section .bozp-subpermit-card {
+  width: 100%;
+}
+.bozp-page--contractor-detail .bozp-detail__section .bozp-subpermit-card .bozp-subpermit-card-signatures {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5em;
+  border-top: 1px solid #eee;
+  margin-top: 12px;
+}
+.bozp-page--contractor-detail .bozp-detail__section .bozp-subpermit-card .bozp-subpermit-card-signatures > div {
+  width: calc(50% - 1.25em);
+  margin-top: 12px;
+}
+.bozp-page--contractor-detail .bozp-detail__section .bozp-subpermit-card .bozp-subpermit-card-signatures > div span {
+  font-size: 1em;
+}
+.bozp-page--contractor-detail .bozp-detail__section .bozp-subpermit-card .bozp-subpermit-card-signatures > div img {
+  width: 100%;
 }
 
 /*# sourceMappingURL=main.css.map */

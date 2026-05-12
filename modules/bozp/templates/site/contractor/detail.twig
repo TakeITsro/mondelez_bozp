@@ -179,58 +179,60 @@
                             <p style="margin:8px 0 0;font-size:14px;">{{ spData.workDescription }}</p>
                         {% endif %}
 
-                        {# Issuer signature #}
-                        <div style="margin-top:12px;font-size:13px;">
-                            {% if issuerSig %}
-                                {% set iAsset = craft.assets().id(issuerSig.signatureAssetId).one() %}
-                                <span class="bozp-yn bozp-yn--yes">✓ {{ 'Vydavateľ podpísal'|t('bozp') }}:</span>
-                                {{ issuerSig.signerName }}
-                                {% if iAsset %}
-                                    <img src="{{ iAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
-                                         style="display:block;max-width:200px;max-height:70px;margin-top:4px;border:1px solid #eee;background:#fff;">
+                        <div class="bozp-subpermit-card-signatures">
+                            {# Issuer signature #}
+                            <div>
+                                {% if issuerSig %}
+                                    {% set iAsset = craft.assets().id(issuerSig.signatureAssetId).one() %}
+                                    <span class="bozp-yn bozp-yn--yes">✓ {{ 'Vydavateľ podpísal'|t('bozp') }}:</span>
+                                    {{ issuerSig.signerName }}
+                                    {% if iAsset %}
+                                        <img src="{{ iAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                             style="display:block;margin-top:4px;border:1px solid #eee;background:#fff;">
+                                    {% endif %}
+                                {% else %}
+                                    <span class="light">{{ 'Vydavateľ ešte nepodpísal.'|t('bozp') }}</span>
                                 {% endif %}
-                            {% else %}
-                                <span class="light">{{ 'Vydavateľ ešte nepodpísal.'|t('bozp') }}</span>
-                            {% endif %}
-                        </div>
+                            </div>
 
-                        {# Contractor signature #}
-                        <div style="margin-top:12px;border-top:1px solid #eee;padding-top:12px;">
-                            {% if contractorSig %}
-                                {% set cAsset = craft.assets().id(contractorSig.signatureAssetId).one() %}
-                                <span class="bozp-yn bozp-yn--yes">✓ {{ 'Dodávateľ podpísal'|t('bozp') }}:</span>
-                                {{ contractorSig.signerName }}
-                                {% if contractorSig.signerEmployer %} ({{ contractorSig.signerEmployer }}){% endif %}
-                                {% if cAsset %}
-                                    <img src="{{ cAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
-                                         style="display:block;max-width:280px;max-height:100px;margin-top:4px;border:1px solid #eee;background:#fff;">
+                            {# Contractor signature #}
+                            <div>
+                                {% if contractorSig %}
+                                    {% set cAsset = craft.assets().id(contractorSig.signatureAssetId).one() %}
+                                    <span class="bozp-yn bozp-yn--yes">✓ {{ 'Dodávateľ podpísal'|t('bozp') }}:</span>
+                                    {{ contractorSig.signerName }}
+                                    {% if contractorSig.signerEmployer %} ({{ contractorSig.signerEmployer }}){% endif %}
+                                    {% if cAsset %}
+                                        <img src="{{ cAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                             style="display:block;margin-top:4px;border:1px solid #eee;background:#fff;">
+                                    {% endif %}
+                                    <p class="light" style="font-size:12px;margin-top:4px;">
+                                        {{ contractorSig.signatureDate ? contractorSig.signatureDate|date('d.m.Y') : '—' }}
+                                    </p>
+                                {% else %}
+                                    {# Hidden form — populated by the dialog JS before submit #}
+                                    <form method="post" id="bozp-sp-sign-form-{{ sp.id }}"
+                                          action="{{ url('bozp/c/' ~ token ~ '/subpermits/' ~ sp.id ~ '/sign') }}">
+                                        {{ csrfInput() }}
+                                        <input type="hidden" name="action" value="bozp/contractor/sign-subpermit">
+                                        <input type="hidden" name="token" value="{{ token }}">
+                                        <input type="hidden" name="id" value="{{ sp.id }}">
+                                        <input type="hidden" name="signerName"     id="bozp-sp-sig-name-{{ sp.id }}">
+                                        <input type="hidden" name="signerEmployer" id="bozp-sp-sig-employer-{{ sp.id }}">
+                                        <input type="hidden" name="signatureDate"  id="bozp-sp-sig-date-{{ sp.id }}">
+                                        <input type="hidden" name="signatureData"  id="bozp-sp-sig-data-{{ sp.id }}">
+                                    </form>
+
+                                    <p style="margin:0 0 8px;font-size:14px;font-weight:600;">
+                                        {{ 'Podpíšte potvrdenie prevzatia subpermitu'|t('bozp') }}
+                                    </p>
+                                    <button type="button" class="bozp-btn bozp-btn--primary bozp-sp-open-sign"
+                                            data-sp-id="{{ sp.id }}"
+                                            data-sp-label="{{ spLabelMap[sp.type] ?? sp.type }}">
+                                        {{ 'Podpísať subpermit'|t('bozp') }}
+                                    </button>
                                 {% endif %}
-                                <p class="light" style="font-size:12px;margin-top:4px;">
-                                    {{ contractorSig.signatureDate ? contractorSig.signatureDate|date('d.m.Y') : '—' }}
-                                </p>
-                            {% else %}
-                                {# Hidden form — populated by the dialog JS before submit #}
-                                <form method="post" id="bozp-sp-sign-form-{{ sp.id }}"
-                                      action="{{ url('bozp/c/' ~ token ~ '/subpermits/' ~ sp.id ~ '/sign') }}">
-                                    {{ csrfInput() }}
-                                    <input type="hidden" name="action" value="bozp/contractor/sign-subpermit">
-                                    <input type="hidden" name="token" value="{{ token }}">
-                                    <input type="hidden" name="id" value="{{ sp.id }}">
-                                    <input type="hidden" name="signerName"     id="bozp-sp-sig-name-{{ sp.id }}">
-                                    <input type="hidden" name="signerEmployer" id="bozp-sp-sig-employer-{{ sp.id }}">
-                                    <input type="hidden" name="signatureDate"  id="bozp-sp-sig-date-{{ sp.id }}">
-                                    <input type="hidden" name="signatureData"  id="bozp-sp-sig-data-{{ sp.id }}">
-                                </form>
-
-                                <p style="margin:0 0 8px;font-size:14px;font-weight:600;">
-                                    {{ 'Podpíšte potvrdenie prevzatia subpermitu'|t('bozp') }}
-                                </p>
-                                <button type="button" class="bozp-btn bozp-btn--primary bozp-sp-open-sign"
-                                        data-sp-id="{{ sp.id }}"
-                                        data-sp-label="{{ spLabelMap[sp.type] ?? sp.type }}">
-                                    {{ 'Podpísať subpermit'|t('bozp') }}
-                                </button>
-                            {% endif %}
+                            </div>
                         </div>
                     </div>
                 {% endfor %}

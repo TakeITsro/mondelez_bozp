@@ -59,23 +59,21 @@
             <fieldset class="bozp-form__section">
                 <legend>{{ 'Základné informácie'|t('bozp') }}</legend>
 
-                <div class="bozp-form__row bozp-form__row--2col">
-                    <div class="bozp-form__field{% if errors.date is defined %} bozp-form__field--error{% endif %}">
-                        <label for="date">{{ 'Dátum'|t('bozp') }} <span class="bozp-form__req">*</span></label>
-                        <input type="date" id="date" name="date"
-                               value="{{ values.date ?? '' }}"
-                               {% if errors.date is defined %}aria-invalid="true"{% endif %}>
-                        {{ _self.field_error(errors, 'date') }}
-                    </div>
+                <div class="bozp-form__field{% if errors.date is defined %} bozp-form__field--error{% endif %}">
+                    <label for="date">{{ 'Dátum'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <input type="date" id="date" name="date"
+                           value="{{ values.date ?? '' }}"
+                           {% if errors.date is defined %}aria-invalid="true"{% endif %}>
+                    {{ _self.field_error(errors, 'date') }}
+                </div>
 
-                    <div class="bozp-form__field{% if errors.placeOfWork is defined %} bozp-form__field--error{% endif %}">
-                        <label for="placeOfWork">{{ 'Miesto výkonu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
-                        <input type="text" id="placeOfWork" name="placeOfWork"
-                               value="{{ values.placeOfWork ?? '' }}"
-                               maxlength="500"
-                               {% if errors.placeOfWork is defined %}aria-invalid="true"{% endif %}>
-                        {{ _self.field_error(errors, 'placeOfWork') }}
-                    </div>
+                <div class="bozp-form__field{% if errors.placeOfWork is defined %} bozp-form__field--error{% endif %}">
+                    <label for="placeOfWork">{{ 'Miesto výkonu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <input type="text" id="placeOfWork" name="placeOfWork"
+                           value="{{ values.placeOfWork ?? '' }}"
+                           maxlength="500"
+                           {% if errors.placeOfWork is defined %}aria-invalid="true"{% endif %}>
+                    {{ _self.field_error(errors, 'placeOfWork') }}
                 </div>
 
                 <div class="bozp-form__field{% if errors.responsiblePerson is defined %} bozp-form__field--error{% endif %}">
@@ -97,7 +95,7 @@
                     <textarea id="workDescription" name="workDescription" rows="3">{{ values.workDescription ?? '' }}</textarea>
                 </div>
 
-                <div class="bozp-form__field">
+                <div class="bozp-form__field bozp-form__field_column">
                     <p class="bozp-form__label">{{ 'Hlavné kroky'|t('bozp') }}</p>
                     {% for i in 1..5 %}
                         <div class="bozp-form__step-row">
