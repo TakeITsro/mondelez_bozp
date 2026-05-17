@@ -31,7 +31,7 @@ use yii\web\Response;
  */
 class AuthController extends Controller
 {
-    protected array|bool|int $allowAnonymous = ['login'];
+    public array|bool|int $allowAnonymous = ['login'];
 
     public function actionLogin(): ?Response
     {

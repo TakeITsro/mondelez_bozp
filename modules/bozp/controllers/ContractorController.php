@@ -18,12 +18,14 @@ use modules\bozp\enums\SignatureRole;
 use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
 use modules\bozp\records\PermitAttachmentRecord;
+use modules\bozp\records\PermitControlRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\PermitSignatureRecord;
 use modules\bozp\records\PermitZoneRecord;
 use modules\bozp\records\SubpermitRecord;
 use modules\bozp\records\ZoneRecord;
+use yii\web\ForbiddenHttpException;
 use modules\bozp\services\SignatureService;
 use modules\bozp\services\SubpermitSignatureService;
 use Throwable;
@@ -64,7 +66,7 @@ class ContractorController extends Controller
 
     public const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 
-    protected array|bool|int $allowAnonymous = true;
+    public array|bool|int $allowAnonymous = true;
     public $enableCsrfValidation = true;
 
     public function actionView(string $token): Response
@@ -289,6 +291,8 @@ class ContractorController extends Controller
             /** @var Module $module */
             $module = Craft::$app->getModule('bozp');
             $module->permitWorkflow->closeByRecipient($permit, $statusFlags, $values['signerName']);
+            $module->permitMailer->notifyIssuerOfContractorSignature($permit, 'close', $values['signerName']);
+            $module->permitPdfService->generateForPermit($permit);
 
             Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Dokončenie bolo zaznamenané.'));
         } catch (Throwable $e) {
@@ -356,6 +360,8 @@ class ContractorController extends Controller
             /** @var Module $module */
             $module = Craft::$app->getModule('bozp');
             $module->permitWorkflow->cancelByRecipient($permit, $reason !== '' ? $reason : null, $values['signerName']);
+            $module->permitMailer->notifyIssuerOfContractorSignature($permit, 'cancel', $values['signerName']);
+            $module->permitPdfService->generateForPermit($permit);
 
             Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Permit bol zrušený dodávateľom.'));
         } catch (Throwable $e) {
@@ -368,6 +374,260 @@ class ContractorController extends Controller
         }
 
         return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+    }
+
+    /**
+     * GET bozp/c/<token>/pdf — redirect to the permit PDF (requires password auth).
+     */
+    public function actionPermitPdf(string $token): Response
+    {
+        $permit = $this->lookupPermit($token);
+
+        if ($this->isExpired($permit)) {
+            return $this->renderExpired();
+        }
+        if (!$this->isAuthedFor($token)) {
+            return $this->renderPasswordPrompt($permit, []);
+        }
+
+        /** @var \modules\bozp\Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        if (empty($permit->pdfAssetId)) {
+            $module->permitPdfService->generateForPermit($permit);
+            $permit = \modules\bozp\records\PermitRecord::findOne(['id' => $permit->id]);
+        }
+
+        if (empty($permit->pdfAssetId)) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'PDF nie je k dispozícii.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        $asset = Craft::$app->getAssets()->getAssetById((int) $permit->pdfAssetId);
+        if (!$asset || !$asset->url) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'PDF súbor nebol nájdený.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        return $this->redirect($asset->url);
+    }
+
+    /**
+     * GET bozp/c/<token>/subpermits/<id>/pdf — redirect to a subpermit PDF (requires password auth).
+     */
+    public function actionSubpermitPdf(string $token): Response
+    {
+        $permit = $this->lookupPermit($token);
+
+        if ($this->isExpired($permit)) {
+            return $this->renderExpired();
+        }
+        if (!$this->isAuthedFor($token)) {
+            return $this->renderPasswordPrompt($permit, []);
+        }
+
+        $id = (int) Craft::$app->getRequest()->getParam('id');
+        $subpermit = \modules\bozp\records\SubpermitRecord::findOne(['id' => $id, 'parentPermitId' => $permit->id]);
+        if (!$subpermit) {
+            throw new \yii\web\NotFoundHttpException('Subpermit not found.');
+        }
+
+        /** @var \modules\bozp\Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        if (empty($subpermit->pdfAssetId)) {
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+            $subpermit = \modules\bozp\records\SubpermitRecord::findOne(['id' => $id]);
+        }
+
+        if (empty($subpermit->pdfAssetId)) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'PDF nie je k dispozícii.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        $asset = Craft::$app->getAssets()->getAssetById((int) $subpermit->pdfAssetId);
+        if (!$asset || !$asset->url) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'PDF súbor nebol nájdený.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        return $this->redirect($asset->url);
+    }
+
+    /**
+     * GET bozp/c/<token>/control
+     * Shows the control-visit form. Requires a logged-in Craft user with
+     * bozp:control permission. If not logged in, redirects to bozp/login.
+     */
+    public function actionControlView(string $token): Response
+    {
+        if ($redirect = $this->requireControlLogin()) {
+            return $redirect;
+        }
+
+        $permit = $this->lookupPermit($token);
+
+        $controls = PermitControlRecord::find()
+            ->where(['permitId' => $permit->id])
+            ->orderBy(['controlledAt' => SORT_DESC])
+            ->all();
+
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+        return $this->renderTemplate('bozp/site/contractor/control', [
+            'permit'   => $permit,
+            'token'    => $token,
+            'controls' => $controls,
+            'errors'   => [],
+            'values'   => [],
+        ]);
+    }
+
+    /**
+     * POST bozp/c/<token>/control
+     * Saves a control-visit record. Token is read from the POST body (Yii2
+     * route params are not bound to POST actions).
+     */
+    public function actionSaveControl(): Response
+    {
+        $this->requirePostRequest();
+
+        if ($redirect = $this->requireControlLogin()) {
+            return $redirect;
+        }
+
+        $token  = Craft::$app->getRequest()->getRequiredBodyParam('token');
+        $permit = $this->lookupPermit($token);
+
+        $request = Craft::$app->getRequest();
+
+        $values = [
+            'controlledAt' => trim((string) $request->getBodyParam('controlledAt', '')),
+            'controllerName' => trim((string) $request->getBodyParam('controllerName', '')),
+            'result'       => trim((string) $request->getBodyParam('result', 'ok')),
+            'notes'        => trim((string) $request->getBodyParam('notes', '')),
+            'signatureData' => (string) $request->getBodyParam('signatureData', ''),
+            'signatureDate' => trim((string) $request->getBodyParam('signatureDate', '')),
+        ];
+
+        $errors = [];
+
+        if ($values['controlledAt'] === '') {
+            $errors['controlledAt'] = (string) Craft::t('bozp', 'Dátum a čas kontroly je povinný.');
+        }
+        if ($values['controllerName'] === '') {
+            $errors['controllerName'] = (string) Craft::t('bozp', 'Meno kontrolóra je povinné.');
+        }
+        if (!in_array($values['result'], ['ok', 'issues', 'stopped'], true)) {
+            $errors['result'] = (string) Craft::t('bozp', 'Vyberte výsledok kontroly.');
+        }
+        if (!preg_match('#^data:image/png;base64,#', $values['signatureData'])) {
+            $errors['signatureData'] = (string) Craft::t('bozp', 'Podpis je povinný.');
+        }
+
+        if ($errors !== []) {
+            $controls = PermitControlRecord::find()
+                ->where(['permitId' => $permit->id])
+                ->orderBy(['controlledAt' => SORT_DESC])
+                ->all();
+
+            $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+            return $this->renderTemplate('bozp/site/contractor/control', [
+                'permit'   => $permit,
+                'token'    => $token,
+                'controls' => $controls,
+                'errors'   => $errors,
+                'values'   => $values,
+            ]);
+        }
+
+        try {
+            // Save signature PNG as a Craft Asset
+            $signatureAssetId = null;
+            $pngData = base64_decode(substr($values['signatureData'], strpos($values['signatureData'], ',') + 1));
+            if ($pngData !== false && strlen($pngData) >= 100) {
+                $volume = Craft::$app->getVolumes()->getVolumeByHandle(self::ASSET_VOLUME_HANDLE);
+                $rootFolder = $volume ? Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id) : null;
+                if ($volume && $rootFolder) {
+                    $tempPath = Craft::$app->getPath()->getTempPath()
+                        . '/sig-control-' . bin2hex(random_bytes(8)) . '.png';
+                    file_put_contents($tempPath, $pngData);
+
+                    $asset = new \craft\elements\Asset();
+                    $asset->tempFilePath = $tempPath;
+                    $asset->filename = \craft\helpers\Assets::prepareAssetName(
+                        'control-' . $permit->id . '-' . time() . '.png'
+                    );
+                    $asset->newFolderId = $rootFolder->id;
+                    $asset->volumeId = $volume->id;
+                    $asset->avoidFilenameConflicts = true;
+                    $asset->setScenario(\craft\elements\Asset::SCENARIO_CREATE);
+
+                    if (Craft::$app->getElements()->saveElement($asset)) {
+                        $signatureAssetId = (int) $asset->id;
+                    }
+                }
+            }
+
+            $user = Craft::$app->getUser()->getIdentity();
+
+            $control = new PermitControlRecord();
+            $control->permitId         = (int) $permit->id;
+            $control->controllerUserId = $user ? (int) $user->id : null;
+            $control->controllerName   = $values['controllerName'];
+            $control->controlledAt     = $values['controlledAt'];
+            $control->result           = $values['result'];
+            $control->notes            = $values['notes'] !== '' ? $values['notes'] : null;
+            $control->signatureAssetId = $signatureAssetId;
+            $control->signedAt         = date('Y-m-d H:i:s');
+            $control->ipAddress        = Craft::$app->getRequest()->getUserIP();
+
+            if (!$control->save()) {
+                throw new \RuntimeException('Control record save failed: ' . print_r($control->getErrors(), true));
+            }
+
+            /** @var Module $module */
+            $module = Craft::$app->getModule('bozp');
+            $module->auditLogger->log(
+                permitId: (int) $permit->id,
+                userId: $user ? (int) $user->id : null,
+                action: 'control_visit',
+                note: 'Result: ' . $values['result'] . ($values['notes'] !== '' ? ' — ' . mb_substr($values['notes'], 0, 100) : ''),
+            );
+            $module->permitMailer->notifyParticipantsOfControl($permit, $control);
+
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Kontrola bola zaznamenaná.')
+            );
+        } catch (Throwable $e) {
+            Craft::error('BOZP control save failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Uloženie kontroly zlyhalo. Skúste znova.')
+            );
+        }
+
+        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token . '/control'));
+    }
+
+    /**
+     * Require a logged-in Craft user with bozp:control permission.
+     * Returns a redirect Response if the check fails, null if OK.
+     */
+    private function requireControlLogin(): ?Response
+    {
+        $userService = Craft::$app->getUser();
+
+        if ($userService->getIsGuest()) {
+            $userService->setReturnUrl(Craft::$app->getRequest()->getAbsoluteUrl());
+            return $this->redirect(UrlHelper::siteUrl('bozp/login'));
+        }
+
+        if (!$userService->checkPermission('bozp:control')) {
+            throw new ForbiddenHttpException(
+                Craft::t('bozp', 'Nemáte oprávnenie na vykonávanie kontrol.')
+            );
+        }
+
+        return null;
     }
 
     /**
@@ -604,6 +864,11 @@ class ContractorController extends Controller
             }
         }
 
+        $controls = PermitControlRecord::find()
+            ->where(['permitId' => $permit->id])
+            ->orderBy(['controlledAt' => SORT_DESC])
+            ->all();
+
         $defaultSign = [
             'signerName' => $permit->contractorPersonName ?: '',
             'signerEmployer' => $permit->contractorCompany ?: '',
@@ -635,6 +900,7 @@ class ContractorController extends Controller
             'subpermits' => $subpermits,
             'subpermitSignatures' => $subpermitSignatures,
             'subpermitTypes' => SubpermitType::cases(),
+            'controls' => $controls,
         ]);
     }
 

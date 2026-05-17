@@ -1,0 +1,163 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{# ---------------------------------------------------------------------------
+   CP Subpermit edit — HSE officer can edit subpermit data fields.
+   Variables from QueueController::actionEditSubpermit():
+     permit, subpermit, subpermitType, values (decoded + overridden by POST),
+     errors, canApprove
+--------------------------------------------------------------------------- #}
+
+{% set appendixN = subpermitType ? subpermitType.appendixNumber() : '?' %}
+{% set typeLabel = subpermitType ? subpermitType.label() : subpermit.type %}
+
+{% set title = ('Upraviť prílohu č. {n}'|t('bozp'))|replace({'{n}': appendixN}) %}
+{% set selectedSubnavItem = 'queue' %}
+
+{% set crumbs = [
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
+    { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) },
+    { label: ('Príloha č. {n}'|t('bozp'))|replace({'{n}': appendixN}),
+      url: cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) },
+    { label: 'Upraviť'|t('bozp'), url: '' }
+] %}
+
+{% set values = values ?? {} %}
+{% set errors = errors ?? {} %}
+
+{% macro field_error(errors, key) %}
+    {% if errors[key] is defined %}
+        <p class="error" style="margin-top:4px;">{{ errors[key] }}</p>
+    {% endif %}
+{% endmacro %}
+
+{% macro yes_no(name, value) %}
+    <div style="display:flex;gap:16px;margin-top:4px;">
+        <label><input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}> {{ 'Áno'|t('bozp') }}</label>
+        <label><input type="radio" name="{{ name }}" value="no"  {% if value == 'no'  %}checked{% endif %}> {{ 'Nie'|t('bozp') }}</label>
+    </div>
+{% endmacro %}
+
+{% block headHtml %}
+<style>
+.bozp-status{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.8em;font-weight:600;line-height:1.6;white-space:nowrap;color:#fff}
+.bozp-status--pending{background:#d97706}.bozp-status--approved{background:#16a34a}
+.bozp-status--rejected{background:#dc2626}.bozp-status--cancelled{background:#991b1b}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-pane">
+
+    <div class="flex flex-nowrap" style="justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+        <div>
+            <h2 style="margin:0;">{{ 'Príloha č. {n}'|t('bozp', {n: appendixN}) }} — {{ typeLabel }}</h2>
+            <div style="margin-top:6px;">
+                <span class="bozp-status bozp-status--{{ subpermit.status }}">
+                    {{ subpermit.status|t('bozp') }}
+                </span>
+                <span class="light" style="font-size:12px;margin-left:8px;">
+                    {{ permit.permitNumber }}
+                </span>
+            </div>
+        </div>
+        <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) }}" class="btn">
+            ← {{ 'Späť'|t('bozp') }}
+        </a>
+    </div>
+
+    <hr>
+
+    {% if errors|length > 0 %}
+        <div class="error" style="margin-bottom:16px;padding:12px;">
+            <strong>{{ 'Opravte nasledujúce chyby'|t('bozp') }}:</strong>
+            <ul style="margin:6px 0 0 16px;">
+                {% for field, msg in errors %}
+                    <li>{{ msg }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <form method="post" accept-charset="UTF-8" novalidate>
+        {{ csrfInput() }}
+        <input type="hidden" name="action" value="bozp/queue/update-subpermit">
+        <input type="hidden" name="permitId" value="{{ permit.id }}">
+        <input type="hidden" name="id" value="{{ subpermit.id }}">
+
+        {# ---- Common fields ---- #}
+        <h3>{{ 'Základné informácie'|t('bozp') }}</h3>
+
+        {{ forms.dateField({
+            label: 'Dátum'|t('bozp'),
+            name: 'date',
+            value: values.date ?? '',
+            required: true,
+            errors: errors.date is defined ? [errors.date] : [],
+        }) }}
+
+        {{ forms.textField({
+            label: 'Miesto výkonu'|t('bozp'),
+            name: 'placeOfWork',
+            value: values.placeOfWork ?? '',
+            required: true,
+            errors: errors.placeOfWork is defined ? [errors.placeOfWork] : [],
+        }) }}
+
+        {{ forms.textField({
+            label: 'Zodpovedná osoba MDLZ'|t('bozp'),
+            name: 'responsiblePerson',
+            value: values.responsiblePerson ?? '',
+            required: true,
+            errors: errors.responsiblePerson is defined ? [errors.responsiblePerson] : [],
+        }) }}
+
+        {{ forms.textareaField({
+            label: 'Zúčastnení dodávatelia / osoby'|t('bozp'),
+            name: 'participants',
+            value: values.participants ?? '',
+            rows: 2,
+        }) }}
+
+        {{ forms.textareaField({
+            label: 'Popis vykonávanej práce'|t('bozp'),
+            name: 'workDescription',
+            value: values.workDescription ?? '',
+            rows: 3,
+        }) }}
+
+        <div class="field">
+            <div class="heading"><label>{{ 'Hlavné kroky'|t('bozp') }}</label></div>
+            <div class="input">
+                {% for i in 1..5 %}
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="width:20px;text-align:right;color:#888;">{{ i }}.</span>
+                        <input type="text" name="workStep{{ i }}"
+                               value="{{ attribute(values, 'workStep' ~ i) ?? '' }}"
+                               style="flex:1;"
+                               aria-label="{{ 'Krok {n}'|t('bozp', {n: i}) }}">
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ---- Type-specific fields — rendered from the same partials ---- #}
+        {# We re-use the site form partials here for consistency.             #}
+        {# The partials only output <fieldset> blocks — safe in CP context.  #}
+        {% if subpermitType %}
+            <h3 style="margin-top:24px;">{{ 'Špecifické podmienky'|t('bozp') }}</h3>
+            {% include 'bozp/site/subpermits/_forms/' ~ subpermit.type ~ '.twig' with {
+                values: values,
+                errors: errors,
+            } only %}
+        {% endif %}
+
+        <div class="buttons" style="margin-top:24px;">
+            <button type="submit" class="btn submit">{{ 'Uložiť zmeny'|t('bozp') }}</button>
+            <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) }}"
+               class="btn">{{ 'Zrušiť'|t('bozp') }}</a>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

@@ -1,0 +1,300 @@
+{% extends 'bozp/site/contractor/_layout.twig' %}
+
+{# ---------------------------------------------------------------------------
+   Control visit form.
+   GET  bozp/c/<token>/control  — shows form + list of past controls
+   POST bozp/c/<token>/control  — saves via ContractorController::actionSaveControl()
+
+   Variables: permit, token, controls (PermitControlRecord[]), errors, values
+--------------------------------------------------------------------------- #}
+
+{% set values = values ?? {} %}
+{% set errors = errors ?? {} %}
+
+{% set resultLabels = {
+    'ok':      'V poriadku'|t('bozp'),
+    'issues':  'Zistené nedostatky'|t('bozp'),
+    'stopped': 'Práce zastavené'|t('bozp'),
+} %}
+
+{% block title %}{{ 'Kontrola prevádzky'|t('bozp') }} — {{ permit.permitNumber }}{% endblock %}
+
+{% block content %}
+<section class="bozp-page bozp-page--control">
+
+    <header class="bozp-page__header">
+        <p class="bozp-page__back">
+            <a href="{{ url('bozp/c/' ~ token) }}">← {{ 'Späť na permit'|t('bozp') }}</a>
+        </p>
+        <h1>{{ 'Kontrola prevádzky'|t('bozp') }}</h1>
+        <p class="bozp-page__lede">
+            {{ 'Permit'|t('bozp') }}: <strong>{{ permit.permitNumber }}</strong>
+            · {{ permit.contractorCompany ?: '—' }}
+        </p>
+    </header>
+
+    {# ---- Flash notices ---- #}
+    {% set flashNotice = craft.app.session.getFlash('notice') %}
+    {% set flashError  = craft.app.session.getFlash('error') %}
+    {% if flashNotice %}
+        <div class="bozp-alert bozp-alert--success" style="margin-bottom:16px;">✓ {{ flashNotice }}</div>
+    {% endif %}
+    {% if flashError %}
+        <div class="bozp-alert bozp-alert--danger" style="margin-bottom:16px;">{{ flashError }}</div>
+    {% endif %}
+
+    {# ---- Control form ---- #}
+    <form method="post" action="{{ url('bozp/c/' ~ token ~ '/control') }}"
+          class="bozp-form" novalidate>
+        {{ csrfInput() }}
+        <input type="hidden" name="action" value="bozp/contractor/save-control">
+        <input type="hidden" name="token" value="{{ token }}">
+
+        {# Hidden signature fields — populated by dialog JS before submit #}
+        <input type="hidden" name="signatureData" id="bozp-ctrl-sig-data">
+        <input type="hidden" name="signatureDate" id="bozp-ctrl-sig-date">
+
+        <fieldset class="bozp-form__section">
+            <legend>{{ 'Kontrola'|t('bozp') }}</legend>
+
+            {# Date / time of control #}
+            <div class="bozp-form__field{% if errors.controlledAt is defined %} bozp-form__field--error{% endif %}">
+                <label for="controlledAt">
+                    {{ 'Dátum a čas kontroly'|t('bozp') }} <span class="bozp-form__req">*</span>
+                </label>
+                <input type="datetime-local" id="controlledAt" name="controlledAt"
+                       value="{{ values.controlledAt ?? 'now'|date('Y-m-d\\TH:i') }}"
+                       {% if errors.controlledAt is defined %}aria-invalid="true"{% endif %}>
+                {% if errors.controlledAt is defined %}
+                    <p class="bozp-form__error">{{ errors.controlledAt }}</p>
+                {% endif %}
+            </div>
+
+            {# Controller name #}
+            <div class="bozp-form__field{% if errors.controllerName is defined %} bozp-form__field--error{% endif %}">
+                <label for="controllerName">
+                    {{ 'Meno kontrolóra'|t('bozp') }} <span class="bozp-form__req">*</span>
+                </label>
+                <input type="text" id="controllerName" name="controllerName"
+                       value="{{ values.controllerName ?? (currentUser.fullName ?: currentUser.friendlyName ?: currentUser.username) }}"
+                       maxlength="255"
+                       {% if errors.controllerName is defined %}aria-invalid="true"{% endif %}>
+                {% if errors.controllerName is defined %}
+                    <p class="bozp-form__error">{{ errors.controllerName }}</p>
+                {% endif %}
+            </div>
+
+            {# Result #}
+            <div class="bozp-form__field{% if errors.result is defined %} bozp-form__field--error{% endif %}">
+                <label for="result">
+                    {{ 'Výsledok kontroly'|t('bozp') }} <span class="bozp-form__req">*</span>
+                </label>
+                <select id="result" name="result"
+                        {% if errors.result is defined %}aria-invalid="true"{% endif %}>
+                    {% for val, label in resultLabels %}
+                        <option value="{{ val }}"
+                                {% if (values.result ?? 'ok') == val %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% if errors.result is defined %}
+                    <p class="bozp-form__error">{{ errors.result }}</p>
+                {% endif %}
+            </div>
+
+            {# Notes #}
+            <div class="bozp-form__field">
+                <label for="notes">{{ 'Poznámky / zistenia'|t('bozp') }}</label>
+                <textarea id="notes" name="notes" rows="4"
+                          maxlength="2000">{{ values.notes ?? '' }}</textarea>
+            </div>
+        </fieldset>
+
+        {% if errors.signatureData is defined %}
+            <div class="bozp-alert bozp-alert--danger" style="margin:0 0 16px;">
+                {{ errors.signatureData }}
+            </div>
+        {% endif %}
+
+        <div class="bozp-form__actions">
+            <a href="{{ url('bozp/c/' ~ token) }}" class="bozp-btn bozp-btn--cancel">
+                {{ 'Zrušiť'|t('bozp') }}
+            </a>
+            <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-ctrl-open-sign">
+                {{ 'Podpísať a uložiť kontrolu'|t('bozp') }}
+            </button>
+        </div>
+    </form>
+
+    {# ---- Past controls list ---- #}
+    {% if controls is defined and controls|length > 0 %}
+        <section class="bozp-detail__section" style="margin-top:40px;">
+            <h2>{{ 'Predchádzajúce kontroly'|t('bozp') }}</h2>
+            <table class="bozp-table" style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Dátum a čas'|t('bozp') }}</th>
+                        <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Kontrolór'|t('bozp') }}</th>
+                        <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Výsledok'|t('bozp') }}</th>
+                        <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Podpis'|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in controls %}
+                        <tr style="border-bottom:1px solid #f0f0f0;">
+                            <td style="padding:8px 10px;vertical-align:top;">{{ c.controlledAt|date('d.m.Y H:i') }}</td>
+                            <td style="padding:8px 10px;vertical-align:top;">{{ c.controllerName }}</td>
+                            <td style="padding:8px 10px;vertical-align:top;">
+                                {% set resultCss = {'ok': '#16a34a', 'issues': '#d97706', 'stopped': '#dc2626'} %}
+                                <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:{{ resultCss[c.result] ?? '#6b7280' }};color:#fff;font-size:.8em;font-weight:600;">
+                                    {{ resultLabels[c.result] ?? c.result }}
+                                </span>
+                                {% if c.notes %}
+                                    <p style="margin:4px 0 0;font-size:.85em;color:#555;">{{ c.notes }}</p>
+                                {% endif %}
+                            </td>
+                            <td style="padding:8px 10px;vertical-align:top;">
+                                {% if c.signatureAssetId %}
+                                    {% set sigAsset = craft.assets().id(c.signatureAssetId).one() %}
+                                    {% if sigAsset %}
+                                        <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                             style="max-width:160px;max-height:60px;border:1px solid #eee;background:#fff;display:block;">
+                                    {% endif %}
+                                {% else %}
+                                    <span style="color:#999;font-size:.85em;">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
+
+    {# ---- Signature dialog ---- #}
+    <dialog id="bozp-ctrl-sign-dialog"
+            style="border:none;padding:0;border-radius:8px;max-width:560px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+        <div class="bozp-form bozp-form--sign" style="margin:0;padding:24px;">
+
+            {# Stage 1 — warning #}
+            <div class="bozp-dialog__stage" data-stage="warning">
+                <h3 style="margin-top:0;">{{ 'Podpis kontrolóra'|t('bozp') }}</h3>
+                <p>{{ 'Podpíšte záznam kontroly. Po uložení ho nebude možné upravovať.'|t('bozp') }}</p>
+                <p class="bozp-warning"
+                   style="background:#fff4e0;border-left:4px solid #d97706;padding:10px 14px;margin:16px 0;color:#7a3e00;">
+                    <strong>{{ 'Upozornenie'|t('bozp') }}:</strong>
+                    {{ 'Skontrolujte, že výsledok a poznámky sú správne vyplnené pred podpisom.'|t('bozp') }}
+                </p>
+                <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+                    <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="cancel">
+                        {{ 'Zrušiť'|t('bozp') }}
+                    </button>
+                    <button type="button" class="bozp-btn bozp-btn--primary" data-bozp-action="proceed">
+                        {{ 'Pokračovať k podpisu'|t('bozp') }}
+                    </button>
+                </div>
+            </div>
+
+            {# Stage 2 — signature #}
+            <div class="bozp-dialog__stage" data-stage="form" hidden>
+                <h3 style="margin-top:0;">{{ 'Podpis kontrolóra'|t('bozp') }}</h3>
+
+                <div class="bozp-form__field">
+                    <label>{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <input type="date" id="bozp-ctrl-dlg-date"
+                           value="{{ 'now'|date('Y-m-d') }}" required>
+                </div>
+
+                <div class="bozp-form__field">
+                    <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <div class="bozp-sigpad" style="border:1px solid #ccc;background:#fff;width:100%;">
+                        <canvas id="bozp-ctrl-canvas" data-bozp-sigpad
+                                width="520" height="180"
+                                style="display:block;width:100%;height:180px;touch-action:none;"></canvas>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <button type="button" class="bozp-btn bozp-btn--secondary" id="bozp-ctrl-clear">
+                            {{ 'Vyčistiť'|t('bozp') }}
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;">
+                    <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="back">
+                        {{ 'Späť'|t('bozp') }}
+                    </button>
+                    <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-ctrl-submit">
+                        {{ 'Podpísať a uložiť'|t('bozp') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js"></script>
+    <script>
+    (function () {
+        var dialog    = document.getElementById('bozp-ctrl-sign-dialog');
+        var openBtn   = document.getElementById('bozp-ctrl-open-sign');
+        var mainForm  = openBtn ? openBtn.closest('form') : null;
+        var stages    = dialog ? dialog.querySelectorAll('.bozp-dialog__stage') : [];
+        var canvas    = document.getElementById('bozp-ctrl-canvas');
+        var clearBtn  = document.getElementById('bozp-ctrl-clear');
+        var submitBtn = document.getElementById('bozp-ctrl-submit');
+        var pad       = null;
+
+        function showStage(name) {
+            stages.forEach(function (s) {
+                s.hidden = s.getAttribute('data-stage') !== name;
+            });
+            if (name === 'form') initPad();
+        }
+
+        function initPad() {
+            if (!window.SignaturePad || !canvas || pad) return;
+            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width  = canvas.offsetWidth  * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext('2d').scale(ratio, ratio);
+            pad = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,1)', penColor: '#000' });
+        }
+
+        if (openBtn) {
+            openBtn.addEventListener('click', function () {
+                showStage('warning');
+                dialog.showModal ? dialog.showModal() : dialog.setAttribute('open', '');
+            });
+        }
+
+        if (dialog) {
+            dialog.addEventListener('click', function (e) {
+                var action = e.target.closest('[data-bozp-action]');
+                if (!action) return;
+                var a = action.getAttribute('data-bozp-action');
+                if (a === 'cancel')  { dialog.close(); }
+                if (a === 'proceed') { showStage('form'); }
+                if (a === 'back')    { showStage('warning'); }
+            });
+        }
+
+        if (clearBtn) clearBtn.addEventListener('click', function () { if (pad) pad.clear(); });
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                var dateVal = document.getElementById('bozp-ctrl-dlg-date').value.trim();
+                if (!pad || pad.isEmpty()) {
+                    alert('{{ 'Podpis je povinný.'|t('bozp') }}');
+                    return;
+                }
+                document.getElementById('bozp-ctrl-sig-data').value = pad.toDataURL('image/png');
+                document.getElementById('bozp-ctrl-sig-date').value = dateVal;
+                dialog.close();
+                mainForm.submit();
+            });
+        }
+    })();
+    </script>
+
+</section>
+{% endblock %}

@@ -1,0 +1,261 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{#
+  Public subpermit signing page — no login required.
+  Variables:
+    request       SubpermitSigningRequestRecord
+    subpermit     SubpermitRecord
+    permit        PermitRecord
+    role          SubpermitSigningRole|null
+    data          array  (decoded subpermit JSON data)
+    alreadySigned bool
+    errors        array<string, string>
+    values        array  (re-populated on validation failure)
+#}
+
+{% set subpermitTypeLabel = subpermit.type|capitalize %}
+
+{% block title %}
+    {% if alreadySigned %}
+        {{ 'Podpis bol zaznamenaný'|t('bozp') }}
+    {% else %}
+        {{ 'Podpis subpermitu — permit {n}'|t('bozp', {n: permit.permitNumber}) }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="bozp-page bozp-page--subpermit-sign" style="max-width:680px;margin:0 auto;">
+
+    {# ── Header ────────────────────────────────────────────────────────── #}
+    <header class="bozp-page__header" style="margin-bottom:24px;">
+        <p class="bozp-page__eyebrow"
+           style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4F2170;margin:0 0 6px;">
+            {{ 'Elektronický podpis subpermitu'|t('bozp') }}
+        </p>
+        <h1 style="margin:0 0 8px;">
+            {{ 'Permit'|t('bozp') }} {{ permit.permitNumber }}
+        </h1>
+        {% if permit.workLocation %}
+            <p style="margin:0;color:#444;font-size:14px;">{{ permit.workLocation }}</p>
+        {% endif %}
+    </header>
+
+    {# ── Already signed ────────────────────────────────────────────────── #}
+    {% if alreadySigned %}
+        <div class="bozp-alert bozp-alert--success"
+             style="background:#f0fdf4;border-left:4px solid #4F2170;padding:20px 24px;border-radius:4px;margin-bottom:24px;">
+            <p style="margin:0 0 6px;font-weight:700;font-size:16px;">
+                ✓ {{ 'Podpis bol úspešne zaznamenaný'|t('bozp') }}
+            </p>
+            {% if request.signerName %}
+                <p style="margin:0;font-size:14px;">
+                    {{ 'Podpísal/a: {name}'|t('bozp', {name: request.signerName}) }}
+                </p>
+            {% endif %}
+            {% if request.signedAt %}
+                <p style="margin:4px 0 0;font-size:13px;color:#555;">
+                    {{ request.signedAt|date('d.m.Y H:i') }}
+                </p>
+            {% endif %}
+        </div>
+        <p style="font-size:14px;">
+            {{ 'Túto záložku môžete zavrieť. Ďakujeme.'|t('bozp') }}
+        </p>
+
+    {# ── Signing form ──────────────────────────────────────────────────── #}
+    {% else %}
+
+        {# Role badge #}
+        {% if role %}
+            <div style="display:inline-block;padding:4px 12px;border-radius:20px;
+                        background:#4F2170;color:#FEFFFD;font-size:13px;font-weight:700;margin-bottom:20px;">
+                {{ role.label() }}
+            </div>
+        {% endif %}
+
+        {# General error #}
+        {% if errors.general is defined %}
+            <div class="bozp-alert bozp-alert--danger"
+                 style="background:#fff1f1;border-left:4px solid #000000;padding:12px 16px;border-radius:4px;margin-bottom:20px;">
+                {{ errors.general }}
+            </div>
+        {% endif %}
+
+        {# Permit + subpermit summary #}
+        <div style="background:#FEFFFD;border:1px solid #4F2170;border-radius:6px;padding:16px 20px;margin-bottom:24px;">
+            <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#4F2170;text-transform:uppercase;letter-spacing:1px;">
+                {{ 'Prehľad povolenia'|t('bozp') }}
+            </p>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <tr>
+                    <td style="padding:3px 0;color:#555;width:160px;">{{ 'Číslo povolenia'|t('bozp') }}</td>
+                    <td style="padding:3px 0;font-weight:700;">{{ permit.permitNumber }}</td>
+                </tr>
+                {% if permit.contractorCompany %}
+                    <tr>
+                        <td style="padding:3px 0;color:#555;">{{ 'Dodávateľ'|t('bozp') }}</td>
+                        <td style="padding:3px 0;">{{ permit.contractorCompany }}</td>
+                    </tr>
+                {% endif %}
+                {% if permit.workLocation %}
+                    <tr>
+                        <td style="padding:3px 0;color:#555;">{{ 'Miesto práce'|t('bozp') }}</td>
+                        <td style="padding:3px 0;">{{ permit.workLocation }}</td>
+                    </tr>
+                {% endif %}
+                {% if data.voltageLevel is defined and data.voltageLevel %}
+                    <tr>
+                        <td style="padding:3px 0;color:#555;">{{ 'Napätie'|t('bozp') }}</td>
+                        <td style="padding:3px 0;">{{ data.voltageLevel }} V</td>
+                    </tr>
+                {% endif %}
+                {% if data.circuitId is defined and data.circuitId %}
+                    <tr>
+                        <td style="padding:3px 0;color:#555;">{{ 'Obvod / rozvádzač'|t('bozp') }}</td>
+                        <td style="padding:3px 0;">{{ data.circuitId }}</td>
+                    </tr>
+                {% endif %}
+                {% if data.workDescription is defined and data.workDescription %}
+                    <tr>
+                        <td style="padding:3px 0;color:#555;">{{ 'Popis práce'|t('bozp') }}</td>
+                        <td style="padding:3px 0;">{{ data.workDescription }}</td>
+                    </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        {# Signing form #}
+        <form method="post" action="{{ url('bozp/sp-sign/sign') }}" class="bozp-form" novalidate>
+            {{ csrfInput() }}
+            <input type="hidden" name="action" value="bozp/subpermit-signing/sign">
+            <input type="hidden" name="token" value="{{ request.token }}">
+            <input type="hidden" name="signatureData" id="bozp-sig-data">
+
+            <div class="bozp-form__field{% if errors.signerName is defined %} bozp-form__field--error{% endif %}">
+                <label for="signerName">
+                    {{ 'Vaše meno a priezvisko'|t('bozp') }}
+                    <span class="bozp-form__req">*</span>
+                </label>
+                <input type="text" id="signerName" name="signerName"
+                       value="{{ values.signerName ?? '' }}"
+                       maxlength="255"
+                       autocomplete="name"
+                       {% if errors.signerName is defined %}aria-invalid="true"{% endif %}>
+                {% if errors.signerName is defined %}
+                    <p class="bozp-form__error">{{ errors.signerName }}</p>
+                {% endif %}
+            </div>
+
+            {# Signature pad #}
+            <div class="bozp-form__field{% if errors.signatureData is defined %} bozp-form__field--error{% endif %}">
+                <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <div style="border:2px solid {% if errors.signatureData is defined %}#dc2626{% else %}#4F2170{% endif %};
+                            border-radius:4px;background:#fff;touch-action:none;cursor:crosshair;">
+                    <canvas id="bozp-sig-canvas"
+                            width="600" height="180"
+                            style="display:block;width:100%;height:180px;touch-action:none;">
+                    </canvas>
+                </div>
+                {% if errors.signatureData is defined %}
+                    <p class="bozp-form__error">{{ errors.signatureData }}</p>
+                {% endif %}
+                <button type="button" id="bozp-sig-clear"
+                        style="margin-top:6px;font-size:12px;background:none;border:none;
+                               cursor:pointer;color:#4F2170;text-decoration:underline;padding:0;">
+                    {{ 'Vymazať podpis'|t('bozp') }}
+                </button>
+            </div>
+
+            <p style="font-size:13px;color:#555;margin:0 0 20px;padding:10px 14px;
+                      background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;">
+                {{ 'Podpisom potvrdzujete, že ste si preštudovali podmienky subpermitu a súhlasíte s nimi v roli <strong>{role}</strong>.'|t('bozp', {
+                    role: role ? role.label() : subpermit.type
+                })|raw }}
+            </p>
+
+            <div class="bozp-form__actions">
+                <button type="submit" class="bozp-btn bozp-btn--primary" id="bozp-submit-btn">
+                    {{ 'Podpísať'|t('bozp') }}
+                </button>
+            </div>
+        </form>
+    {% endif %}
+
+</section>
+
+{# ── Signature pad JS ──────────────────────────────────────────────────────── #}
+{% if not alreadySigned %}
+<script>
+(function () {
+    const canvas  = document.getElementById('bozp-sig-canvas');
+    const dataIn  = document.getElementById('bozp-sig-data');
+    const clearBtn = document.getElementById('bozp-sig-clear');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let hasMark = false;
+
+    function pos(e) {
+        const r = canvas.getBoundingClientRect();
+        const scaleX = canvas.width  / r.width;
+        const scaleY = canvas.height / r.height;
+        const src = e.touches ? e.touches[0] : e;
+        return [(src.clientX - r.left) * scaleX, (src.clientY - r.top) * scaleY];
+    }
+
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth   = 2;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+
+    function start(e) {
+        e.preventDefault();
+        drawing = true;
+        const [x, y] = pos(e);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+    function move(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        const [x, y] = pos(e);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        hasMark = true;
+    }
+    function stop(e) {
+        if (!drawing) return;
+        drawing = false;
+        if (hasMark) {
+            dataIn.value = canvas.toDataURL('image/png');
+        }
+    }
+
+    canvas.addEventListener('mousedown',  start);
+    canvas.addEventListener('mousemove',  move);
+    canvas.addEventListener('mouseup',    stop);
+    canvas.addEventListener('mouseleave', stop);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove',  move,  { passive: false });
+    canvas.addEventListener('touchend',   stop);
+
+    clearBtn.addEventListener('click', function () {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        dataIn.value = '';
+        hasMark = false;
+    });
+
+    // Prevent form submit if no signature drawn
+    document.getElementById('bozp-submit-btn').addEventListener('click', function (e) {
+        if (!hasMark || !dataIn.value) {
+            e.preventDefault();
+            dataIn.value = '';
+            canvas.style.borderColor = '#000000';
+            alert('{{ "Prosím, podpíšte sa pred odoslaním."|t("bozp") }}');
+        }
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

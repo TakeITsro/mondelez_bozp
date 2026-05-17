@@ -45,10 +45,17 @@
                 <a href="{{ url('bozp') }}">← {{ 'Moje permity'|t('bozp') }}</a>
             </p>
             <h1>{{ permit.permitNumber }}</h1>
-            <p>
+            <p style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                 <span class="bozp-status bozp-status--{{ permit.status }}">
                     {{ statusLabels[permit.status] ?? permit.status }}
                 </span>
+                <a href="{{ url('bozp/permits/' ~ permit.id ~ '/pdf') }}"
+                   target="_blank"
+                   rel="noopener"
+                   class="bozp-btn bozp-btn--secondary bozp-btn--sm"
+                   style="font-size:12px;padding:4px 12px;">
+                    ⬇ {{ 'Zobraziť PDF'|t('bozp') }}
+                </a>
             </p>
         </header>
 
@@ -289,7 +296,7 @@
             </section>
         {% endif %}
 
-        {# ---- Attachments (read-only list) ---- #}
+        {# ---- Attachments (list + upload form for issuer) ---- #}
         <section class="bozp-section bozp-section--attachments">
             <h2>{{ 'Prílohy'|t('bozp') }}</h2>
             {% if attachments is not defined or attachments|length == 0 %}
@@ -310,6 +317,31 @@
                         </li>
                     {% endfor %}
                 </ul>
+            {% endif %}
+
+            {% if isIssuer is defined and isIssuer %}
+                <form method="post"
+                      action="{{ url('bozp/permits/' ~ permit.id ~ '/upload') }}"
+                      enctype="multipart/form-data"
+                      class="bozp-form bozp-form--upload"
+                      style="margin-top:16px;"
+                      novalidate>
+                    {{ csrfInput() }}
+                    <input type="hidden" name="action" value="bozp/permits/upload-attachment">
+                    <div class="bozp-form__field" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:200px;">
+                            <label for="issuer-attachment">
+                                {{ 'Nahrať prílohu (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp') }}
+                            </label>
+                            <input type="file" id="issuer-attachment" name="attachment"
+                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                   required>
+                        </div>
+                        <button type="submit" class="bozp-btn bozp-btn--secondary">
+                            {{ 'Nahrať'|t('bozp') }}
+                        </button>
+                    </div>
+                </form>
             {% endif %}
         </section>
 
@@ -543,6 +575,56 @@
                         <dd>{{ recipientClosureSignature.signatureDate ? recipientClosureSignature.signatureDate|date('d.m.Y') : '—' }}</dd>
                     </dl>
                 </div>
+            </section>
+        {% endif %}
+
+        {# ---- Control visits ---- #}
+        {% if controls is defined and controls|length > 0 %}
+            {% set resultLabels = {
+                'ok':      'V poriadku'|t('bozp'),
+                'issues':  'Zistené nedostatky'|t('bozp'),
+                'stopped': 'Práce zastavené'|t('bozp'),
+            } %}
+            {% set resultColors = {'ok': '#16a34a', 'issues': '#d97706', 'stopped': '#dc2626'} %}
+            <section class="bozp-section bozp-section--controls">
+                <h2>{{ 'Kontroly prevádzky'|t('bozp') }}</h2>
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="border-bottom:2px solid #e3e5e8;">
+                            <th style="text-align:left;padding:8px 10px;">{{ 'Dátum a čas'|t('bozp') }}</th>
+                            <th style="text-align:left;padding:8px 10px;">{{ 'Kontrolór'|t('bozp') }}</th>
+                            <th style="text-align:left;padding:8px 10px;">{{ 'Výsledok'|t('bozp') }}</th>
+                            <th style="text-align:left;padding:8px 10px;">{{ 'Podpis'|t('bozp') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in controls %}
+                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                <td style="padding:8px 10px;vertical-align:top;">{{ c.controlledAt|date('d.m.Y H:i') }}</td>
+                                <td style="padding:8px 10px;vertical-align:top;">{{ c.controllerName }}</td>
+                                <td style="padding:8px 10px;vertical-align:top;">
+                                    <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:{{ resultColors[c.result] ?? '#6b7280' }};color:#fff;font-size:.8em;font-weight:600;">
+                                        {{ resultLabels[c.result] ?? c.result }}
+                                    </span>
+                                    {% if c.notes %}
+                                        <p style="margin:4px 0 0;font-size:.85em;color:#555;">{{ c.notes }}</p>
+                                    {% endif %}
+                                </td>
+                                <td style="padding:8px 10px;vertical-align:top;">
+                                    {% if c.signatureAssetId %}
+                                        {% set sigAsset = craft.assets().id(c.signatureAssetId).one() %}
+                                        {% if sigAsset %}
+                                            <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                                 style="max-width:160px;max-height:60px;border:1px solid #eee;background:#fff;display:block;">
+                                        {% endif %}
+                                    {% else %}
+                                        <span style="color:#999;font-size:.85em;">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </section>
         {% endif %}
 

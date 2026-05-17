@@ -23,14 +23,13 @@ use yii\web\Response;
  */
 class DashboardController extends BaseSiteController
 {
-    protected array|bool|int $allowAnonymous = ['index'];
+    public array|bool|int $allowAnonymous = ['index'];
 
     public function actionIndex(): Response
     {
         if ($redirect = $this->requireBozpLogin()) {
             return $redirect;
         }
-        $this->requirePermission('bozp:createPermit');
 
         $userId = Craft::$app->getUser()->getId();
 

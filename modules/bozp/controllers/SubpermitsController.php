@@ -7,6 +7,7 @@ namespace modules\bozp\controllers;
 use Craft;
 use craft\web\View;
 use modules\bozp\enums\PermitStatus;
+use modules\bozp\enums\SubpermitSigningRole;
 use modules\bozp\enums\SubpermitStatus;
 use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
@@ -30,7 +31,7 @@ use yii\web\Response;
  */
 class SubpermitsController extends BaseSiteController
 {
-    protected array|bool|int $allowAnonymous = ['new', 'form', 'save', 'view', 'cancel'];
+    public array|bool|int $allowAnonymous = ['new', 'form', 'save', 'view', 'cancel', 'pdf'];
 
     // -------------------------------------------------------------------------
     // Type selector
@@ -152,6 +153,29 @@ class SubpermitsController extends BaseSiteController
 
         $userId = Craft::$app->getUser()->getId();
 
+        // For Electrical subpermits, validate that required signing emails are present
+        if ($subpermitType === SubpermitType::Electrical) {
+            foreach (SubpermitSigningRole::cases() as $role) {
+                if ($role->isRequired() && empty(trim($values['signEmail_' . $role->value] ?? ''))) {
+                    $errors['signEmail_' . $role->value] = (string) Craft::t(
+                        'bozp',
+                        'E-mail pre rolu „{role}" je povinný.',
+                        ['role' => $role->label()]
+                    );
+                }
+            }
+            if ($errors !== []) {
+                Craft::$app->getSession()->setError(Craft::t('bozp', 'Skontrolujte chyby vo formulári.'));
+                $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+                return $this->renderTemplate('bozp/site/subpermits/form', [
+                    'permit' => $permit,
+                    'subpermitType' => $subpermitType,
+                    'errors' => $errors,
+                    'values' => $values,
+                ]);
+            }
+        }
+
         try {
             $subpermit = new SubpermitRecord();
             $subpermit->parentPermitId = $permit->id;
@@ -175,6 +199,21 @@ class SubpermitsController extends BaseSiteController
                 $signatureDate,
                 $signatureData,
             );
+
+            // For Electrical: create token-based signing requests for all other signers
+            if ($subpermitType === SubpermitType::Electrical) {
+                $emails = [];
+                foreach (SubpermitSigningRole::cases() as $role) {
+                    $email = trim($values['signEmail_' . $role->value] ?? '');
+                    if ($email !== '') {
+                        $emails[$role->value] = $email;
+                    }
+                }
+                $module->subpermitSigningService->createRequestsForSubpermit($subpermit, $permit, $emails);
+            }
+
+            // Generate initial subpermit PDF (silently skips on failure)
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
         } catch (Throwable $e) {
             Craft::error('Subpermit save failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
             $msg = (string) Craft::t('bozp', 'Subpermit sa nepodarilo uložiť. Skúste znova.');
@@ -185,7 +224,10 @@ class SubpermitsController extends BaseSiteController
             return $this->redirect("bozp/permits/{$permitId}/subpermits/new/{$typeValue}");
         }
 
-        Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol uložený a podpísaný.'));
+        $notice = $subpermitType === SubpermitType::Electrical
+            ? Craft::t('bozp', 'Subpermit bol uložený. Pozvania na podpis boli odoslané e-mailom.')
+            : Craft::t('bozp', 'Subpermit bol uložený a podpísaný.');
+        Craft::$app->getSession()->setNotice($notice);
         return $this->redirect("bozp/permits/{$permitId}");
     }
 
@@ -265,6 +307,9 @@ class SubpermitsController extends BaseSiteController
             if (!$subpermit->save()) {
                 throw new \RuntimeException('Cancel failed: ' . print_r($subpermit->getErrors(), true));
             }
+            /** @var Module $module */
+            $module = Craft::$app->getModule('bozp');
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
         } catch (Throwable $e) {
             Craft::error('Subpermit cancel failed: ' . $e->getMessage(), __METHOD__);
             $msg = (string) Craft::t('bozp', 'Subpermit sa nepodarilo zrušiť. Skúste znova.');
@@ -276,6 +321,45 @@ class SubpermitsController extends BaseSiteController
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol zrušený.'));
         return $this->redirect("bozp/permits/{$permitId}");
+    }
+
+    // -------------------------------------------------------------------------
+    // PDF
+    // -------------------------------------------------------------------------
+
+    public function actionPdf(int $permitId, int $id): Response
+    {
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $permit = $this->findPermit($permitId);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        $user = Craft::$app->getUser();
+        $isIssuer = (int) $permit->issuerId === (int) $user->getId();
+        if (!$isIssuer && !$user->checkPermission('bozp:viewAll')) {
+            throw new \yii\web\ForbiddenHttpException();
+        }
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        if (empty($subpermit->pdfAssetId)) {
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+            $subpermit = $this->findSubpermit($id, $permitId);
+        }
+
+        if (empty($subpermit->pdfAssetId)) {
+            throw new \yii\web\NotFoundHttpException('PDF is not available yet.');
+        }
+
+        $asset = Craft::$app->getAssets()->getAssetById((int) $subpermit->pdfAssetId);
+        if (!$asset || !$asset->url) {
+            throw new \yii\web\NotFoundHttpException('PDF asset not found.');
+        }
+
+        return $this->redirect($asset->url);
     }
 
     // -------------------------------------------------------------------------
@@ -396,6 +480,14 @@ class SubpermitsController extends BaseSiteController
                 'checklist' => [], 'ssowDescription' => '',
                 'aedInArea' => '', 'cprTrained' => '', 'aedTrained' => '',
                 'areaSupervisorName' => '', 'secondTechnicianName' => '',
+                // Signing request emails (one per required/optional signer role)
+                'signEmail_third_party'              => '',
+                'signEmail_mdlz_qualified_emergency' => '',
+                'signEmail_area_supervisor'          => '',
+                'signEmail_mdlz_qualified_approval'  => '',
+                'signEmail_second_technician'        => '',
+                'signEmail_safety_rep'               => '',
+                'signEmail_maintenance_manager'      => '',
             ],
             SubpermitType::Excavation => [
                 'workerTrained' => '', 'checklist' => [],
@@ -530,6 +622,14 @@ class SubpermitsController extends BaseSiteController
                 'aedTrained'                 => $str('aedTrained'),
                 'areaSupervisorName'         => $str('areaSupervisorName'),
                 'secondTechnicianName'       => $str('secondTechnicianName'),
+                // Signing request emails
+                'signEmail_third_party'              => $str('signEmail_third_party'),
+                'signEmail_mdlz_qualified_emergency' => $str('signEmail_mdlz_qualified_emergency'),
+                'signEmail_area_supervisor'          => $str('signEmail_area_supervisor'),
+                'signEmail_mdlz_qualified_approval'  => $str('signEmail_mdlz_qualified_approval'),
+                'signEmail_second_technician'        => $str('signEmail_second_technician'),
+                'signEmail_safety_rep'               => $str('signEmail_safety_rep'),
+                'signEmail_maintenance_manager'      => $str('signEmail_maintenance_manager'),
             ],
             SubpermitType::Excavation => [
                 'workerTrained'   => $str('workerTrained'),

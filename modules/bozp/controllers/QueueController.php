@@ -15,6 +15,7 @@ use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
 use modules\bozp\records\AuditLogRecord;
 use modules\bozp\records\PermitAttachmentRecord;
+use modules\bozp\records\PermitControlRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\SubpermitRecord;
@@ -126,6 +127,157 @@ class QueueController extends Controller
             'subpermits' => $subpermits,
             'subpermitTypes' => SubpermitType::cases(),
             'requiredSubpermitTypes' => $requiredTypes,
+            'controls' => PermitControlRecord::find()
+                ->where(['permitId' => $permit->id])
+                ->orderBy(['controlledAt' => SORT_DESC])
+                ->all(),
+        ]);
+    }
+
+    /**
+     * CP subpermit detail view for HSE officer.
+     * GET bozp/permit/<permitId>/subpermit/<id>
+     */
+    public function actionSubpermitView(int $permitId, int $id): Response
+    {
+        $this->requireLogin();
+        $this->requirePermission('bozp:viewQueue');
+
+        $permit    = $this->findPermit($permitId);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        $rawData = is_string($subpermit->data) ? (json_decode($subpermit->data, true) ?? []) : ($subpermit->data ?? []);
+        $type    = SubpermitType::tryFrom($subpermit->type);
+
+        /** @var Module $module */
+        $module     = Craft::$app->getModule('bozp');
+        $signatures = $module->subpermitSignatureService->findAllForSubpermit((int) $subpermit->id);
+
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
+
+        return $this->renderTemplate('bozp/cp/subpermit-view', [
+            'permit'        => $permit,
+            'subpermit'     => $subpermit,
+            'subpermitType' => $type,
+            'values'        => $rawData,
+            'signatures'    => $signatures,
+            'canApprove'    => Craft::$app->getUser()->checkPermission('bozp:approve'),
+            'subpermitTypes' => SubpermitType::cases(),
+        ]);
+    }
+
+    /**
+     * GET bozp/permit/<id>/pdf — CP permit PDF download.
+     */
+    public function actionPermitPdf(int $id): Response
+    {
+        $this->requireLogin();
+        $this->requirePermission('bozp:viewQueue');
+
+        $permit = $this->findPermit($id);
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        if (empty($permit->pdfAssetId)) {
+            $module->permitPdfService->generateForPermit($permit);
+            $permit = $this->findPermit($id);
+        }
+
+        if (empty($permit->pdfAssetId)) {
+            throw new \yii\web\NotFoundHttpException('PDF is not available.');
+        }
+
+        $asset = Craft::$app->getAssets()->getAssetById((int) $permit->pdfAssetId);
+        if (!$asset || !$asset->url) {
+            throw new \yii\web\NotFoundHttpException('PDF asset not found.');
+        }
+
+        return $this->redirect($asset->url);
+    }
+
+    /**
+     * GET bozp/permit/<permitId>/subpermit/<id>/pdf — CP subpermit PDF download.
+     */
+    public function actionSubpermitPdf(int $permitId, int $id): Response
+    {
+        $this->requireLogin();
+        $this->requirePermission('bozp:viewQueue');
+
+        $permit    = $this->findPermit($permitId);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        if (empty($subpermit->pdfAssetId)) {
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+            $subpermit = $this->findSubpermit($id, $permitId);
+        }
+
+        if (empty($subpermit->pdfAssetId)) {
+            throw new \yii\web\NotFoundHttpException('PDF is not available.');
+        }
+
+        $asset = Craft::$app->getAssets()->getAssetById((int) $subpermit->pdfAssetId);
+        if (!$asset || !$asset->url) {
+            throw new \yii\web\NotFoundHttpException('PDF asset not found.');
+        }
+
+        return $this->redirect($asset->url);
+    }
+
+    /**
+     * CP subpermit edit form for HSE officer.
+     * GET bozp/permit/<permitId>/subpermit/<id>/edit
+     */
+    public function actionEditSubpermit(int $permitId, int $id): Response
+    {
+        $this->requireLogin();
+        $this->requirePermission('bozp:approve');
+
+        $permit    = $this->findPermit($permitId);
+        $subpermit = $this->findSubpermit($id, $permitId);
+        $rawData   = is_string($subpermit->data) ? (json_decode($subpermit->data, true) ?? []) : ($subpermit->data ?? []);
+        $type      = SubpermitType::tryFrom($subpermit->type);
+
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
+
+        return $this->renderTemplate('bozp/cp/subpermit-edit', [
+            'permit'        => $permit,
+            'subpermit'     => $subpermit,
+            'subpermitType' => $type,
+            'values'        => $rawData,
+            'errors'        => [],
+            'canApprove'    => true,
+        ]);
+    }
+
+    /**
+     * CP permit edit form for HSE officer.
+     * GET bozp/permit/<permitId>/edit
+     */
+    public function actionEditPermit(int $permitId): Response
+    {
+        $this->requireLogin();
+        $this->requirePermission('bozp:approve');
+
+        $permit = $this->findPermit($permitId);
+        $zones  = $this->loadZonesFor((int) $permit->id);
+
+        $allZones = ZoneRecord::find()->orderBy(['sortOrder' => SORT_ASC, 'name' => SORT_ASC])->all();
+
+        $rawRequired = $permit->requiresHighRisk;
+        $selectedZoneIds = array_map(static fn(ZoneRecord $z) => (int) $z->id, $zones);
+
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
+
+        return $this->renderTemplate('bozp/cp/permit-edit', [
+            'permit'          => $permit,
+            'zones'           => $allZones,
+            'selectedZoneIds' => $selectedZoneIds,
+            'errors'          => [],
+            'subpermitTypes'  => SubpermitType::cases(),
         ]);
     }
 
@@ -160,6 +312,11 @@ class QueueController extends Controller
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit sa nepodarilo schváliť.'));
             return $this->redirect("bozp/permit/{$permitId}");
         }
+
+        // Generate subpermit PDF
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+        $module->permitPdfService->generateForSubpermit($subpermit, $permit);
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol schválený. Platnosť 8 hodín.'));
         return $this->redirect("bozp/permit/{$permitId}");
@@ -199,6 +356,11 @@ class QueueController extends Controller
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit sa nepodarilo zamietnuť.'));
             return $this->redirect("bozp/permit/{$permitId}");
         }
+
+        // Generate subpermit PDF
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+        $module->permitPdfService->generateForSubpermit($subpermit, $permit);
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol zamietnutý.'));
         return $this->redirect("bozp/permit/{$permitId}");
@@ -277,6 +439,9 @@ class QueueController extends Controller
             return $this->redirect("bozp/permit/{$permit->id}");
         }
 
+        // Generate PDF after transaction commit (silently on failure)
+        $module->permitPdfService->generateForPermit($permit);
+
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Permit {n} bol schválený.', ['n' => $permit->permitNumber]));
         return $this->redirect('bozp');
     }
@@ -324,6 +489,9 @@ class QueueController extends Controller
             Craft::$app->getSession()->setError($message);
             return $this->redirect("bozp/permit/{$permit->id}");
         }
+
+        // Generate PDF after transaction commit
+        $module->permitPdfService->generateForPermit($permit);
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Permit {n} bol zamietnutý.', ['n' => $permit->permitNumber]));
         return $this->redirect('bozp');

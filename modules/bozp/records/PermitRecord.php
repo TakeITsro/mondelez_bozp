@@ -63,6 +63,8 @@ use craft\db\ActiveRecord;
  * @property string|null $cancelledAt
  * @property string|null $expiredAt
  *
+ * @property int|null    $pdfAssetId  Asset ID of the most recent generated PDF (replaced on each status change)
+ *
  * @property string $dateCreated
  * @property string $dateUpdated
  * @property string $uid

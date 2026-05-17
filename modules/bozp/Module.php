@@ -16,9 +16,11 @@ use craft\web\View;
 use modules\bozp\services\AuditLogger;
 use modules\bozp\services\PermitMailer;
 use modules\bozp\services\PermitNumberGenerator;
+use modules\bozp\services\PermitPdfService;
 use modules\bozp\services\PermitWorkflow;
 use modules\bozp\services\SignatureService;
 use modules\bozp\services\SubpermitSignatureService;
+use modules\bozp\services\SubpermitSigningService;
 use yii\base\Event;
 use yii\base\Module as BaseModule;
 
@@ -32,8 +34,10 @@ use yii\base\Module as BaseModule;
  * @property-read PermitWorkflow $permitWorkflow
  * @property-read AuditLogger $auditLogger
  * @property-read PermitMailer $permitMailer
+ * @property-read PermitPdfService $permitPdfService
  * @property-read SignatureService $signatureService
  * @property-read SubpermitSignatureService $subpermitSignatureService
+ * @property-read SubpermitSigningService $subpermitSigningService
  */
 class Module extends BaseModule
 {
@@ -50,8 +54,10 @@ class Module extends BaseModule
             'permitWorkflow' => PermitWorkflow::class,
             'auditLogger' => AuditLogger::class,
             'permitMailer' => PermitMailer::class,
+            'permitPdfService' => PermitPdfService::class,
             'signatureService' => SignatureService::class,
             'subpermitSignatureService' => SubpermitSignatureService::class,
+            'subpermitSigningService'   => SubpermitSigningService::class,
         ]);
 
         parent::init();
@@ -108,10 +114,17 @@ class Module extends BaseModule
                 $event->rules['bozp/queue'] = 'bozp/queue/index';
                 $event->rules['bozp/all'] = 'bozp/queue/all';
                 $event->rules['bozp/permit/<id:\d+>'] = 'bozp/queue/view';
+                $event->rules['bozp/permit/<permitId:\d+>/edit'] = 'bozp/queue/edit-permit';
                 $event->rules['POST bozp/permit/<id:\d+>/resend'] = 'bozp/queue/resend';
                 $event->rules['POST bozp/permit/<id:\d+>/delete'] = 'bozp/queue/delete';
                 $event->rules['POST bozp/permit/<permitId:\d+>/subpermits/<id:\d+>/approve'] = 'bozp/queue/approve-subpermit';
                 $event->rules['POST bozp/permit/<permitId:\d+>/subpermits/<id:\d+>/reject'] = 'bozp/queue/reject-subpermit';
+                $event->rules['bozp/permit/<permitId:\d+>/subpermit/<id:\d+>'] = 'bozp/queue/subpermit-view';
+                $event->rules['bozp/permit/<permitId:\d+>/subpermit/<id:\d+>/edit'] = 'bozp/queue/edit-subpermit';
+
+                // CP PDF download
+                $event->rules['bozp/permit/<id:\d+>/pdf'] = 'bozp/queue/permit-pdf';
+                $event->rules['bozp/permit/<permitId:\d+>/subpermit/<id:\d+>/pdf'] = 'bozp/queue/subpermit-pdf';
             }
         );
     }
@@ -142,9 +155,20 @@ class Module extends BaseModule
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/cancel'] = 'bozp/contractor/cancel';
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/sign'] = 'bozp/contractor/sign-subpermit';
 
+                // Control visits (Mondelez employee, logged-in with Craft account)
+                $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/control'] = 'bozp/contractor/control-view';
+                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/control'] = 'bozp/contractor/save-control';
+
                 // Issuer cancel / close (front-end issuer detail page)
                 $event->rules['POST bozp/permits/<id:\d+>/cancel'] = 'bozp/permits/cancel';
                 $event->rules['POST bozp/permits/<id:\d+>/close'] = 'bozp/permits/close';
+
+                // Issuer attachment upload
+                $event->rules['POST bozp/permits/<id:\d+>/upload'] = 'bozp/permits/upload-attachment';
+
+                // Subpermit multi-signer token signing
+                $event->rules['bozp/sp-sign/<token:[A-Za-z0-9]+>'] = 'bozp/subpermit-signing/view';
+                $event->rules['POST bozp/sp-sign/sign']             = 'bozp/subpermit-signing/sign';
 
                 // Subpermits (high-risk, attached to a general permit)
                 $event->rules['bozp/permits/<permitId:\d+>/subpermits/new'] = 'bozp/subpermits/new';
@@ -152,6 +176,14 @@ class Module extends BaseModule
                 $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/save'] = 'bozp/subpermits/save';
                 $event->rules['bozp/permits/<permitId:\d+>/subpermits/<id:\d+>'] = 'bozp/subpermits/view';
                 $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/cancel'] = 'bozp/subpermits/cancel';
+
+                // PDF download (issuer side)
+                $event->rules['bozp/permits/<id:\d+>/pdf'] = 'bozp/permits/pdf';
+                $event->rules['bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/pdf'] = 'bozp/subpermits/pdf';
+
+                // PDF download (contractor portal — password-gated)
+                $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/pdf'] = 'bozp/contractor/permit-pdf';
+                $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/pdf'] = 'bozp/contractor/subpermit-pdf';
             }
         );
     }
@@ -218,6 +250,9 @@ class Module extends BaseModule
                         ],
                         'bozp:deletePermit' => [
                             'label' => Craft::t('bozp', 'Mazať permity'),
+                        ],
+                        'bozp:control' => [
+                            'label' => Craft::t('bozp', 'Vykonávať kontroly prevádzky'),
                         ],
                     ],
                 ];

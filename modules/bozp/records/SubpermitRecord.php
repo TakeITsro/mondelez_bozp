@@ -21,12 +21,16 @@ use craft\db\ActiveRecord;
  * @property string|null $rejectedAt
  * @property string|null $rejectionNote
  * @property string|null $cancelledAt
+ * @property int|null    $pdfAssetId  Asset ID of the most recent generated PDF (replaced on each status change)
  * @property string      $dateCreated
  * @property string      $dateUpdated
  * @property string      $uid
  */
 class SubpermitRecord extends ActiveRecord
 {
+    /** Populated at runtime by PermitMailer for use in email templates. */
+    public string $typeLabel = '';
+
     public static function tableName(): string
     {
         return '{{%bozp_subpermits}}';

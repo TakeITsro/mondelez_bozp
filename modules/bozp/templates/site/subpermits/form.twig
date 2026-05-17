@@ -167,7 +167,7 @@
                     <div class="bozp-form__field">
                         <label>{{ 'Meno podpisujúceho'|t('bozp') }} <span class="bozp-form__req">*</span></label>
                         <input type="text" id="bozp-dlg-signer-name"
-                               value="{{ currentUser.fullName ?? '' }}" required>
+                               value="{{ currentUser.fullName ?: currentUser.friendlyName ?: currentUser.username }}" required>
                     </div>
 
                     <div class="bozp-form__field">

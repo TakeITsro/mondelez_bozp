@@ -1,51 +1,116 @@
-{# Approval email to the contractor. Includes the access link, the
-   one-time password (also delivered in the same message), and a QR
-   code that encodes the same link for phone scanning. #}
-<!doctype html>
-<html lang="{{ craft.app.language }}">
-<head>
-    <meta charset="utf-8">
-    <title>{{ 'Permit bol schválený'|t('bozp') }}</title>
-</head>
-<body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
-    <p>{{ 'Dobrý deň,'|t('bozp') }}</p>
+{% extends 'bozp/email/_layout.twig' %}
 
-    <p>
+{# Approval email to the contractor.
+   Variables: permit, permitUrl, password, qrDataUri, subpermits #}
+
+{% block subject %}{{ 'Permit {n} bol schválený'|t('bozp', {n: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Povolenie na prácu'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Váš permit bol schválený'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
         {{
-            'Permit {n} bol schválený. Pre prístup k detailu permitu použite nasledujúci odkaz alebo naskenujte QR kód.'|t('bozp', {
-                n: permit.permitNumber
-            })
+            'Permit <strong>{n}</strong> pre spoločnosť <strong>{company}</strong> bol schválený oddelením HSE. Pre prístup k detailu permitu použite odkaz nižšie alebo naskenujte QR kód.'|t('bozp', {
+                n: permit.permitNumber,
+                company: permit.contractorCompany ?: '—'
+            })|raw
         }}
     </p>
 
-    {% if permit.validTo %}
-        <p>
-            <strong>{{ 'Platnosť do'|t('bozp') }}:</strong>
-            {{ permit.validTo|date('d.m.Y H:i') }}
+    {# Permit details block #}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:16px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="4">
+                    <tr>
+                        <td style="font-size:13px;color:#000000;width:140px;padding-bottom:6px;">{{ 'Číslo permitu'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;padding-bottom:6px;">{{ permit.permitNumber }}</td>
+                    </tr>
+                    {% if permit.workLocation %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Miesto práce'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:6px;">{{ permit.workLocation }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if permit.validTo %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Platnosť do'|t('bozp') }}</td>
+                            <td style="font-size:13px;font-weight:700;padding-bottom:6px;color:#000000;">
+                                {{ permit.validTo|date('d.m.Y H:i') }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    {# Subpermit list #}
+    {% if subpermits is defined and subpermits|length > 0 %}
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#4F2170;">
+            {{ 'Požadované prílohy k permitu'|t('bozp') }}
         </p>
+        <ul style="margin:0 0 24px;padding-left:20px;">
+            {% for sp in subpermits %}
+                <li style="margin-bottom:4px;font-size:13px;">{{ sp.typeLabel }}</li>
+            {% endfor %}
+        </ul>
     {% endif %}
 
-    <p>
-        <a href="{{ permitUrl }}">{{ permitUrl }}</a>
-    </p>
+    {# Access credentials #}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border:1px solid #4F2170;border-radius:4px;margin:0 0 24px;">
+        <tr>
+            <td style="padding:16px 20px;">
+                <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#000;">
+                    {{ 'Prístupové údaje k portálu'|t('bozp') }}
+                </p>
+                <p style="margin:0 0 8px;font-size:13px;">
+                    <strong>{{ 'Odkaz'|t('bozp') }}:</strong><br>
+                    <a href="{{ permitUrl }}" style="color:#4F2170;word-break:break-all;">{{ permitUrl }}</a>
+                </p>
+                <p style="margin:0;font-size:13px;">
+                    <strong>{{ 'Heslo'|t('bozp') }}:</strong>
+                    <span style="font-family:monospace;font-size:16px;font-weight:700;
+                                 display:inline-block;margin-left:8px;padding:2px 8px;
+                                 background:#4F2170;color:#FEFFFD;border-radius:3px;letter-spacing:2px;">
+                        {{ password }}
+                    </span>
+                </p>
+            </td>
+        </tr>
+    </table>
 
-    <p>
-        <strong>{{ 'Heslo pre prístup'|t('bozp') }}:</strong>
-        <span style="font-family: monospace; font-size: 16px;">{{ password }}</span>
-    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+        <tr>
+            <td style="background:#4F2170;border-radius:4px;">
+                <a href="{{ permitUrl }}"
+                   style="display:inline-block;padding:12px 28px;color:#FEFFFD;font-size:15px;font-weight:700;text-decoration:none;">
+                    {{ 'Otvoriť portál dodávateľa'|t('bozp') }} →
+                </a>
+            </td>
+        </tr>
+    </table>
 
     {% if qrDataUri %}
-        <p>
-            <img src="{{ qrDataUri }}" alt="QR" width="220" height="220">
+        <p style="margin:0 0 8px;font-size:13px;color:#000000;">
+            {{ 'Prípadne naskenujte QR kód mobilným zariadením:'|t('bozp') }}
+        </p>
+        <p style="margin:0;">
+            <img src="{{ qrDataUri }}" alt="QR" width="200" height="200"
+                 style="border:4px solid #4F2170;border-radius:4px;">
         </p>
     {% endif %}
 
-    <p style="color: #555; font-size: 13px;">
-        {{ 'Odkaz a heslo platia do dátumu skončenia platnosti permitu.'|t('bozp') }}
+    <p style="margin:24px 0 0;font-size:12px;color:#000000;border-top:1px solid #000000;padding-top:16px;">
+        {{ 'Odkaz a heslo platia do dátumu skončenia platnosti permitu. Heslo je jednorazové — nepredávajte ho.'|t('bozp') }}
     </p>
-
-    <p style="color: #888; font-size: 12px;">
-        {{ 'Toto je automatická správa zo systému BOZP Permity.'|t('bozp') }}
-    </p>
-</body>
-</html>
+{% endblock %}

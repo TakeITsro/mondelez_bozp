@@ -1,0 +1,250 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{# ---------------------------------------------------------------------------
+   CP Subpermit detail — read-only view for HSE officer.
+   Variables from QueueController::actionSubpermitView():
+     permit (PermitRecord), subpermit (SubpermitRecord),
+     subpermitType (SubpermitType|null), values (decoded data array),
+     signatures (keyed by role), canApprove (bool),
+     subpermitTypes (SubpermitType::cases())
+--------------------------------------------------------------------------- #}
+
+{% set appendixN = subpermitType ? subpermitType.appendixNumber() : '?' %}
+{% set typeLabel = subpermitType ? subpermitType.label() : subpermit.type %}
+
+{% set title = ('Príloha č. {n} — {type}'|t('bozp'))|replace({'{n}': appendixN, '{type}': typeLabel}) %}
+{% set selectedSubnavItem = 'queue' %}
+
+{% set crumbs = [
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
+    { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) },
+    { label: ('Príloha č. {n}'|t('bozp'))|replace({'{n}': appendixN}), url: '' }
+] %}
+
+{% set statusLabels = {
+    'pending':   'Čaká na schválenie'|t('bozp'),
+    'approved':  'Schválené'|t('bozp'),
+    'rejected':  'Zamietnuté'|t('bozp'),
+    'cancelled': 'Zrušené'|t('bozp'),
+} %}
+
+{% block headHtml %}
+<style>
+.bozp-status{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.8em;font-weight:600;line-height:1.6;white-space:nowrap;color:#fff}
+.bozp-status--draft{background:#6b7280}.bozp-status--submitted{background:#d97706}
+.bozp-status--approved{background:#16a34a}.bozp-status--rejected{background:#dc2626}
+.bozp-status--signed{background:#2563eb}.bozp-status--active{background:#0891b2}
+.bozp-status--pending_closure{background:#ea580c}.bozp-status--pending{background:#d97706}
+.bozp-status--closed{background:#374151}.bozp-status--cancelled{background:#991b1b}
+.bozp-status--expired{background:#9f1239}
+.bozp-sp-sig-grid{display:flex;gap:24px;flex-wrap:wrap;margin-top:8px;}
+.bozp-sp-sig-slot{flex:1;min-width:220px;border:1px solid #e3e5e8;border-radius:4px;padding:14px;}
+.bozp-sp-sig-slot h4{margin:0 0 10px;font-size:13px;font-weight:600;}
+.bozp-sp-sig-slot img{display:block;max-width:280px;max-height:110px;border:1px solid #eee;background:#fff;margin-bottom:8px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-pane">
+
+    {# ---- Header ---- #}
+    <div class="flex flex-nowrap" style="justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+        <div>
+            <h2 style="margin:0;">
+                {{ 'Príloha č. {n}'|t('bozp', {n: appendixN}) }} — {{ typeLabel }}
+            </h2>
+            <div style="margin-top:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <span class="bozp-status bozp-status--{{ subpermit.status }}">
+                    {{ statusLabels[subpermit.status] ?? subpermit.status }}
+                </span>
+                <span class="light" style="font-size:12px;">
+                    {{ 'Permit'|t('bozp') }}:
+                    <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}">{{ permit.permitNumber }}</a>
+                </span>
+                {% if subpermit.status == 'approved' and subpermit.expiresAt %}
+                    <span class="light" style="font-size:12px;">
+                        {{ 'Platný do'|t('bozp') }}: <strong>{{ subpermit.expiresAt|date('d.m.Y H:i') }}</strong>
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="flex" style="gap:8px;">
+            <a href="{{ url('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/pdf') }}"
+               target="_blank" rel="noopener"
+               class="btn small">⬇ {{ 'Zobraziť PDF'|t('bozp') }}</a>
+            {% if canApprove %}
+                <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/edit') }}"
+                   class="btn">{{ 'Upraviť'|t('bozp') }}</a>
+            {% endif %}
+            <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn">← {{ 'Späť'|t('bozp') }}</a>
+        </div>
+    </div>
+
+    <hr>
+
+    {# ---- Rejection note ---- #}
+    {% if subpermit.status == 'rejected' and subpermit.rejectionNote %}
+        <p class="error" style="margin-bottom:16px;">
+            <strong>{{ 'Dôvod zamietnutia'|t('bozp') }}:</strong> {{ subpermit.rejectionNote }}
+        </p>
+    {% endif %}
+
+    {# ---- Common fields ---- #}
+    <h3>{{ 'Základné informácie'|t('bozp') }}</h3>
+    <table class="data fullwidth">
+        <tbody>
+            <tr>
+                <th style="width:220px;">{{ 'Dátum'|t('bozp') }}</th>
+                <td>{{ values.date ? values.date|date('d.m.Y') : '—' }}</td>
+            </tr>
+            <tr>
+                <th>{{ 'Miesto výkonu'|t('bozp') }}</th>
+                <td>{{ values.placeOfWork ?: '—' }}</td>
+            </tr>
+            <tr>
+                <th>{{ 'Zodpovedná osoba MDLZ'|t('bozp') }}</th>
+                <td>{{ values.responsiblePerson ?: '—' }}</td>
+            </tr>
+            {% if values.participants ?? '' %}
+                <tr>
+                    <th>{{ 'Zúčastnení dodávatelia / osoby'|t('bozp') }}</th>
+                    <td>{{ values.participants }}</td>
+                </tr>
+            {% endif %}
+            {% if values.workDescription ?? '' %}
+                <tr>
+                    <th>{{ 'Popis vykonávanej práce'|t('bozp') }}</th>
+                    <td>{{ values.workDescription|nl2br }}</td>
+                </tr>
+            {% endif %}
+            {% set hasSteps = false %}
+            {% for i in 1..5 %}{% if attribute(values, 'workStep' ~ i) ?? '' %}{% set hasSteps = true %}{% endif %}{% endfor %}
+            {% if hasSteps %}
+                <tr>
+                    <th>{{ 'Hlavné kroky'|t('bozp') }}</th>
+                    <td>
+                        <ol style="margin:0;padding-left:18px;">
+                            {% for i in 1..5 %}
+                                {% set step = attribute(values, 'workStep' ~ i) ?? '' %}
+                                {% if step %}<li>{{ step }}</li>{% endif %}
+                            {% endfor %}
+                        </ol>
+                    </td>
+                </tr>
+            {% endif %}
+            <tr>
+                <th>{{ 'Vytvorené'|t('bozp') }}</th>
+                <td>{{ subpermit.dateCreated|date('d.m.Y H:i') }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {# ---- Type-specific fields ---- #}
+    {% set commonKeys = ['date','placeOfWork','responsiblePerson','participants','workDescription',
+        'workStep1','workStep2','workStep3','workStep4','workStep5'] %}
+    {% set typeValues = {} %}
+    {% for k, v in values %}
+        {% if k not in commonKeys and v is not empty %}
+            {% set typeValues = typeValues|merge({(k): v}) %}
+        {% endif %}
+    {% endfor %}
+
+    {% if typeValues|length > 0 %}
+        <h3 style="margin-top:24px;">{{ 'Špecifické podmienky'|t('bozp') }}</h3>
+        <table class="data fullwidth">
+            <tbody>
+                {% for k, v in typeValues %}
+                    <tr>
+                        <th style="width:220px;">{{ k }}</th>
+                        <td>
+                            {% if v is iterable %}
+                                {{ v|join(', ') }}
+                            {% elseif v == 'yes' %}
+                                {{ 'Áno'|t('bozp') }}
+                            {% elseif v == 'no' %}
+                                {{ 'Nie'|t('bozp') }}
+                            {% else %}
+                                {{ v }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {# ---- Signatures ---- #}
+    <h3 style="margin-top:24px;">{{ 'Podpisy'|t('bozp') }}</h3>
+    <div class="bozp-sp-sig-grid">
+        {% for role, label in {'issuer': 'Vydavateľ'|t('bozp'), 'contractor': 'Dodávateľ'|t('bozp')} %}
+            {% set sig = signatures[role] ?? null %}
+            <div class="bozp-sp-sig-slot">
+                <h4>{{ label }}</h4>
+                {% if sig %}
+                    {% set sigAsset = craft.assets().id(sig.signatureAssetId).one() %}
+                    {% if sigAsset %}
+                        <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}">
+                    {% endif %}
+                    <table class="data" style="font-size:12px;">
+                        <tr><th style="width:100px;">{{ 'Meno'|t('bozp') }}</th><td>{{ sig.signerName }}</td></tr>
+                        {% if sig.signerEmployer %}
+                            <tr><th>{{ 'Firma'|t('bozp') }}</th><td>{{ sig.signerEmployer }}</td></tr>
+                        {% endif %}
+                        <tr>
+                            <th>{{ 'Dátum'|t('bozp') }}</th>
+                            <td>{{ sig.signatureDate ? sig.signatureDate|date('d.m.Y') : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'Podpísané'|t('bozp') }}</th>
+                            <td>{{ sig.signedAt ? sig.signedAt|date('d.m.Y H:i') : '—' }}</td>
+                        </tr>
+                    </table>
+                {% else %}
+                    <p class="light" style="font-size:13px;">{{ 'Nepodpísané'|t('bozp') }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    {# ---- HSE approve / reject (only if pending) ---- #}
+    {% if subpermit.status == 'pending' and canApprove %}
+        <hr style="margin-top:32px;">
+        <h3>{{ 'Rozhodnutie HSE'|t('bozp') }}</h3>
+
+        <div class="flex" style="gap:32px;align-items:flex-start;flex-wrap:wrap;">
+            <form method="post" accept-charset="UTF-8">
+                {{ csrfInput() }}
+                <input type="hidden" name="action" value="bozp/queue/approve-subpermit">
+                <input type="hidden" name="permitId" value="{{ permit.id }}">
+                <input type="hidden" name="id" value="{{ subpermit.id }}">
+                <button type="submit" class="btn submit">{{ 'Schváliť subpermit'|t('bozp') }}</button>
+                <span class="light" style="font-size:12px;margin-left:6px;">
+                    {{ 'Platnosť 8 hodín od schválenia'|t('bozp') }}
+                </span>
+            </form>
+
+            <form method="post" accept-charset="UTF-8"
+                  style="display:flex;gap:8px;align-items:flex-start;">
+                {{ csrfInput() }}
+                <input type="hidden" name="action" value="bozp/queue/reject-subpermit">
+                <input type="hidden" name="permitId" value="{{ permit.id }}">
+                <input type="hidden" name="id" value="{{ subpermit.id }}">
+                <input type="text" name="rejectionNote"
+                       placeholder="{{ 'Dôvod zamietnutia (povinné)'|t('bozp') }}"
+                       required style="width:280px;">
+                <button type="submit" class="btn">{{ 'Zamietnuť'|t('bozp') }}</button>
+            </form>
+        </div>
+    {% endif %}
+
+    {# ---- Edit subpermit data ---- #}
+    {% if canApprove %}
+        <hr style="margin-top:32px;">
+        <h3>{{ 'Upraviť subpermit'|t('bozp') }}</h3>
+        <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/edit') }}"
+           class="btn">{{ 'Upraviť údaje subpermitu'|t('bozp') }}</a>
+    {% endif %}
+
+</div>
+{% endblock %}

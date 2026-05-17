@@ -1,34 +1,88 @@
-{# HSE notification: a new permit was submitted and is waiting in the queue. #}
-<!doctype html>
-<html lang="{{ craft.app.language }}">
-<head>
-    <meta charset="utf-8">
-    <title>{{ 'Nový permit čaká na schválenie'|t('bozp') }}</title>
-</head>
-<body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
-    <p>{{ 'Dobrý deň,'|t('bozp') }}</p>
+{% extends 'bozp/email/_layout.twig' %}
 
-    <p>
+{# Variables: permit, permitUrl #}
+
+{% block subject %}{{ 'Nový permit čaká na schválenie'|t('bozp') }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Schvaľovacia fronta HSE'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Nový permit čaká na schválenie'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
         {{
-            'Bol odoslaný nový permit {n} a čaká na vaše schválenie.'|t('bozp', {
+            'Bol odoslaný nový permit <strong>{n}</strong> a čaká na vaše schválenie v systéme BOZP Permity.'|t('bozp', {
                 n: permit.permitNumber
-            })
+            })|raw
         }}
     </p>
 
-    {% if permit.contractorCompany %}
-        <p>
-            <strong>{{ 'Dodávateľ'|t('bozp') }}:</strong>
-            {{ permit.contractorCompany }}{% if permit.contractorPersonName %} ({{ permit.contractorPersonName }}){% endif %}
+    {# Permit details block #}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:16px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="4">
+                    <tr>
+                        <td style="font-size:13px;color:#000000;width:140px;padding-bottom:6px;">{{ 'Číslo permitu'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;padding-bottom:6px;">{{ permit.permitNumber }}</td>
+                    </tr>
+                    {% if permit.contractorCompany %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Dodávateľ'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:6px;">
+                                {{ permit.contractorCompany }}
+                                {% if permit.contractorPersonName %}<br><span style="color:#000000;">{{ permit.contractorPersonName }}</span>{% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if permit.workLocation %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Miesto práce'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:6px;">{{ permit.workLocation }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if permit.validFrom and permit.validTo %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;">{{ 'Platnosť'|t('bozp') }}</td>
+                            <td style="font-size:13px;">{{ permit.validFrom|date('d.m.Y') }} – {{ permit.validTo|date('d.m.Y') }}</td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    {# Subpermit list #}
+    {% if subpermits is defined and subpermits|length > 0 %}
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#4F2170;">
+            {{ 'Priložené subpermity'|t('bozp') }}
         </p>
+        <ul style="margin:0 0 24px;padding-left:20px;">
+            {% for sp in subpermits %}
+                {% set spType = constant('modules\\bozp\\enums\\SubpermitType::' ~ sp.type|title) is defined
+                    ? craft.app.locale %}{# fallback #}
+                <li style="margin-bottom:4px;font-size:13px;">
+                    {{ sp.type }}
+                    <span style="color:#000000;">({{ sp.status }})</span>
+                </li>
+            {% endfor %}
+        </ul>
     {% endif %}
 
-    <p>
-        <a href="{{ permitUrl }}">{{ 'Otvoriť permit'|t('bozp') }}</a>
-    </p>
-
-    <p style="color: #888; font-size: 12px;">
-        {{ 'Toto je automatická správa zo systému BOZP Permity.'|t('bozp') }}
-    </p>
-</body>
-</html>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+        <tr>
+            <td style="background:#4F2170;border-radius:4px;">
+                <a href="{{ permitUrl }}"
+                   style="display:inline-block;padding:12px 28px;color:#FEFFFD;font-size:15px;font-weight:700;text-decoration:none;">
+                    {{ 'Otvoriť permit v CP'|t('bozp') }} →
+                </a>
+            </td>
+        </tr>
+    </table>
+{% endblock %}

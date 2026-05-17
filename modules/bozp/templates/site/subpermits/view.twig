@@ -19,7 +19,7 @@
                 <a href="{{ url('bozp/permits/' ~ permit.id) }}">← {{ permit.permitNumber }}</a>
             </p>
             <h1>{{ 'Príloha č. {n}'|t('bozp', {n: appendixN}) }} — {{ typeLabel }}</h1>
-            <div class="bozp-page__meta">
+            <div class="bozp-page__meta" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                 <span class="bozp-status bozp-status--{{ subpermit.status }}">
                     {{ subpermit.status|t('bozp') }}
                 </span>
@@ -32,6 +32,12 @@
                 <span class="bozp-page__created">
                     {{ 'Vytvorené'|t('bozp') }}: {{ subpermit.dateCreated|date('d.m.Y H:i') }}
                 </span>
+                <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/' ~ subpermit.id ~ '/pdf') }}"
+                   target="_blank" rel="noopener"
+                   class="bozp-btn bozp-btn--secondary bozp-btn--sm"
+                   style="font-size:12px;padding:4px 12px;">
+                    ⬇ {{ 'Zobraziť PDF'|t('bozp') }}
+                </a>
             </div>
         </header>
 

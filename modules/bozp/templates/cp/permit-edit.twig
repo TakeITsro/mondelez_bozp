@@ -1,0 +1,190 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = ('Upraviť permit {n}'|t('bozp'))|replace({'{n}': permit.permitNumber}) %}
+{% set selectedSubnavItem = 'queue' %}
+
+{% set crumbs = [
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
+    { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) },
+    { label: 'Upraviť'|t('bozp'), url: cpUrl('bozp/permit/' ~ permit.id ~ '/edit') }
+] %}
+
+{% set values = values ?? permit %}
+{% set errors = errors ?? {} %}
+
+{% block headHtml %}
+<style>
+.bozp-status{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.8em;font-weight:600;line-height:1.6;white-space:nowrap;color:#fff}
+.bozp-status--draft{background:#6b7280}.bozp-status--submitted{background:#d97706}
+.bozp-status--approved{background:#16a34a}.bozp-status--rejected{background:#dc2626}
+.bozp-status--signed{background:#2563eb}.bozp-status--active{background:#0891b2}
+.bozp-status--pending_closure{background:#ea580c}.bozp-status--pending{background:#d97706}
+.bozp-status--closed{background:#374151}.bozp-status--cancelled{background:#991b1b}
+.bozp-status--expired{background:#9f1239}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-pane">
+
+    <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+            <h2 style="margin:0;">{{ permit.permitNumber }}</h2>
+            <div style="margin-top:4px;">
+                <span class="bozp-status bozp-status--{{ permit.status }}">
+                    {{ permit.status|t('bozp') }}
+                </span>
+            </div>
+        </div>
+        <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn">← {{ 'Späť'|t('bozp') }}</a>
+    </div>
+
+    {% if errors|length > 0 %}
+        <div class="error" style="margin-bottom:16px;">
+            <ul>
+                {% for field, msg in errors %}
+                    <li>{{ msg }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <form method="post" accept-charset="UTF-8" novalidate>
+        {{ csrfInput() }}
+        <input type="hidden" name="action" value="bozp/queue/update-permit">
+        <input type="hidden" name="id" value="{{ permit.id }}">
+
+        {# ---- Contractor ---- #}
+        <h3>{{ 'Dodávateľ'|t('bozp') }}</h3>
+        {{ forms.textField({
+            label: 'Názov dodávateľskej firmy'|t('bozp'),
+            name: 'contractorCompany',
+            value: values.contractorCompany ?? '',
+            required: true,
+            errors: errors.contractorCompany is defined ? [errors.contractorCompany] : [],
+        }) }}
+        {{ forms.textField({
+            label: 'Kontaktná osoba'|t('bozp'),
+            name: 'contractorPersonName',
+            value: values.contractorPersonName ?? '',
+        }) }}
+        {{ forms.textField({
+            label: 'E-mail'|t('bozp'),
+            name: 'contractorEmail',
+            type: 'email',
+            value: values.contractorEmail ?? '',
+            errors: errors.contractorEmail is defined ? [errors.contractorEmail] : [],
+        }) }}
+
+        {# ---- Work ---- #}
+        <h3 style="margin-top:24px;">{{ 'Práca'|t('bozp') }}</h3>
+        {{ forms.textField({
+            label: 'Miesto výkonu'|t('bozp'),
+            name: 'workLocation',
+            value: values.workLocation ?? '',
+            required: true,
+            errors: errors.workLocation is defined ? [errors.workLocation] : [],
+        }) }}
+        {{ forms.textareaField({
+            label: 'Popis prác'|t('bozp'),
+            name: 'workOverview',
+            value: values.workOverview ?? '',
+            rows: 4,
+            required: true,
+        }) }}
+        {{ forms.dateField({
+            label: 'Platnosť od'|t('bozp'),
+            name: 'validFrom',
+            value: values.validFrom ?? '',
+        }) }}
+        {{ forms.dateTimeField({
+            label: 'Platnosť do'|t('bozp'),
+            name: 'validTo',
+            value: values.validTo ?? '',
+        }) }}
+
+        {# ---- Zones ---- #}
+        {% if zones|length > 0 %}
+            <h3 style="margin-top:24px;">{{ 'Zóny'|t('bozp') }}</h3>
+            {% set selectedZoneIds = selectedZoneIds ?? [] %}
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                {% for zone in zones %}
+                    <label style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" name="zoneIds[]" value="{{ zone.id }}"
+                               {% if zone.id in selectedZoneIds %}checked{% endif %}>
+                        <span>{{ zone.name }}{% if zone.code %} <code>({{ zone.code }})</code>{% endif %}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# ---- Preparation checks ---- #}
+        <h3 style="margin-top:24px;">{{ 'Príprava pracoviska'|t('bozp') }}</h3>
+
+        {% macro yesno(name, currentValue, labelText) %}
+            <div style="margin-bottom:12px;">
+                <div style="font-weight:600;margin-bottom:4px;">{{ labelText }}</div>
+                <label style="margin-right:16px;">
+                    <input type="radio" name="{{ name }}" value="yes" {% if currentValue == true or currentValue == 'yes' or currentValue == 1 %}checked{% endif %}>
+                    {{ 'Áno'|t('bozp') }}
+                </label>
+                <label>
+                    <input type="radio" name="{{ name }}" value="no" {% if currentValue == false or currentValue == 'no' or currentValue == 0 %}checked{% endif %}>
+                    {{ 'Nie'|t('bozp') }}
+                </label>
+            </div>
+        {% endmacro %}
+
+        {{ _self.yesno('preparation[conditionsSuitable]', values.conditionsSuitable, 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp')) }}
+        {{ _self.yesno('preparation[toolsInGoodCondition]', values.toolsInGoodCondition, 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp')) }}
+        {{ _self.yesno('preparation[hasStopConditions]', values.hasStopConditions, 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp')) }}
+
+        {{ forms.textareaField({
+            label: 'Popis podmienok pre zastavenie prác'|t('bozp'),
+            name: 'preparation[stopConditionsDescription]',
+            value: values.stopConditionsDescription ?? '',
+            rows: 2,
+        }) }}
+
+        {{ _self.yesno('preparation[lotoImplemented]', values.lotoImplemented, 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp')) }}
+
+        {{ forms.textareaField({
+            label: 'Núdzový plán / postup v prípade mimoriadnej udalosti'|t('bozp'),
+            name: 'preparation[emergencyPlan]',
+            value: values.emergencyPlan ?? '',
+            rows: 3,
+        }) }}
+
+        {# ---- Required subpermit types ---- #}
+        {% if subpermitTypes is defined and subpermitTypes|length > 0 %}
+            <h3 style="margin-top:24px;">{{ 'Subpermity zvýšeného rizika'|t('bozp') }}</h3>
+            {% set requiredHighRisk = permit.requiresHighRisk is iterable ? permit.requiresHighRisk : (permit.requiresHighRisk ? permit.requiresHighRisk|split(',') : []) %}
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                {% for type in subpermitTypes %}
+                    <label style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" name="requiresHighRisk[]" value="{{ type.value }}"
+                               {% if type.value in requiredHighRisk %}checked{% endif %}>
+                        <span>{{ type.label() }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# ---- HSE comment ---- #}
+        <h3 style="margin-top:24px;">{{ 'Komentár HSE'|t('bozp') }}</h3>
+        {{ forms.textareaField({
+            label: 'Komentár / poznámka'|t('bozp'),
+            name: 'approvalComment',
+            value: values.approvalComment ?? '',
+            rows: 3,
+        }) }}
+
+        <div class="buttons" style="margin-top:24px;">
+            <button type="submit" class="btn submit">{{ 'Uložiť zmeny'|t('bozp') }}</button>
+            <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn">{{ 'Zrušiť'|t('bozp') }}</a>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

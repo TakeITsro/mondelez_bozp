@@ -1,0 +1,94 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Sent to the contractor when the issuer (employee) signs the permit.
+   Variables: permit, permitUrl, signerName, action ('close'|'cancel') #}
+
+{% block subject %}
+    {% if action == 'cancel' %}
+        {{ 'Vydavateľ zrušil permit {n}'|t('bozp', {n: permit.permitNumber}) }}
+    {% else %}
+        {{ 'Permit {n} bol uzavretý'|t('bozp', {n: permit.permitNumber}) }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {% if action == 'cancel' %}
+            {{ 'Zrušenie permitu'|t('bozp') }}
+        {% else %}
+            {{ 'Uzavretie permitu'|t('bozp') }}
+        {% endif %}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {% if action == 'cancel' %}
+            {{ 'Permit bol zrušený vydavateľom'|t('bozp') }}
+        {% else %}
+            {{ 'Permit bol oficiálne uzavretý'|t('bozp') }}
+        {% endif %}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    {% if action == 'cancel' %}
+        <p style="margin:0 0 20px;">
+            {{
+                'Vydavateľ <strong>{signer}</strong> podpísal zrušenie permitu <strong>{n}</strong>. Všetky práce musia byť ihneď zastavené.'|t('bozp', {
+                    signer: signerName,
+                    n: permit.permitNumber
+                })|raw
+            }}
+        </p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="background:#FEFFFD;border-left:4px solid #000000;border-radius:0 4px 4px 0;margin:0 0 24px;">
+            <tr>
+                <td style="padding:12px 18px;font-size:13px;font-weight:700;color:#000000;">
+                    {{ 'Práce na základe tohto permitu sú zakázané.'|t('bozp') }}
+                </td>
+            </tr>
+        </table>
+    {% else %}
+        <p style="margin:0 0 20px;">
+            {{
+                'Vydavateľ <strong>{signer}</strong> uzavrel permit <strong>{n}</strong>. Ďakujeme za spoluprácu.'|t('bozp', {
+                    signer: signerName,
+                    n: permit.permitNumber
+                })|raw
+            }}
+        </p>
+    {% endif %}
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:14px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="4">
+                    <tr>
+                        <td style="font-size:13px;color:#000000;width:140px;padding-bottom:4px;">{{ 'Číslo permitu'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;padding-bottom:4px;">{{ permit.permitNumber }}</td>
+                    </tr>
+                    {% if permit.contractorCompany %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:4px;">{{ 'Dodávateľ'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:4px;">{{ permit.contractorCompany }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td style="font-size:13px;color:#000000;">{{ 'Uzavrel'|t('bozp') }}</td>
+                        <td style="font-size:13px;">{{ signerName }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+        <tr>
+            <td style="background:#4F2170;border-radius:4px;">
+                <a href="{{ permitUrl }}"
+                   style="display:inline-block;padding:12px 28px;color:#FEFFFD;font-size:15px;font-weight:700;text-decoration:none;">
+                    {{ 'Zobraziť permit'|t('bozp') }} →
+                </a>
+            </td>
+        </tr>
+    </table>
+{% endblock %}

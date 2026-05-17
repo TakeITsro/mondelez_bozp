@@ -13,8 +13,14 @@ use modules\bozp\enums\PermitType;
 use modules\bozp\enums\SignatureRole;
 use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
+use craft\elements\Asset;
+use craft\helpers\Assets;
+use craft\helpers\FileHelper;
+use craft\helpers\UrlHelper;
+use craft\web\UploadedFile;
 use modules\bozp\records\AuditLogRecord;
 use modules\bozp\records\PermitAttachmentRecord;
+use modules\bozp\records\PermitControlRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\SubpermitRecord;
@@ -48,7 +54,49 @@ use yii\web\Response;
  */
 class PermitsController extends BaseSiteController
 {
-    protected array|bool|int $allowAnonymous = ['view', 'new', 'save', 'cancel', 'close'];
+    public array|bool|int $allowAnonymous = ['view', 'new', 'save', 'cancel', 'close', 'pdf'];
+
+    /**
+     * GET bozp/permits/<id>/pdf — stream or redirect to the stored permit PDF.
+     * Generates on-demand if not yet available.
+     */
+    public function actionPdf(int $id): Response
+    {
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $permit = PermitRecord::findOne(['id' => $id]);
+        if (!$permit) {
+            throw new NotFoundHttpException('Permit not found.');
+        }
+
+        $user = Craft::$app->getUser();
+        $isIssuer = (int) $permit->issuerId === (int) $user->getId();
+        if (!$isIssuer && !$user->checkPermission('bozp:viewAll')) {
+            throw new ForbiddenHttpException();
+        }
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        // Generate on-demand if no PDF stored yet
+        if (empty($permit->pdfAssetId)) {
+            $module->permitPdfService->generateForPermit($permit);
+            $permit = PermitRecord::findOne(['id' => $id]);
+        }
+
+        if (empty($permit->pdfAssetId)) {
+            throw new NotFoundHttpException('PDF is not available yet.');
+        }
+
+        $asset = Craft::$app->getAssets()->getAssetById((int) $permit->pdfAssetId);
+        if (!$asset || !$asset->url) {
+            throw new NotFoundHttpException('PDF asset not found.');
+        }
+
+        return $this->redirect($asset->url);
+    }
 
     public function actionView(int $id): Response
     {
@@ -114,6 +162,8 @@ class PermitsController extends BaseSiteController
                 $values['signatureData'],
             );
             $module->permitWorkflow->cancelByIssuer($permit, $userId, $reason);
+            $module->permitMailer->notifyContractorOfIssuerSignature($permit, 'cancel', $values['signerName']);
+            $module->permitPdfService->generateForPermit($permit);
 
             Craft::$app->getSession()->setNotice(
                 Craft::t('bozp', 'Permit bol zrušený.')
@@ -176,6 +226,8 @@ class PermitsController extends BaseSiteController
                 $values['signatureData'],
             );
             $module->permitWorkflow->closeByIssuer($permit, $userId, $requiresTrial);
+            $module->permitMailer->notifyContractorOfIssuerSignature($permit, 'close', $values['signerName']);
+            $module->permitPdfService->generateForPermit($permit);
 
             Craft::$app->getSession()->setNotice(
                 Craft::t('bozp', 'Permit bol uzavretý.')
@@ -269,6 +321,10 @@ class PermitsController extends BaseSiteController
             'subpermits' => $subpermits,
             'subpermitTypes' => SubpermitType::cases(),
             'requiredSubpermitTypes' => $requiredTypes,
+            'controls' => PermitControlRecord::find()
+                ->where(['permitId' => $permit->id])
+                ->orderBy(['controlledAt' => SORT_DESC])
+                ->all(),
         ]);
     }
 
@@ -313,6 +369,111 @@ class PermitsController extends BaseSiteController
             $out[$row->hazardKey] = $row;
         }
         return $out;
+    }
+
+    /**
+     * POST bozp/permits/<id>/upload — issuer uploads a supplementary attachment.
+     */
+    public function actionUploadAttachment(int $id): Response
+    {
+        $this->requirePostRequest();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $permit = PermitRecord::findOne(['id' => $id]);
+        if (!$permit) {
+            throw new NotFoundHttpException('Permit not found.');
+        }
+
+        $userId = (int) Craft::$app->getUser()->getId();
+        $isIssuer = (int) $permit->issuerId === $userId;
+        $hasViewAll = Craft::$app->getUser()->checkPermission('bozp:viewAll');
+        if (!$isIssuer && !$hasViewAll) {
+            throw new ForbiddenHttpException();
+        }
+
+        $uploaded = UploadedFile::getInstanceByName('attachment');
+        if (!$uploaded || $uploaded->getHasError()) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Nepodarilo sa nahrať súbor. Skúste znova.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/permits/' . $id));
+        }
+
+        if ($uploaded->size > 10 * 1024 * 1024) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Súbor je príliš veľký. Maximálna veľkosť je 10 MB.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/permits/' . $id));
+        }
+
+        $allowedExt  = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+        $allowedMime = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg', 'image/png',
+        ];
+        $ext  = strtolower((string) pathinfo($uploaded->name, PATHINFO_EXTENSION));
+        $mime = (string) FileHelper::getMimeType($uploaded->tempName);
+
+        if (!in_array($ext, $allowedExt, true) || !in_array($mime, $allowedMime, true)) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Nepodporovaný typ súboru. Povolené: PDF, DOCX, JPG, PNG.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/permits/' . $id));
+        }
+
+        try {
+            $volume = Craft::$app->getVolumes()->getVolumeByHandle('bozpAttachments');
+            if (!$volume) {
+                throw new \RuntimeException("Missing asset volume 'bozpAttachments'");
+            }
+            $rootFolder = Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id);
+            if (!$rootFolder) {
+                throw new \RuntimeException('No root folder for bozpAttachments.');
+            }
+
+            $tempPath = $uploaded->saveAsTempFile();
+            if ($tempPath === false) {
+                throw new \RuntimeException('Could not copy uploaded file to temp location.');
+            }
+
+            $asset = new Asset();
+            $asset->tempFilePath = $tempPath;
+            $asset->filename = Assets::prepareAssetName($uploaded->name);
+            $asset->newFolderId = $rootFolder->id;
+            $asset->volumeId = $volume->id;
+            $asset->avoidFilenameConflicts = true;
+            $asset->setScenario(Asset::SCENARIO_CREATE);
+
+            if (!Craft::$app->getElements()->saveElement($asset)) {
+                throw new \RuntimeException('Asset save failed: ' . print_r($asset->getErrors(), true));
+            }
+
+            $user = Craft::$app->getUser()->getIdentity();
+
+            $att = new PermitAttachmentRecord();
+            $att->permitId        = (int) $permit->id;
+            $att->attachmentType  = 'issuer_upload';
+            $att->assetId         = (int) $asset->id;
+            $att->uploadedById    = $userId;
+            $att->uploadedByName  = $user?->getFullName() ?: ($user?->username ?: '');
+            if (!$att->save()) {
+                throw new \RuntimeException('Attachment row save failed: ' . print_r($att->getErrors(), true));
+            }
+
+            /** @var Module $module */
+            $module = Craft::$app->getModule('bozp');
+            $module->auditLogger->log(
+                permitId: (int) $permit->id,
+                userId: $userId,
+                action: 'issuer_upload',
+                note: $asset->filename,
+            );
+
+            Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Súbor bol nahraný.'));
+        } catch (Throwable $e) {
+            Craft::error('BOZP issuer upload failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Nahrávanie súboru zlyhalo. Skúste znova.'));
+        }
+
+        return $this->redirect(UrlHelper::siteUrl('bozp/permits/' . $id));
     }
 
     public function actionNew(): Response
@@ -486,11 +647,11 @@ class PermitsController extends BaseSiteController
             return $this->redirect('bozp/permits/new');
         }
 
-        // Notifications fire AFTER the transaction has committed, and OUTSIDE
-        // the try/catch — the mailer swallows its own failures, so a delivery
-        // problem won't bubble up as "save failed" to the user.
+        // Notifications and PDF generation fire AFTER the transaction has committed,
+        // and OUTSIDE the try/catch — failures here don't break the save flow.
         if ($intent === 'submit') {
             $module->permitMailer->notifyHseOfSubmission($permit);
+            $module->permitPdfService->generateForPermit($permit);
         }
 
         $msg = $intent === 'submit'

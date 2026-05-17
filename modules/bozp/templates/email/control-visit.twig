@@ -1,0 +1,103 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Sent to both issuer and contractor after a control visit is recorded.
+   Variables: permit, permitUrl, controllerName, controlledAt, result, notes #}
+
+{% set resultLabels = {
+    'ok':      'V poriadku',
+    'issues':  'Zistené nedostatky',
+    'stopped': 'Práce zastavené',
+} %}
+
+{% block subject %}{{ 'Kontrola prevádzky — permit {n}'|t('bozp', {n: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Záznam o kontrole prevádzky'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Bola vykonaná kontrola'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
+        {{
+            'Na pracovisku permitu <strong>{n}</strong> bola vykonaná kontrola prevádzky.'|t('bozp', {
+                n: permit.permitNumber
+            })|raw
+        }}
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:16px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="4">
+                    <tr>
+                        <td style="font-size:13px;color:#000000;width:160px;padding-bottom:8px;">{{ 'Číslo permitu'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;padding-bottom:8px;">{{ permit.permitNumber }}</td>
+                    </tr>
+                    {% if permit.contractorCompany %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:8px;">{{ 'Dodávateľ'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:8px;">{{ permit.contractorCompany }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td style="font-size:13px;color:#000000;padding-bottom:8px;">{{ 'Dátum a čas kontroly'|t('bozp') }}</td>
+                        <td style="font-size:13px;padding-bottom:8px;">{{ controlledAt|date('d.m.Y H:i') }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px;color:#000000;padding-bottom:8px;">{{ 'Kontrolór'|t('bozp') }}</td>
+                        <td style="font-size:13px;padding-bottom:8px;">{{ controllerName }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px;color:#000000;">{{ 'Výsledok'|t('bozp') }}</td>
+                        <td style="font-size:13px;">
+                            <span style="display:inline-block;padding:2px 10px;border-radius:10px;
+                                         background:#4F2170;
+                                         color:#FEFFFD;font-size:12px;font-weight:700;">
+                                {{ resultLabels[result] ?? result }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    {% if notes %}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="background:#FEFFFD;border-left:4px solid #000000;border-radius:0 4px 4px 0;margin:0 0 24px;">
+            <tr>
+                <td style="padding:14px 20px;">
+                    <p style="margin:0 0 6px;font-size:13px;font-weight:700;">{{ 'Poznámky / zistenia'|t('bozp') }}</p>
+                    <p style="margin:0;font-size:13px;line-height:1.5;">{{ notes|nl2br }}</p>
+                </td>
+            </tr>
+        </table>
+    {% endif %}
+
+    {% if result == 'stopped' %}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="background:#FEFFFD;border-left:4px solid #000000;border-radius:0 4px 4px 0;margin:0 0 24px;">
+            <tr>
+                <td style="padding:12px 18px;font-size:13px;font-weight:700;color:#000000;">
+                    {{ 'Práce boli zastavené kontrolórom. Kontaktujte okamžite oddelenie HSE.'|t('bozp') }}
+                </td>
+            </tr>
+        </table>
+    {% endif %}
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+        <tr>
+            <td style="background:#4F2170;border-radius:4px;">
+                <a href="{{ permitUrl }}"
+                   style="display:inline-block;padding:12px 28px;color:#FEFFFD;font-size:15px;font-weight:700;text-decoration:none;">
+                    {{ 'Zobraziť permit'|t('bozp') }} →
+                </a>
+            </td>
+        </tr>
+    </table>
+{% endblock %}

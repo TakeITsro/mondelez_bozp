@@ -99,3 +99,65 @@
         <textarea id="electricalAdditionalMeasures" name="electricalAdditionalMeasures" rows="3">{{ values.electricalAdditionalMeasures ?? '' }}</textarea>
     </div>
 </fieldset>
+
+{# ── Signing requests ──────────────────────────────────────────────────────── #}
+{#
+   After you save the subpermit, each person below receives an email with a
+   unique link where they can review the subpermit details and sign electronically.
+   The subpermit enters the HSE approval queue only once all required signers have signed.
+#}
+<fieldset class="bozp-form__section">
+    <legend>{{ 'Signatári subpermitu'|t('bozp') }}</legend>
+
+    <p style="margin:0 0 16px;font-size:13px;color:#444;">
+        {{ 'Každej osobe bude po uložení odoslaný e-mail s odkazom na elektronický podpis. Povinné polia sú označené *.'|t('bozp') }}
+    </p>
+
+    {# Always required #}
+    {% set requiredRoles = [
+        { key: 'mdlz_qualified_emergency', label: 'Kvalifikovaná osoba MDLZ — havarijný plán'|t('bozp'),   required: true  },
+        { key: 'area_supervisor',          label: 'Vedúci pracoviska'|t('bozp'),                            required: true  },
+        { key: 'mdlz_qualified_approval',  label: 'Kvalifikovaná osoba MDLZ — schválenie SSoW'|t('bozp'),  required: true  },
+    ] %}
+
+    {# Conditional #}
+    {% set conditionalRoles = [
+        { key: 'third_party',          label: 'Dodávateľ (tretia strana)'|t('bozp'),         required: false },
+        { key: 'second_technician',    label: 'Druhý technik (>750 VAC)'|t('bozp'),          required: false },
+        { key: 'safety_rep',           label: 'Zástupca pre bezpečnosť (>750 VAC)'|t('bozp'),required: false },
+        { key: 'maintenance_manager',  label: 'Vedúci údržby (>750 VAC)'|t('bozp'),          required: false },
+    ] %}
+
+    {% for role in requiredRoles %}
+        {% set fieldName = 'signEmail_' ~ role.key %}
+        <div class="bozp-form__field{% if errors[fieldName] is defined %} bozp-form__field--error{% endif %}">
+            <label for="{{ fieldName }}">
+                {{ role.label }} <span class="bozp-form__req">*</span>
+            </label>
+            <input type="email" id="{{ fieldName }}" name="{{ fieldName }}"
+                   value="{{ attribute(values, fieldName) ?? '' }}"
+                   maxlength="255"
+                   placeholder="meno@firma.sk"
+                   {% if errors[fieldName] is defined %}aria-invalid="true"{% endif %}>
+            {% if errors[fieldName] is defined %}
+                <p class="bozp-form__error">{{ errors[fieldName] }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <p style="margin:16px 0 8px;font-size:13px;font-weight:700;color:#4F2170;">
+        {{ 'Voliteľné / podmienené'|t('bozp') }}
+    </p>
+
+    {% for role in conditionalRoles %}
+        {% set fieldName = 'signEmail_' ~ role.key %}
+        <div class="bozp-form__field">
+            <label for="{{ fieldName }}">{{ role.label }}</label>
+            <input type="email" id="{{ fieldName }}" name="{{ fieldName }}"
+                   value="{{ attribute(values, fieldName) ?? '' }}"
+                   maxlength="255"
+                   placeholder="meno@firma.sk">
+        </div>
+    {% endfor %}
+
+</fieldset>

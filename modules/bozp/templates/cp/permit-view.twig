@@ -4,6 +4,18 @@
 {% set title = ('Permit {n}'|t('bozp'))|replace({'{n}': permit.permitNumber}) %}
 {% set selectedSubnavItem = 'queue' %}
 
+{% block headHtml %}
+<style>
+.bozp-status{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.8em;font-weight:600;line-height:1.6;white-space:nowrap;color:#fff}
+.bozp-status--draft{background:#6b7280}.bozp-status--submitted{background:#d97706}
+.bozp-status--approved{background:#16a34a}.bozp-status--rejected{background:#dc2626}
+.bozp-status--signed{background:#2563eb}.bozp-status--active{background:#0891b2}
+.bozp-status--pending_closure{background:#ea580c}.bozp-status--pending{background:#d97706}
+.bozp-status--closed{background:#374151}.bozp-status--cancelled{background:#991b1b}
+.bozp-status--expired{background:#9f1239}
+</style>
+{% endblock %}
+
 {% set crumbs = [
     { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
     { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) }
@@ -53,6 +65,9 @@
             </div>
 
             <div>
+                <a href="{{ url('bozp/permit/' ~ permit.id ~ '/pdf') }}"
+                   target="_blank" rel="noopener"
+                   class="btn small">⬇ {{ 'Zobraziť PDF'|t('bozp') }}</a>
                 {% if permit.submittedAt %}
                     <div class="light">
                         {{ 'Odoslané'|t('bozp') }}: {{ permit.submittedAt|date('d.m.Y H:i') }}
@@ -222,6 +237,7 @@
                             <th>{{ 'Dátum'|t('bozp') }}</th>
                             <th style="width:120px;">{{ 'Stav'|t('bozp') }}</th>
                             <th>{{ 'Platnosť do'|t('bozp') }}</th>
+                            <th style="width:80px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -239,10 +255,15 @@
                                     {% endif %}
                                 </td>
                                 <td>{{ (sp.status == 'approved' and sp.expiresAt) ? sp.expiresAt|date('d.m.Y H:i') : '—' }}</td>
+                                <td>
+                                    <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ sp.id) }}" class="btn small">
+                                        {{ 'Detail'|t('bozp') }}
+                                    </a>
+                                </td>
                             </tr>
                             {% if sp.status == 'pending' and canApprove %}
                                 <tr class="bozp-subpermit-actions-row">
-                                    <td colspan="6" style="background:#f7f8f9;padding:12px 16px;">
+                                    <td colspan="7" style="background:#f7f8f9;padding:12px 16px;">
                                         <div class="flex" style="gap:24px;align-items:flex-start;flex-wrap:wrap;">
                                             <form method="post" accept-charset="UTF-8" style="display:inline;">
                                                 {{ csrfInput() }}
@@ -276,7 +297,7 @@
                             {% endif %}
                             {% if sp.status == 'rejected' and sp.rejectionNote %}
                                 <tr>
-                                    <td colspan="6" class="light" style="padding-left:16px;font-style:italic;">
+                                    <td colspan="7" class="light" style="padding-left:16px;font-style:italic;">
                                         {{ 'Dôvod zamietnutia'|t('bozp') }}: {{ sp.rejectionNote }}
                                     </td>
                                 </tr>
@@ -386,40 +407,79 @@
             </table>
         {% endif %}
 
-        {# ---------- Resend / Delete actions --------------------------- #}
+        {# ---------- Akcie -------------------------------------------- #}
         {% set canResend = canApprove and permit.status in ['approved','signed','active','rejected'] %}
-        {% if canResend or canDelete %}
-            <h3 style="margin-top:32px;">{{ 'Akcie'|t('bozp') }}</h3>
+        <h3 style="margin-top:32px;">{{ 'Akcie'|t('bozp') }}</h3>
+        <div class="flex" style="gap:12px;flex-wrap:wrap;">
 
-            <div class="flex" style="gap:12px;flex-wrap:wrap;">
+            {# Edit permit — always available to HSE #}
+            <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/edit') }}" class="btn">
+                {{ 'Upraviť permit'|t('bozp') }}
+            </a>
 
-                {% if canResend %}
-                    <form method="post"
-                          action="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/resend') }}"
-                          accept-charset="UTF-8">
-                        {{ csrfInput() }}
-                        <button type="submit" class="btn">
-                            {% if permit.status == 'rejected' %}
-                                {{ 'Znova odoslať e-mail o zamietnutí'|t('bozp') }}
-                            {% else %}
-                                {{ 'Znova odoslať schválenie (nové heslo)'|t('bozp') }}
-                            {% endif %}
-                        </button>
-                    </form>
-                {% endif %}
+            {% if canResend %}
+                <form method="post"
+                      action="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/resend') }}"
+                      accept-charset="UTF-8">
+                    {{ csrfInput() }}
+                    <button type="submit" class="btn">
+                        {% if permit.status == 'rejected' %}
+                            {{ 'Znova odoslať e-mail o zamietnutí'|t('bozp') }}
+                        {% else %}
+                            {{ 'Znova odoslať schválenie (nové heslo)'|t('bozp') }}
+                        {% endif %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
 
-                {% if canDelete %}
-                    <form method="post"
-                          action="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/delete') }}"
-                          accept-charset="UTF-8"
-                          onsubmit="return confirm('{{ 'Naozaj zmazať tento permit? Operáciu nie je možné vrátiť.'|t('bozp')|e('js') }}');">
-                        {{ csrfInput() }}
-                        <button type="submit" class="btn submit" style="background-color:#cf2929;border-color:#cf2929;">
-                            {{ 'Zmazať permit'|t('bozp') }}
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
+        {# ---- Control visits ---- #}
+        {% if controls is defined and controls|length > 0 %}
+            {% set resultLabels = {
+                'ok':      'V poriadku'|t('bozp'),
+                'issues':  'Zistené nedostatky'|t('bozp'),
+                'stopped': 'Práce zastavené'|t('bozp'),
+            } %}
+            {% set resultColors = {'ok': '#16a34a', 'issues': '#d97706', 'stopped': '#dc2626'} %}
+            <h3 style="margin-top:32px;">{{ 'Kontroly prevádzky'|t('bozp') }}</h3>
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Dátum a čas'|t('bozp') }}</th>
+                        <th>{{ 'Kontrolór'|t('bozp') }}</th>
+                        <th>{{ 'Výsledok'|t('bozp') }}</th>
+                        <th>{{ 'Poznámky'|t('bozp') }}</th>
+                        <th>{{ 'Podpis'|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in controls %}
+                        <tr>
+                            <td>{{ c.controlledAt|date('d.m.Y H:i') }}</td>
+                            <td>{{ c.controllerName }}</td>
+                            <td>
+                                <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:{{ resultColors[c.result] ?? '#6b7280' }};color:#fff;font-size:.8em;font-weight:600;">
+                                    {{ resultLabels[c.result] ?? c.result }}
+                                </span>
+                            </td>
+                            <td>{{ c.notes ?: '—' }}</td>
+                            <td>
+                                {% if c.signatureAssetId %}
+                                    {% set sigAsset = craft.assets().id(c.signatureAssetId).one() %}
+                                    {% if sigAsset %}
+                                        <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                             style="max-width:120px;max-height:48px;border:1px solid #eee;background:#fff;display:block;">
+                                    {% else %}
+                                        <span class="light">—</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="light">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% endif %}
 
         <h3 style="margin-top:32px;">{{ 'Audit'|t('bozp') }}</h3>

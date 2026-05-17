@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: DejaVu Sans, Arial, sans-serif;
+    font-size: 9pt;
+    color: #000000;
+    line-height: 1.4;
+}
+h1 { font-size: 14pt; color: #4F2170; margin-bottom: 4pt; }
+h2 { font-size: 10pt; color: #4F2170; margin: 8pt 0 4pt; border-bottom: 1pt solid #4F2170; padding-bottom: 2pt; }
+h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
+
+/* Header */
+.doc-header {
+    border: 2pt solid #4F2170;
+    padding: 8pt;
+    margin-bottom: 10pt;
+}
+.doc-header table { width: 100%; border-collapse: collapse; }
+.doc-header .logo-cell { width: 30%; vertical-align: middle; }
+.doc-header .title-cell { vertical-align: middle; text-align: center; }
+.doc-header .meta-cell { width: 30%; vertical-align: middle; text-align: right; font-size: 8pt; }
+.permit-number { font-size: 16pt; font-weight: bold; color: #4F2170; }
+.status-badge {
+    display: inline-block;
+    background: #4F2170;
+    color: #FEFFFD;
+    padding: 2pt 6pt;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+/* Sections */
+.section { margin-bottom: 8pt; }
+.dl-table { width: 100%; border-collapse: collapse; margin-bottom: 4pt; }
+.dl-table td { padding: 2pt 4pt; vertical-align: top; border-bottom: 0.5pt solid #000000; }
+.dl-table .label { width: 35%; font-weight: bold; background: #FEFFFD; }
+.dl-table .value { width: 65%; }
+
+/* Hazards */
+.hazard-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+.hazard-table th {
+    background: #4F2170;
+    color: #FEFFFD;
+    padding: 3pt 4pt;
+    text-align: left;
+    border: 0.5pt solid #4F2170;
+}
+.hazard-table td {
+    padding: 2pt 4pt;
+    border: 0.5pt solid #000000;
+    vertical-align: top;
+}
+.hazard-table tr:nth-child(even) td { background: #f5f0f8; }
+
+/* Subpermits */
+.subpermit-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+.subpermit-table th {
+    background: #4F2170;
+    color: #FEFFFD;
+    padding: 3pt 4pt;
+    text-align: left;
+    border: 0.5pt solid #4F2170;
+}
+.subpermit-table td { padding: 2pt 4pt; border: 0.5pt solid #000000; }
+
+/* Signatures */
+.sig-section { margin-top: 8pt; }
+.sig-grid { width: 100%; border-collapse: collapse; }
+.sig-grid td { width: 50%; vertical-align: top; padding: 4pt; border: 0.5pt solid #000000; }
+.sig-label { font-size: 8pt; font-weight: bold; color: #4F2170; margin-bottom: 3pt; }
+.sig-image { max-width: 200pt; max-height: 60pt; }
+.sig-meta { font-size: 7.5pt; color: #000000; margin-top: 3pt; }
+.sig-line { border-bottom: 0.5pt solid #000000; margin-top: 25pt; margin-bottom: 2pt; }
+
+/* Controls */
+.control-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+.control-table th {
+    background: #4F2170;
+    color: #FEFFFD;
+    padding: 3pt 4pt;
+    text-align: left;
+    border: 0.5pt solid #4F2170;
+}
+.control-table td { padding: 2pt 4pt; border: 0.5pt solid #000000; vertical-align: top; }
+
+/* Yes/No */
+.yn-yes { font-weight: bold; }
+.yn-no { }
+.yn-null { color: #555; }
+
+/* Footer */
+.doc-footer {
+    margin-top: 10pt;
+    padding-top: 4pt;
+    border-top: 0.5pt solid #000000;
+    font-size: 7pt;
+    color: #000000;
+}
+.pagebreak { page-break-before: always; }
+</style>
+</head>
+<body>
+
+{# ── Status labels ──────────────────────────────────────────────────────── #}
+{% set statusLabels = {
+    'draft':           'Koncept',
+    'submitted':       'Odoslané na schválenie',
+    'approved':        'Schválené',
+    'rejected':        'Zamietnuté',
+    'signed':          'Podpísané dodávateľom',
+    'active':          'Aktívne',
+    'pending_closure': 'Čaká na uzavretie',
+    'closed':          'Uzavreté',
+    'cancelled':       'Zrušené',
+    'expired':         'Vypršané',
+} %}
+
+{% macro yn(val) -%}
+    {%- if val is null -%}<span class="yn-null">—</span>
+    {%- elseif val -%}<span class="yn-yes">Áno</span>
+    {%- else -%}<span class="yn-no">Nie</span>
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro yn_str(val) -%}
+    {%- if val == 'yes' or val == true -%}Áno
+    {%- elseif val == 'no' or val == false -%}Nie
+    {%- else -%}—
+    {%- endif -%}
+{%- endmacro %}
+
+{# ── Document header ────────────────────────────────────────────────────── #}
+<div class="doc-header">
+    <table>
+        <tr>
+            <td class="logo-cell">
+                <strong style="font-size:11pt;color:#4F2170;">MONDELĒZ</strong><br>
+                <span style="font-size:8pt;">Bezpečnosť a ochrana zdravia pri práci</span>
+            </td>
+            <td class="title-cell">
+                <div style="font-size:10pt;font-weight:bold;color:#000000;margin-bottom:4pt;">
+                    VŠEOBECNÉ POVOLENIE NA PRÁCU
+                </div>
+                <div class="permit-number">{{ permit.permitNumber }}</div>
+            </td>
+            <td class="meta-cell">
+                <div class="status-badge">{{ statusLabels[permit.status] ?? permit.status }}</div>
+                <br><br>
+                <div>Vygenerované: {{ generatedAt }}</div>
+                {% if permit.validFrom %}
+                    <div>Platné od: {{ permit.validFrom|date('d.m.Y') }}</div>
+                {% endif %}
+                {% if permit.validTo %}
+                    <div>Platné do: {{ permit.validTo|date('d.m.Y H:i') }}</div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+{# ── Core details ────────────────────────────────────────────────────────── #}
+<div class="section">
+    <h2>Základné informácie</h2>
+    <table class="dl-table">
+        <tr>
+            <td class="label">Dodávateľ / spoločnosť</td>
+            <td class="value">{{ permit.contractorCompany ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Kontaktná osoba</td>
+            <td class="value">{{ permit.contractorPersonName ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">E-mail dodávateľa</td>
+            <td class="value">{{ permit.contractorEmail ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Miesto výkonu prác</td>
+            <td class="value">{{ permit.workLocation ?: '—' }}</td>
+        </tr>
+        {% if zones|length > 0 %}
+        <tr>
+            <td class="label">Zóny</td>
+            <td class="value">
+                {% for z in zones %}{{ z.name }}{% if z.code %} ({{ z.code }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+            </td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td class="label">Popis prác</td>
+            <td class="value">{{ permit.workOverview|nl2br ?: '—' }}</td>
+        </tr>
+        {% if permit.submittedAt %}
+        <tr>
+            <td class="label">Dátum odoslania</td>
+            <td class="value">{{ permit.submittedAt|date('d.m.Y H:i') }}</td>
+        </tr>
+        {% endif %}
+        {% if permit.approvedAt %}
+        <tr>
+            <td class="label">Dátum schválenia</td>
+            <td class="value">{{ permit.approvedAt|date('d.m.Y H:i') }}{% if approver %} — {{ approver.fullName ?: approver.username }}{% endif %}</td>
+        </tr>
+        {% endif %}
+        {% if permit.approvalComment %}
+        <tr>
+            <td class="label">Komentár HSE</td>
+            <td class="value">{{ permit.approvalComment|nl2br }}</td>
+        </tr>
+        {% endif %}
+        {% if permit.rejectedAt %}
+        <tr>
+            <td class="label">Dátum zamietnutia</td>
+            <td class="value">{{ permit.rejectedAt|date('d.m.Y H:i') }}{% if approver %} — {{ approver.fullName ?: approver.username }}{% endif %}</td>
+        </tr>
+        {% endif %}
+        {% if permit.closedAt %}
+        <tr>
+            <td class="label">Dátum uzavretia</td>
+            <td class="value">{{ permit.closedAt|date('d.m.Y H:i') }}</td>
+        </tr>
+        {% endif %}
+        {% if permit.cancelledAt %}
+        <tr>
+            <td class="label">Dátum zrušenia</td>
+            <td class="value">{{ permit.cancelledAt|date('d.m.Y H:i') }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td class="label">Vydavateľ permitu</td>
+            <td class="value">{{ issuer ? (issuer.fullName ?: issuer.username) : '—' }}</td>
+        </tr>
+    </table>
+</div>
+
+{# ── Preparation checks ──────────────────────────────────────────────────── #}
+<div class="section">
+    <h2>Príprava pracoviska</h2>
+    <table class="dl-table">
+        <tr>
+            <td class="label">Pracovné podmienky sú vhodné</td>
+            <td class="value">{{ _self.yn(permit.conditionsSuitable) }}</td>
+        </tr>
+        <tr>
+            <td class="label">Náradie v dobrom stave</td>
+            <td class="value">{{ _self.yn(permit.toolsInGoodCondition) }}</td>
+        </tr>
+        <tr>
+            <td class="label">Podmienky pre zastavenie prác</td>
+            <td class="value">{{ _self.yn(permit.hasStopConditions) }}</td>
+        </tr>
+        {% if permit.stopConditionsDescription %}
+        <tr>
+            <td class="label">Popis podmienok zastavenia</td>
+            <td class="value">{{ permit.stopConditionsDescription|nl2br }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td class="label">LOTO zavedené</td>
+            <td class="value">{{ _self.yn(permit.lotoImplemented) }}</td>
+        </tr>
+        {% if permit.emergencyPlan %}
+        <tr>
+            <td class="label">Núdzový plán</td>
+            <td class="value">{{ permit.emergencyPlan|nl2br }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+{# ── Hazards matrix ──────────────────────────────────────────────────────── #}
+{% if hazards|length > 0 %}
+<div class="section">
+    <h2>Riziká a OOPP</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th style="width:30%">Riziko</th>
+                <th style="width:10%">Exponovaný</th>
+                <th style="width:35%">Opatrenie / OOPP</th>
+                <th style="width:25%">Kontrola počas činnosti</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set controlLabels = {
+                'used':     'Použité',
+                'not_used': 'Nepoužité',
+                'other':    'Iné',
+            } %}
+            {% for cat in hazardCategories %}
+                {% set row = hazards[cat.value] ?? null %}
+                {% if row %}
+                <tr>
+                    <td><strong>{{ cat.label() }}</strong></td>
+                    <td>{{ _self.yn(row.exposed) }}</td>
+                    <td>{{ row.measure ? row.measure|nl2br : '—' }}</td>
+                    <td>
+                        {{- controlLabels[row.controlDuringActivity] ?? (row.controlDuringActivity ?: '—') -}}
+                        {%- if row.controlDuringActivityOther %} — {{ row.controlDuringActivityOther }}{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# ── Subpermits ──────────────────────────────────────────────────────────── #}
+{% if subpermits|length > 0 %}
+<div class="section">
+    <h2>Subpermity zvýšeného rizika</h2>
+    {% set spLabelMap = {} %}
+    {% set spAppendixMap = {} %}
+    {% for t in subpermitTypes %}
+        {% set spLabelMap = spLabelMap|merge({(t.value): t.label()}) %}
+        {% set spAppendixMap = spAppendixMap|merge({(t.value): t.appendixNumber()}) %}
+    {% endfor %}
+    {% set spStatusLabels = {
+        'pending':           'Čaká na schválenie',
+        'pending_signatures':'Čaká na podpisy',
+        'approved':          'Schválené',
+        'rejected':          'Zamietnuté',
+        'cancelled':         'Zrušené',
+    } %}
+    <table class="subpermit-table">
+        <thead>
+            <tr>
+                <th style="width:12%">Príloha</th>
+                <th style="width:30%">Typ</th>
+                <th style="width:18%">Dátum</th>
+                <th style="width:20%">Stav</th>
+                <th style="width:20%">Platnosť do</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sp in subpermits %}
+            {% set spData = sp.data is string ? sp.data|json_decode : (sp.data ?? {}) %}
+            <tr>
+                <td>Príloha č. {{ spAppendixMap[sp.type] ?? sp.type }}</td>
+                <td>{{ spLabelMap[sp.type] ?? sp.type }}</td>
+                <td>{{ spData.date ? spData.date|date('d.m.Y') : sp.dateCreated|date('d.m.Y') }}</td>
+                <td>{{ spStatusLabels[sp.status] ?? sp.status }}</td>
+                <td>{{ (sp.status == 'approved' and sp.expiresAt) ? sp.expiresAt|date('d.m.Y H:i') : '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# ── Control visits ──────────────────────────────────────────────────────── #}
+{% if controls|length > 0 %}
+<div class="section">
+    <h2>Kontroly prevádzky</h2>
+    {% set resultLabels = {
+        'ok':      'V poriadku',
+        'issues':  'Zistené nedostatky',
+        'stopped': 'Práce zastavené',
+    } %}
+    <table class="control-table">
+        <thead>
+            <tr>
+                <th style="width:20%">Dátum a čas</th>
+                <th style="width:25%">Kontrolór</th>
+                <th style="width:18%">Výsledok</th>
+                <th style="width:22%">Poznámky</th>
+                <th style="width:15%">Podpis</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in controls %}
+            <tr>
+                <td>{{ c.controlledAt|date('d.m.Y H:i') }}</td>
+                <td>{{ c.controllerName }}</td>
+                <td>{{ resultLabels[c.result] ?? c.result }}</td>
+                <td>{{ c.notes ?: '—' }}</td>
+                <td>
+                    {% if controlSigImages[c.id] is defined and controlSigImages[c.id] %}
+                        <img src="{{ controlSigImages[c.id] }}" style="max-width:80pt;max-height:30pt;">
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# ── Signatures ──────────────────────────────────────────────────────────── #}
+<div class="section sig-section">
+    <h2>Podpisy</h2>
+    <table class="sig-grid">
+        <tr>
+            {# Issuer signature #}
+            <td>
+                <div class="sig-label">Vydavateľ permitu (Issuer)</div>
+                {% set issuerSig = signatures['issuer'] ?? null %}
+                {% if issuerSig %}
+                    {% if sigImages['issuer'] is defined and sigImages['issuer'] %}
+                        <img src="{{ sigImages['issuer'] }}" class="sig-image">
+                    {% else %}
+                        <div class="sig-line"></div>
+                    {% endif %}
+                    <div class="sig-meta">
+                        <strong>{{ issuerSig.signerName }}</strong>
+                        {% if issuerSig.signatureDate %} · {{ issuerSig.signatureDate|date('d.m.Y') }}{% endif %}
+                    </div>
+                {% else %}
+                    <div class="sig-line"></div>
+                    <div class="sig-meta">{{ issuer ? (issuer.fullName ?: issuer.username) : '—' }}</div>
+                {% endif %}
+            </td>
+
+            {# HSE approval #}
+            <td>
+                <div class="sig-label">Schválenie HSE (Approver)</div>
+                {% set approvalSig = signatures['hse_approval'] ?? null %}
+                {% if approvalSig %}
+                    {% if sigImages['hse_approval'] is defined and sigImages['hse_approval'] %}
+                        <img src="{{ sigImages['hse_approval'] }}" class="sig-image">
+                    {% else %}
+                        <div class="sig-line"></div>
+                    {% endif %}
+                    <div class="sig-meta">
+                        <strong>{{ approvalSig.signerName }}</strong>
+                        {% if approvalSig.signatureDate %} · {{ approvalSig.signatureDate|date('d.m.Y') }}{% endif %}
+                    </div>
+                {% else %}
+                    <div class="sig-line"></div>
+                    <div class="sig-meta">{{ approver ? (approver.fullName ?: approver.username) : '—' }}</div>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            {# Recipient closure #}
+            <td>
+                <div class="sig-label">Podpis dodávateľa — dokončenie (Recipient Closure)</div>
+                {% set rcSig = signatures['recipient_closure'] ?? null %}
+                {% if rcSig %}
+                    {% if sigImages['recipient_closure'] is defined and sigImages['recipient_closure'] %}
+                        <img src="{{ sigImages['recipient_closure'] }}" class="sig-image">
+                    {% else %}
+                        <div class="sig-line"></div>
+                    {% endif %}
+                    <div class="sig-meta">
+                        <strong>{{ rcSig.signerName }}</strong>
+                        {% if rcSig.signerEmployer %} / {{ rcSig.signerEmployer }}{% endif %}
+                        {% if rcSig.signatureDate %} · {{ rcSig.signatureDate|date('d.m.Y') }}{% endif %}
+                    </div>
+                {% else %}
+                    <div class="sig-line"></div>
+                    <div class="sig-meta">Dodávateľ — dokončenie</div>
+                {% endif %}
+            </td>
+
+            {# Issuer closure #}
+            <td>
+                <div class="sig-label">Podpis vydavateľa — uzavretie (Issuer Closure)</div>
+                {% set icSig = signatures['issuer_closure'] ?? null %}
+                {% if icSig %}
+                    {% if sigImages['issuer_closure'] is defined and sigImages['issuer_closure'] %}
+                        <img src="{{ sigImages['issuer_closure'] }}" class="sig-image">
+                    {% else %}
+                        <div class="sig-line"></div>
+                    {% endif %}
+                    <div class="sig-meta">
+                        <strong>{{ icSig.signerName }}</strong>
+                        {% if icSig.signatureDate %} · {{ icSig.signatureDate|date('d.m.Y') }}{% endif %}
+                    </div>
+                {% else %}
+                    <div class="sig-line"></div>
+                    <div class="sig-meta">Vydavateľ — uzavretie</div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+{# ── Closure status flags ────────────────────────────────────────────────── #}
+{% set rcStatus = permit.recipientClosureStatus %}
+{% if rcStatus is iterable and rcStatus|length > 0 %}
+<div class="section">
+    <h3>Stav pri uzavretí dodávateľom</h3>
+    {% set rcLabels = {
+        'work_completed':                   'Práce boli dokončené',
+        'equipment_operational':            'Zariadenie je prevádzkyschopné',
+        'equipment_not_operational':        'Zariadenie nie je prevádzkyschopné',
+        'personnel_and_materials_removed':  'Všetky osoby a materiály opustili oblasť',
+        'work_suspended':                   'Práce boli pozastavené',
+    } %}
+    {% for f in rcStatus %}
+        <div>✓ {{ rcLabels[f] ?? f }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# ── Footer ──────────────────────────────────────────────────────────────── #}
+<div class="doc-footer">
+    <table style="width:100%;border-collapse:collapse;">
+        <tr>
+            <td>{{ 'Mondelēz Slovensko, s.r.o. — BOZP povolenie na prácu' }}</td>
+            <td style="text-align:right;">Číslo: {{ permit.permitNumber }} | Vygenerované: {{ generatedAt }}</td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

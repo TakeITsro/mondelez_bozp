@@ -11,36 +11,25 @@ use craft\helpers\UrlHelper;
 use craft\web\View;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
+use modules\bozp\enums\SubpermitType;
+use modules\bozp\records\PermitControlRecord;
 use modules\bozp\records\PermitRecord;
+use modules\bozp\records\SubpermitRecord;
 use Throwable;
 use yii\base\Component;
 
 /**
  * PermitMailer
  *
- * Notification emails for permit lifecycle events. Intentionally short:
- * subject + a one-paragraph message + a link to the permit. The full
- * permit content is NOT included — recipients open the link to see it.
+ * Notification emails for permit lifecycle events. All sends are wrapped in
+ * try/catch so a mailer failure never blocks the underlying state transition.
  *
- * All sends are wrapped in try/catch so a mailer failure never blocks
- * the underlying state transition (approving a permit must not fail
- * because the SMTP server is down).
- *
- * Templates live under templates/email/. Each template receives:
- *   - permit:        PermitRecord
- *   - permitUrl:     absolute URL to view the permit (front-end or CP)
- *   - reason:        rejection reason (rejected.twig only)
- *
- * Recipient language: for Craft users we temporarily switch to their
- * preferred language before rendering; for the contractor (no account)
- * we use the site's default language (Slovak).
+ * Templates live under templates/email/ and extend email/_layout.twig.
  */
 class PermitMailer extends Component
 {
     /**
-     * Permit moved to "submitted" — notify HSE officer.
-     * HSE recipient: first user with bozp:approve permission, or fall
-     * back to env BOZP_HSE_EMAIL if no such user exists.
+     * New permit submitted — notify HSE officer.
      */
     public function notifyHseOfSubmission(PermitRecord $permit): void
     {
@@ -60,25 +49,23 @@ class PermitMailer extends Component
             subjectParams: ['n' => $permit->permitNumber],
             template: 'submitted-hse',
             vars: [
-                'permit' => $permit,
-                'permitUrl' => UrlHelper::cpUrl('bozp/permit/' . $permit->id),
+                'permit'     => $permit,
+                'permitUrl'  => UrlHelper::cpUrl('bozp/permit/' . $permit->id),
+                'subpermits' => $this->loadSubpermitsForEmail($permit),
             ],
         );
     }
 
     /**
-     * Permit approved — notify issuer (simple link) and contractor
-     * (link + plaintext password + QR code embedded inline).
-     *
-     * The plaintext password is passed in by the workflow ONCE at
-     * approval; we never read it from the DB (only the hash is stored).
+     * Permit approved — notify issuer (with subpermit list) and contractor
+     * (with link + password + QR + subpermit list).
      */
     public function notifyParticipantsOfApproval(PermitRecord $permit, ?string $contractorPassword = null): void
     {
         $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
         $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+        $subpermits = $this->loadSubpermitsForEmail($permit);
 
-        // Issuer — simple internal link to the front-end detail page.
         if ($issuer && $issuer->email) {
             $this->send(
                 to: $issuer->email,
@@ -86,12 +73,10 @@ class PermitMailer extends Component
                 subjectKey: 'Permit {n} bol schválený',
                 subjectParams: ['n' => $permit->permitNumber],
                 template: 'approved',
-                vars: ['permit' => $permit, 'permitUrl' => $issuerUrl],
+                vars: ['permit' => $permit, 'permitUrl' => $issuerUrl, 'subpermits' => $subpermits],
             );
         }
 
-        // Contractor — token URL + password + QR. Skip if we don't have
-        // both the email and the access credentials (defensive).
         if (
             !empty($permit->contractorEmail)
             && !empty($permit->accessToken)
@@ -107,37 +92,18 @@ class PermitMailer extends Component
                 subjectParams: ['n' => $permit->permitNumber],
                 template: 'approved-contractor',
                 vars: [
-                    'permit' => $permit,
-                    'permitUrl' => $contractorUrl,
-                    'password' => $contractorPassword,
-                    'qrDataUri' => $qrDataUri,
+                    'permit'     => $permit,
+                    'permitUrl'  => $contractorUrl,
+                    'password'   => $contractorPassword,
+                    'qrDataUri'  => $qrDataUri,
+                    'subpermits' => $subpermits,
                 ],
             );
         }
     }
 
     /**
-     * Render the contractor link as a base64 PNG data URI.
-     * Returns null on failure so the email still sends without QR.
-     */
-    private function buildQrDataUri(string $url): ?string
-    {
-        try {
-            $result = Builder::create()
-                ->writer(new PngWriter())
-                ->data($url)
-                ->size(220)
-                ->margin(8)
-                ->build();
-            return 'data:image/png;base64,' . base64_encode($result->getString());
-        } catch (Throwable $e) {
-            Craft::error('BOZP mailer: QR generation failed: ' . $e->getMessage(), __METHOD__);
-            return null;
-        }
-    }
-
-    /**
-     * Permit rejected — notify contractor and issuer with the reason.
+     * Permit rejected — notify issuer and contractor with the reason.
      */
     public function notifyParticipantsOfRejection(PermitRecord $permit, string $reason): void
     {
@@ -167,13 +133,162 @@ class PermitMailer extends Component
         }
     }
 
+    /**
+     * Contractor signed the permit (close or cancel) — notify the issuer.
+     *
+     * @param string $action  'close' | 'cancel'
+     * @param string $signerName
+     */
+    public function notifyIssuerOfContractorSignature(
+        PermitRecord $permit,
+        string $action,
+        string $signerName,
+    ): void {
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+        if (!$issuer || !$issuer->email) {
+            return;
+        }
+
+        $permitUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+
+        $this->send(
+            to: $issuer->email,
+            language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+            subjectKey: $action === 'cancel'
+                ? 'Dodávateľ zrušil permit {n}'
+                : 'Dodávateľ podpísal dokončenie permitu {n}',
+            subjectParams: ['n' => $permit->permitNumber],
+            template: 'contractor-signed',
+            vars: [
+                'permit'      => $permit,
+                'permitUrl'   => $permitUrl,
+                'signerName'  => $signerName,
+                'action'      => $action,
+            ],
+        );
+    }
+
+    /**
+     * Issuer signed the permit (close or cancel) — notify the contractor.
+     *
+     * @param string $action  'close' | 'cancel'
+     * @param string $signerName
+     */
+    public function notifyContractorOfIssuerSignature(
+        PermitRecord $permit,
+        string $action,
+        string $signerName,
+    ): void {
+        if (empty($permit->contractorEmail) || empty($permit->accessToken)) {
+            return;
+        }
+
+        $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+
+        $this->send(
+            to: $permit->contractorEmail,
+            language: Craft::$app->getSites()->getPrimarySite()->language,
+            subjectKey: $action === 'cancel'
+                ? 'Vydavateľ zrušil permit {n}'
+                : 'Permit {n} bol uzavretý',
+            subjectParams: ['n' => $permit->permitNumber],
+            template: 'issuer-signed',
+            vars: [
+                'permit'      => $permit,
+                'permitUrl'   => $contractorUrl,
+                'signerName'  => $signerName,
+                'action'      => $action,
+            ],
+        );
+    }
+
+    /**
+     * Control visit recorded — notify both issuer and contractor.
+     */
+    public function notifyParticipantsOfControl(
+        PermitRecord $permit,
+        PermitControlRecord $control,
+    ): void {
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+        $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+
+        $vars = [
+            'permit'          => $permit,
+            'controllerName'  => $control->controllerName,
+            'controlledAt'    => $control->controlledAt,
+            'result'          => $control->result,
+            'notes'           => $control->notes,
+        ];
+
+        // Notify issuer
+        if ($issuer && $issuer->email) {
+            $this->send(
+                to: $issuer->email,
+                language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+                subjectKey: 'Kontrola prevádzky — permit {n}',
+                subjectParams: ['n' => $permit->permitNumber],
+                template: 'control-visit',
+                vars: array_merge($vars, ['permitUrl' => $issuerUrl]),
+            );
+        }
+
+        // Notify contractor
+        if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
+            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $this->send(
+                to: $permit->contractorEmail,
+                language: Craft::$app->getSites()->getPrimarySite()->language,
+                subjectKey: 'Kontrola prevádzky — permit {n}',
+                subjectParams: ['n' => $permit->permitNumber],
+                template: 'control-visit',
+                vars: array_merge($vars, ['permitUrl' => $contractorUrl]),
+            );
+        }
+    }
+
     // -- internals -------------------------------------------------------
 
     /**
-     * Render and send. Renders subject + HTML body in $language,
-     * restoring the previous app language afterwards. Failures are
-     * logged, never thrown.
+     * Load subpermits for a permit, enriched with a typeLabel property
+     * for easy use in email templates.
      *
+     * @return array<int, object> plain objects with typeLabel added
+     */
+    private function loadSubpermitsForEmail(PermitRecord $permit): array
+    {
+        $rows = SubpermitRecord::find()
+            ->where(['parentPermitId' => $permit->id])
+            ->orderBy(['dateCreated' => SORT_ASC])
+            ->all();
+
+        foreach ($rows as $row) {
+            $type = SubpermitType::tryFrom($row->type);
+            $row->typeLabel = $type ? $type->label() : $row->type;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Render the contractor link as a base64 PNG data URI.
+     */
+    private function buildQrDataUri(string $url): ?string
+    {
+        try {
+            $result = Builder::create()
+                ->writer(new PngWriter())
+                ->data($url)
+                ->size(220)
+                ->margin(8)
+                ->build();
+            return 'data:image/png;base64,' . base64_encode($result->getString());
+        } catch (Throwable $e) {
+            Craft::error('BOZP mailer: QR generation failed: ' . $e->getMessage(), __METHOD__);
+            return null;
+        }
+    }
+
+    /**
      * @param array<string, mixed> $subjectParams
      * @param array<string, mixed> $vars
      */

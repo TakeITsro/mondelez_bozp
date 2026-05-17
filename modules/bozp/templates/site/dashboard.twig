@@ -19,14 +19,14 @@
     <section class="bozp-page bozp-page--dashboard">
         <header class="bozp-page__header">
             <h1>{{ 'Moje permity'|t('bozp') }}</h1>
-            {% if currentUser.can('bozp:createPermit') %}
+            {% if currentUser and currentUser.can('bozp:createPermit') %}
                 <a class="bozp-btn bozp-btn--primary" href="{{ url('bozp/permits/new') }}">
                     {{ 'Nový permit'|t('bozp') }}
                 </a>
             {% endif %}
         </header>
 
-        {% if myPermits|length == 0 %}
+        {% if (myPermits ?? [])|length == 0 %}
             <p class="bozp-empty">{{ 'Zatiaľ ste nevytvorili žiadny permit.'|t('bozp') }}</p>
         {% else %}
             <table class="bozp-table">
@@ -40,7 +40,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for permit in myPermits %}
+                    {% for permit in (myPermits ?? []) %}
                         <tr class="bozp-table__row bozp-table__row--status-{{ permit.status }}">
                             <td>
                                 <a href="{{ url('bozp/permits/' ~ permit.id) }}">{{ permit.permitNumber }}</a>

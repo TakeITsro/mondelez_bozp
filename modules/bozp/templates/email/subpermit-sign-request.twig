@@ -1,0 +1,78 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Invitation email sent to each required signer of a multi-signer subpermit.
+   Variables: permit, subpermit, role (SubpermitSigningRole), signingUrl #}
+
+{% block subject %}{{ 'Vyžaduje sa váš podpis — subpermit k povoleniu {n}'|t('bozp', {n: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Elektronický podpis subpermitu'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Ste požiadaný o podpis'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
+        {{
+            'Boli ste požiadaný o elektronický podpis subpermitu k povoleniu <strong>{n}</strong> v roli: <strong>{role}</strong>.'|t('bozp', {
+                n:    permit.permitNumber,
+                role: role ? role.label() : subpermit.type
+            })|raw
+        }}
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:16px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="4">
+                    <tr>
+                        <td style="font-size:13px;color:#000000;width:160px;padding-bottom:6px;">{{ 'Číslo povolenia'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;padding-bottom:6px;">{{ permit.permitNumber }}</td>
+                    </tr>
+                    {% if permit.contractorCompany %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Dodávateľ'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:6px;">{{ permit.contractorCompany }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if permit.workLocation %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Miesto práce'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:6px;">{{ permit.workLocation }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td style="font-size:13px;color:#000000;">{{ 'Váša rola'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;">
+                            {{ role ? role.label() : subpermit.type }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:0 0 20px;font-size:14px;">
+        {{ 'Kliknutím na tlačidlo nižšie otvoríte formulár na podpis. Odkaz je platný pre jedno použitie.'|t('bozp') }}
+    </p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+        <tr>
+            <td style="background:#4F2170;border-radius:4px;">
+                <a href="{{ signingUrl }}"
+                   style="display:inline-block;padding:12px 28px;color:#FEFFFD;font-size:15px;font-weight:700;text-decoration:none;">
+                    {{ 'Podpísať subpermit'|t('bozp') }} →
+                </a>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:0;font-size:12px;color:#000000;border-top:1px solid #000000;padding-top:16px;">
+        {{ 'Ak tlačidlo nefunguje, skopírujte tento odkaz do prehliadača:'|t('bozp') }}<br>
+        <a href="{{ signingUrl }}" style="color:#4F2170;word-break:break-all;">{{ signingUrl }}</a>
+    </p>
+{% endblock %}
