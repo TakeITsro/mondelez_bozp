@@ -3,25 +3,38 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="only light">
+    <meta name="supported-color-schemes" content="light only">
     <title>{% block subject %}BOZP Permity{% endblock %}</title>
     <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+    <style>
+        :root { color-scheme: only light; supported-color-schemes: light only; }
+        body, table, td { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+        /* Block Gmail/iOS auto-darkening of the brand purple */
+        [data-ogsc] .bozp-purple,
+        [data-ogsb] .bozp-purple { background-color:#4F2170 !important; background:#4F2170 !important; }
+        [data-ogsc] .bozp-on-purple,
+        [data-ogsb] .bozp-on-purple { color:#FEFFFD !important; }
+    </style>
 </head>
-<body style="margin:0;padding:0;background:#4F2170;font-family:Arial,Helvetica,sans-serif;color:#000000;">
+<body bgcolor="#4F2170" style="margin:0;padding:0;background-color:#4F2170;font-family:Arial,Helvetica,sans-serif;color:#000000;">
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#4F2170;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#4F2170"
+           class="bozp-purple" style="background-color:#4F2170;">
         <tr>
-            <td align="center" style="padding:32px 16px;">
+            <td align="center" bgcolor="#4F2170" class="bozp-purple" style="padding:32px 16px;background-color:#4F2170;">
 
                 {# ── Header ── #}
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0"
-                       style="max-width:600px;width:100%;background:#4F2170;border-radius:6px 6px 0 0;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#4F2170"
+                       class="bozp-purple"
+                       style="max-width:600px;width:100%;background-color:#4F2170;border-radius:6px 6px 0 0;">
                     <tr>
-                        <td style="padding:28px 36px;">
-                            <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;
+                        <td bgcolor="#4F2170" class="bozp-purple" style="padding:28px 36px;background-color:#4F2170;">
+                            <p class="bozp-on-purple" style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;
                                       color:#FEFFFD;font-weight:400;">
                                 Mondelez SR Production
                             </p>
-                            <h1 style="margin:6px 0 0;font-size:22px;font-weight:700;color:#FEFFFD;line-height:1.2;">
+                            <h1 class="bozp-on-purple" style="margin:6px 0 0;font-size:22px;font-weight:700;color:#FEFFFD;line-height:1.2;">
                                 BOZP Permity
                             </h1>
                         </td>
@@ -29,21 +42,22 @@
                 </table>
 
                 {# ── Body ── #}
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0"
-                       style="max-width:600px;width:100%;background:#FEFFFD;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#FEFFFD"
+                       style="max-width:600px;width:100%;background-color:#FEFFFD;">
                     <tr>
-                        <td style="padding:32px 36px;color:#000000;font-size:15px;line-height:1.6;">
+                        <td bgcolor="#FEFFFD" style="padding:32px 36px;color:#000000;font-size:15px;line-height:1.6;background-color:#FEFFFD;">
                             {% block content %}{% endblock %}
                         </td>
                     </tr>
                 </table>
 
                 {# ── Footer ── #}
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0"
-                       style="max-width:600px;width:100%;background:#4F2170;border-radius:0 0 6px 6px;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#4F2170"
+                       class="bozp-purple"
+                       style="max-width:600px;width:100%;background-color:#4F2170;border-radius:0 0 6px 6px;">
                     <tr>
-                        <td style="padding:16px 36px;">
-                            <p style="margin:0;font-size:11px;color:#FEFFFD;line-height:1.5;">
+                        <td bgcolor="#4F2170" class="bozp-purple" style="padding:16px 36px;background-color:#4F2170;">
+                            <p class="bozp-on-purple" style="margin:0;font-size:11px;color:#FEFFFD;line-height:1.5;">
                                 {{ 'Toto je automatická správa zo systému BOZP Permity. Neodpovedajte na tento e-mail.'|t('bozp') }}
                             </p>
                         </td>

@@ -9,6 +9,7 @@ use craft\elements\User;
 use craft\helpers\App;
 use craft\helpers\UrlHelper;
 use craft\web\View;
+use craft\elements\Asset;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 use modules\bozp\enums\SubpermitType;
@@ -203,6 +204,61 @@ class PermitMailer extends Component
     }
 
     /**
+     * Permit closed by the issuer — send the final signed PDF to both
+     * the issuer (employee) and the contractor as an email attachment.
+     *
+     * Requires the closed PDF to have been (re)generated before this is called.
+     */
+    public function notifyParticipantsOfClosure(PermitRecord $permit, string $signerName): void
+    {
+        $attachment = $this->loadPermitPdfAttachment($permit);
+        if ($attachment === null) {
+            Craft::warning(
+                "BOZP mailer: closure email for permit #{$permit->id} sent without PDF (asset missing).",
+                __METHOD__,
+            );
+        }
+
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+
+        // Issuer (Mondelez employee)
+        if ($issuer && $issuer->email) {
+            $this->send(
+                to: $issuer->email,
+                language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+                subjectKey: 'Permit {n} bol uzavretý',
+                subjectParams: ['n' => $permit->permitNumber],
+                template: 'closed',
+                vars: [
+                    'permit'     => $permit,
+                    'permitUrl'  => UrlHelper::siteUrl('bozp/permits/' . $permit->id),
+                    'signerName' => $signerName,
+                    'recipient'  => 'issuer',
+                ],
+                attachments: $attachment ? [$attachment] : [],
+            );
+        }
+
+        // Contractor
+        if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
+            $this->send(
+                to: $permit->contractorEmail,
+                language: Craft::$app->getSites()->getPrimarySite()->language,
+                subjectKey: 'Permit {n} bol uzavretý',
+                subjectParams: ['n' => $permit->permitNumber],
+                template: 'closed',
+                vars: [
+                    'permit'     => $permit,
+                    'permitUrl'  => UrlHelper::siteUrl('bozp/c/' . $permit->accessToken),
+                    'signerName' => $signerName,
+                    'recipient'  => 'contractor',
+                ],
+                attachments: $attachment ? [$attachment] : [],
+            );
+        }
+    }
+
+    /**
      * Control visit recorded — notify both issuer and contractor.
      */
     public function notifyParticipantsOfControl(
@@ -289,8 +345,9 @@ class PermitMailer extends Component
     }
 
     /**
-     * @param array<string, mixed> $subjectParams
-     * @param array<string, mixed> $vars
+     * @param array<string, mixed>                                    $subjectParams
+     * @param array<string, mixed>                                    $vars
+     * @param array<int, array{content: string, filename: string, contentType?: string}> $attachments
      */
     private function send(
         string $to,
@@ -299,6 +356,7 @@ class PermitMailer extends Component
         array $subjectParams,
         string $template,
         array $vars,
+        array $attachments = [],
     ): void {
         $previousLanguage = Craft::$app->language;
         $view = Craft::$app->getView();
@@ -311,12 +369,23 @@ class PermitMailer extends Component
             $subject = (string) Craft::t('bozp', $subjectKey, $subjectParams);
             $html = $view->renderTemplate('bozp/email/' . $template, $vars);
 
-            Craft::$app->getMailer()
+            $message = Craft::$app->getMailer()
                 ->compose()
                 ->setTo($to)
                 ->setSubject($subject)
-                ->setHtmlBody($html)
-                ->send();
+                ->setHtmlBody($html);
+
+            foreach ($attachments as $att) {
+                if (empty($att['content']) || empty($att['filename'])) {
+                    continue;
+                }
+                $message->attachContent($att['content'], [
+                    'fileName'    => $att['filename'],
+                    'contentType' => $att['contentType'] ?? 'application/pdf',
+                ]);
+            }
+
+            $message->send();
         } catch (Throwable $e) {
             Craft::error(
                 "BOZP mailer: send to {$to} (template={$template}) failed: " . $e->getMessage(),
@@ -325,6 +394,43 @@ class PermitMailer extends Component
         } finally {
             Craft::$app->language = $previousLanguage;
             $view->setTemplateMode($previousMode);
+        }
+    }
+
+    /**
+     * Load the permit's stored PDF as an in-memory attachment payload.
+     *
+     * @return array{content: string, filename: string, contentType: string}|null
+     */
+    private function loadPermitPdfAttachment(PermitRecord $permit): ?array
+    {
+        if (empty($permit->pdfAssetId)) {
+            return null;
+        }
+
+        /** @var Asset|null $asset */
+        $asset = Craft::$app->getAssets()->getAssetById((int) $permit->pdfAssetId);
+        if (!$asset) {
+            return null;
+        }
+
+        try {
+            $content = $asset->getContents();
+            if ($content === '' || $content === false) {
+                Craft::warning(
+                    "BOZP mailer: PDF asset #{$asset->id} returned empty contents.",
+                    __METHOD__,
+                );
+                return null;
+            }
+            return [
+                'content'     => $content,
+                'filename'    => $asset->filename ?: ('permit-' . $permit->permitNumber . '.pdf'),
+                'contentType' => 'application/pdf',
+            ];
+        } catch (Throwable $e) {
+            Craft::error('BOZP mailer: failed to read PDF asset: ' . $e->getMessage(), __METHOD__);
+            return null;
         }
     }
 

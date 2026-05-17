@@ -226,8 +226,10 @@ class PermitsController extends BaseSiteController
                 $values['signatureData'],
             );
             $module->permitWorkflow->closeByIssuer($permit, $userId, $requiresTrial);
-            $module->permitMailer->notifyContractorOfIssuerSignature($permit, 'close', $values['signerName']);
-            $module->permitPdfService->generateForPermit($permit);
+            // Re-fetch so the PDF reflects the closed status & latest signatures.
+            $closed = PermitRecord::findOne(['id' => $permit->id]) ?? $permit;
+            $module->permitPdfService->generateForPermit($closed);
+            $module->permitMailer->notifyParticipantsOfClosure($closed, $values['signerName']);
 
             Craft::$app->getSession()->setNotice(
                 Craft::t('bozp', 'Permit bol uzavretý.')
