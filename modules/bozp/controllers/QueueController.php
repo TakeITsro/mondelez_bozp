@@ -646,22 +646,19 @@ class QueueController extends Controller
         return $permit;
     }
 
-    /** @return ZoneRecord[] */
+    /**
+     * Return the single zone for a permit, wrapped in an array so existing
+     * templates that iterate zones keep working unchanged.
+     *
+     * @return ZoneRecord[]
+     */
     private function loadZonesFor(int $permitId): array
     {
-        $zoneIds = (new \yii\db\Query())
-            ->select('zoneId')
-            ->from('{{%bozp_permit_zones}}')
-            ->where(['permitId' => $permitId])
-            ->column();
-
-        if ($zoneIds === []) {
+        $permit = \modules\bozp\records\PermitRecord::findOne(['id' => $permitId]);
+        if (!$permit || empty($permit->zoneId)) {
             return [];
         }
-
-        return ZoneRecord::find()
-            ->where(['id' => $zoneIds])
-            ->orderBy(['sortOrder' => SORT_ASC, 'name' => SORT_ASC])
-            ->all();
+        $zone = ZoneRecord::findOne(['id' => (int) $permit->zoneId]);
+        return $zone ? [$zone] : [];
     }
 }

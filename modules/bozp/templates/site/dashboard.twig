@@ -21,7 +21,7 @@
             <h1>{{ 'Moje permity'|t('bozp') }}</h1>
             {% if currentUser and currentUser.can('bozp:createPermit') %}
                 <a class="bozp-btn bozp-btn--primary" href="{{ url('bozp/permits/new') }}">
-                    {{ 'Nový permit'|t('bozp') }}
+                    + {{ 'Nový permit'|t('bozp') }}
                 </a>
             {% endif %}
         </header>
@@ -29,34 +29,36 @@
         {% if (myPermits ?? [])|length == 0 %}
             <p class="bozp-empty">{{ 'Zatiaľ ste nevytvorili žiadny permit.'|t('bozp') }}</p>
         {% else %}
-            <table class="bozp-table">
-                <thead>
-                    <tr>
-                        <th>{{ 'Číslo'|t('bozp') }}</th>
-                        <th>{{ 'Dodávateľ'|t('bozp') }}</th>
-                        <th>{{ 'Miesto výkonu'|t('bozp') }}</th>
-                        <th>{{ 'Stav'|t('bozp') }}</th>
-                        <th>{{ 'Vytvorené'|t('bozp') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for permit in (myPermits ?? []) %}
-                        <tr class="bozp-table__row bozp-table__row--status-{{ permit.status }}">
-                            <td>
-                                <a href="{{ url('bozp/permits/' ~ permit.id) }}">{{ permit.permitNumber }}</a>
-                            </td>
-                            <td>{{ permit.contractorCompany }}</td>
-                            <td>{{ permit.workLocation }}</td>
-                            <td>
-                                <span class="bozp-status bozp-status--{{ permit.status }}">
-                                    {{ statusLabels[permit.status] ?? permit.status }}
-                                </span>
-                            </td>
-                            <td>{{ permit.dateCreated|date('d.m.Y H:i') }}</td>
+            <div class="bozp-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{{ 'Číslo'|t('bozp') }}</th>
+                            <th>{{ 'Dodávateľ'|t('bozp') }}</th>
+                            <th>{{ 'Miesto výkonu'|t('bozp') }}</th>
+                            <th>{{ 'Stav'|t('bozp') }}</th>
+                            <th>{{ 'Vytvorené'|t('bozp') }}</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for permit in (myPermits ?? []) %}
+                            <tr class="bozp-table__row bozp-table__row--status-{{ permit.status }}">
+                                <td>
+                                    <a href="{{ url('bozp/permits/' ~ permit.id) }}">{{ permit.permitNumber }}</a>
+                                </td>
+                                <td>{{ permit.contractorCompany }}</td>
+                                <td>{{ permit.workLocation }}</td>
+                                <td>
+                                    <span class="bozp-status bozp-status--{{ permit.status }}">
+                                        {{ statusLabels[permit.status] ?? permit.status }}
+                                    </span>
+                                </td>
+                                <td>{{ permit.dateCreated|date('d.m.Y') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% endif %}
     </section>
 {% endblock %}

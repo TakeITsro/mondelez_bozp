@@ -104,19 +104,18 @@
             value: values.validTo ?? '',
         }) }}
 
-        {# ---- Zones ---- #}
+        {# ---- Zone (single) ---- #}
         {% if zones|length > 0 %}
-            <h3 style="margin-top:24px;">{{ 'Zóny'|t('bozp') }}</h3>
-            {% set selectedZoneIds = selectedZoneIds ?? [] %}
-            <div style="display:flex;flex-direction:column;gap:6px;">
+            <h3 style="margin-top:24px;">{{ 'Zóna'|t('bozp') }}</h3>
+            {% set selectedZoneId = (selectedZoneIds ?? [])|first %}
+            <select name="zoneId" style="padding:6px 10px;">
+                <option value="">{{ '— Žiadna —'|t('bozp') }}</option>
                 {% for zone in zones %}
-                    <label style="display:flex;align-items:center;gap:8px;">
-                        <input type="checkbox" name="zoneIds[]" value="{{ zone.id }}"
-                               {% if zone.id in selectedZoneIds %}checked{% endif %}>
-                        <span>{{ zone.name }}{% if zone.code %} <code>({{ zone.code }})</code>{% endif %}</span>
-                    </label>
+                    <option value="{{ zone.id }}" {% if selectedZoneId == zone.id %}selected{% endif %}>
+                        {{ zone.name }}{% if zone.code %} ({{ zone.code }}){% endif %}
+                    </option>
                 {% endfor %}
-            </div>
+            </select>
         {% endif %}
 
         {# ---- Preparation checks ---- #}

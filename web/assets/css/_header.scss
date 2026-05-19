@@ -55,4 +55,37 @@
       }
     }
   }
+
+  @media (max-width: 1200px) {
+    .bozp-header__user {
+      padding: 0.625em 2.5em;
+    }
+
+    .bozp-header__inner {
+      padding: 2.5em;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .bozp-header__user {
+      padding: 0.625em 10px;
+    }
+
+    .bozp-header__inner {
+      flex-direction: column;
+      gap: 2.5em;
+      padding: 2.5em 10px;
+
+      .bozp-header__nav {
+        flex-direction: column;
+        gap: 20px;
+
+        a {
+          color: var(--main-color-light);
+          font-size: 1.5em;
+        }
+      }
+    }
+
+  }
 }

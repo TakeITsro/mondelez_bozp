@@ -89,6 +89,40 @@ class PermitPdfService extends Component
     }
 
     /**
+     * Render the permit PDF as raw HTML — for fast in-browser CSS iteration.
+     * No file is written; no asset is created.
+     */
+    public function previewPermitHtml(PermitRecord $permit): string
+    {
+        return $this->renderPermitHtml($permit);
+    }
+
+    /**
+     * Render the permit PDF to bytes — for in-browser preview without
+     * touching the stored asset.
+     */
+    public function previewPermitPdfBytes(PermitRecord $permit): string
+    {
+        return $this->htmlToPdf($this->renderPermitHtml($permit));
+    }
+
+    /**
+     * Render the subpermit PDF as raw HTML — for fast in-browser CSS iteration.
+     */
+    public function previewSubpermitHtml(SubpermitRecord $subpermit, PermitRecord $permit): string
+    {
+        return $this->renderSubpermitHtml($subpermit, $permit);
+    }
+
+    /**
+     * Render the subpermit PDF to bytes — preview without writing.
+     */
+    public function previewSubpermitPdfBytes(SubpermitRecord $subpermit, PermitRecord $permit): string
+    {
+        return $this->htmlToPdf($this->renderSubpermitHtml($subpermit, $permit));
+    }
+
+    /**
      * Return the public URL for the stored permit PDF, or null if none exists.
      */
     public function getPermitPdfUrl(PermitRecord $permit): ?string
@@ -118,15 +152,14 @@ class PermitPdfService extends Component
 
     private function renderPermitHtml(PermitRecord $permit): string
     {
-        // Zones
-        $zoneIds = (new \yii\db\Query())
-            ->select('zoneId')
-            ->from('{{%bozp_permit_zones}}')
-            ->where(['permitId' => $permit->id])
-            ->column();
-        $zones = $zoneIds
-            ? ZoneRecord::find()->where(['id' => $zoneIds])->orderBy(['sortOrder' => SORT_ASC])->all()
-            : [];
+        // Zone (single)
+        $zones = [];
+        if (!empty($permit->zoneId)) {
+            $zone = ZoneRecord::findOne(['id' => (int) $permit->zoneId]);
+            if ($zone) {
+                $zones[] = $zone;
+            }
+        }
 
         // Hazards
         $hazardRows = PermitHazardRecord::find()

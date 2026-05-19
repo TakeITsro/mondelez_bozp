@@ -1,0 +1,152 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{# Variables: zones (ZoneRecord[]), counts (array<int,int>) #}
+
+{% block title %}{{ 'Mapa zón'|t('bozp') }}{% endblock %}
+
+{% block content %}
+    <section class="bozp-page bozp-page--map">
+        <header class="bozp-page__header">
+            <h1>{{ 'Mapa zón'|t('bozp') }}</h1>
+            <p class="bozp-page__subtitle">
+                {{ 'Kliknite na zónu pre zobrazenie aktívnych permitov.'|t('bozp') }}
+            </p>
+        </header>
+
+        <div class="bozp-map">
+            {# ── Replace this <svg> with your facility map. Keep the viewBox 0 0 1000 600
+               and the .bozp-map__svg class. Zone overlays below position over the SVG. #}
+            <svg class="bozp-map__svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                <rect x="0" y="0" width="1000" height="600" fill="#FEFFFD" stroke="#4F2170" stroke-width="2"/>
+                <text x="500" y="305" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" fill="#4F2170" opacity="0.45">
+                    {{ 'Sem vložte mapu závodu (SVG)'|t('bozp') }}
+                </text>
+            </svg>
+
+            {# ── Zone overlays. Tweak top/left/width/height per zone to cover the right area on your map.
+               Inline styles are scaffolding so you can iterate quickly; move to CSS once positions are set. #}
+            {% set zonePositions = {
+                1: { top: '8%',  left: '6%',   width: '26%', height: '38%' },
+                2: { top: '8%',  left: '36%',  width: '28%', height: '38%' },
+                3: { top: '8%',  left: '68%',  width: '26%', height: '38%' },
+                4: { top: '52%', left: '6%',   width: '42%', height: '40%' },
+                5: { top: '52%', left: '52%',  width: '42%', height: '40%' }
+            } %}
+
+            {% for zone in zones %}
+                {% set count = counts[zone.id] ?? 0 %}
+                {% set pos = zonePositions[loop.index] ?? { top: '0%', left: '0%', width: '20%', height: '20%' } %}
+                <a class="bozp-map__zone {% if count > 0 %}bozp-map__zone--has-active{% endif %}"
+                   href="{{ url('bozp/map/zone/' ~ zone.id) }}"
+                   style="top:{{ pos.top }};left:{{ pos.left }};width:{{ pos.width }};height:{{ pos.height }};"
+                   data-zone-id="{{ zone.id }}">
+                    <span class="bozp-map__zone-name">{{ zone.name }}</span>
+                    <span class="bozp-map__zone-count" aria-label="{{ 'Aktívne permity'|t('bozp') }}">
+                        {{ count }}
+                    </span>
+                </a>
+            {% endfor %}
+        </div>
+
+        <ul class="bozp-map__legend">
+            <li>
+                <span class="bozp-map__legend-dot bozp-map__legend-dot--active"></span>
+                {{ 'Zóna s aktívnymi permitmi'|t('bozp') }}
+            </li>
+            <li>
+                <span class="bozp-map__legend-dot"></span>
+                {{ 'Zóna bez aktívnych permitov'|t('bozp') }}
+            </li>
+        </ul>
+    </section>
+
+    <style>
+        .bozp-page--map { gap: 2.5em; padding: 5em; }
+        .bozp-page--map .bozp-page__header { width: 100%; max-width: 1100px; }
+        .bozp-page--map .bozp-page__subtitle { color: var(--main-color); font-size: 1.1em; margin-top: .5em; }
+
+        .bozp-map {
+            position: relative;
+            width: 100%;
+            max-width: 1100px;
+            aspect-ratio: 1000 / 600;
+            background: #FEFFFD;
+            border: 2px solid var(--main-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .bozp-map__svg { display: block; width: 100%; height: 100%; }
+
+        .bozp-map__zone {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .35em;
+            padding: .75em;
+            background: rgba(79, 33, 112, 0.12);
+            border: 2px solid var(--main-color);
+            border-radius: 6px;
+            color: var(--main-color);
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color .15s ease, transform .15s ease;
+        }
+        .bozp-map__zone:hover {
+            background: rgba(79, 33, 112, 0.22);
+            transform: scale(1.01);
+        }
+        .bozp-map__zone--has-active {
+            background: rgba(79, 33, 112, 0.28);
+            border-color: var(--main-color-dark);
+        }
+        .bozp-map__zone--has-active:hover {
+            background: rgba(79, 33, 112, 0.42);
+        }
+        .bozp-map__zone-name {
+            font-size: 1.25em;
+            font-weight: 600;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+        .bozp-map__zone-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.2em;
+            height: 2.2em;
+            padding: 0 .5em;
+            background: var(--main-color);
+            color: var(--main-color-light);
+            border-radius: 999px;
+            font-size: 1.5em;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .bozp-map__legend {
+            display: flex;
+            gap: 2em;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            color: var(--main-color);
+            font-size: .95em;
+        }
+        .bozp-map__legend li { display: flex; align-items: center; gap: .5em; }
+        .bozp-map__legend-dot {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--main-color);
+            background: rgba(79, 33, 112, 0.12);
+            border-radius: 3px;
+        }
+        .bozp-map__legend-dot--active {
+            background: rgba(79, 33, 112, 0.42);
+            border-color: var(--main-color-dark);
+        }
+    </style>
+{% endblock %}

@@ -147,6 +147,10 @@ class Module extends BaseModule
                 $event->rules['POST bozp/permits/save'] = 'bozp/permits/save';
                 $event->rules['bozp/permits/<id:\d+>'] = 'bozp/permits/view';
 
+                // Facility map
+                $event->rules['bozp/map'] = 'bozp/map/index';
+                $event->rules['bozp/map/zone/<id:\d+>'] = 'bozp/map/zone';
+
                 // Contractor (token-gated, password-protected)
                 $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>'] = 'bozp/contractor/view';
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/auth'] = 'bozp/contractor/auth';
@@ -184,6 +188,15 @@ class Module extends BaseModule
                 // PDF download (contractor portal — password-gated)
                 $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/pdf'] = 'bozp/contractor/permit-pdf';
                 $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/pdf'] = 'bozp/contractor/subpermit-pdf';
+
+                // Dev-only PDF preview routes (no auth, no asset write — for CSS iteration)
+                if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                    $event->rules['bozp/debug']                          = 'bozp/debug/index';
+                    $event->rules['bozp/debug/permit/<id:\d+>']          = 'bozp/debug/permit';
+                    $event->rules['bozp/debug/permit/<id:\d+>/pdf']      = 'bozp/debug/permit-pdf';
+                    $event->rules['bozp/debug/subpermit/<id:\d+>']       = 'bozp/debug/subpermit';
+                    $event->rules['bozp/debug/subpermit/<id:\d+>/pdf']   = 'bozp/debug/subpermit-pdf';
+                }
             }
         );
     }
@@ -253,6 +266,9 @@ class Module extends BaseModule
                         ],
                         'bozp:control' => [
                             'label' => Craft::t('bozp', 'Vykonávať kontroly prevádzky'),
+                        ],
+                        'bozp:viewMap' => [
+                            'label' => Craft::t('bozp', 'Zobraziť mapu zón'),
                         ],
                     ],
                 ];

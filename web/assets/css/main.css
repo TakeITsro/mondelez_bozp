@@ -3,7 +3,9 @@
   --main-color-light: #FEFFFD;
   --main-color-dark: #000000;
   --form-input-border: #200633;
-  --form-input-bg: #653489;
+  --form-input-bg-light: #F8EFFF;
+  --form-input-bg-dark: #4F2170;
+  --background-color-pink: #F8EFFF;
 }
 
 @font-face {
@@ -22,6 +24,25 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 16px;
+  overflow: hidden auto;
+}
+@media (max-width: 1500px) {
+  body {
+    font-size: 14px;
+  }
+}
+@media (max-width: 1200px) {
+  body {
+    font-size: 12px;
+  }
 }
 
 input, textarea, select {
@@ -137,6 +158,32 @@ p {
   line-height: 1.2em;
   text-transform: uppercase;
 }
+@media (max-width: 1200px) {
+  .bozp-header .bozp-header__user {
+    padding: 0.625em 2.5em;
+  }
+  .bozp-header .bozp-header__inner {
+    padding: 2.5em;
+  }
+}
+@media (max-width: 600px) {
+  .bozp-header .bozp-header__user {
+    padding: 0.625em 10px;
+  }
+  .bozp-header .bozp-header__inner {
+    flex-direction: column;
+    gap: 2.5em;
+    padding: 2.5em 10px;
+  }
+  .bozp-header .bozp-header__inner .bozp-header__nav {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .bozp-header .bozp-header__inner .bozp-header__nav a {
+    color: var(--main-color-light);
+    font-size: 1.5em;
+  }
+}
 
 .bozp-footer {
   width: 100%;
@@ -164,6 +211,22 @@ p {
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
+}
+@media (max-width: 1200px) {
+  .bozp-footer {
+    padding: 1.25em 2.5em;
+  }
+}
+@media (max-width: 600px) {
+  .bozp-footer {
+    height: auto;
+    flex-direction: column;
+    gap: 10px;
+    padding: 1.25em 10px;
+  }
+  .bozp-footer span {
+    text-align: center;
+  }
 }
 
 .bozp-btn {
@@ -374,6 +437,13 @@ p {
   justify-content: space-between;
   gap: 2.5em;
 }
+.bozp-page--dashboard .bozp-page__header h1 {
+  color: var(--main-color);
+  font-size: 3.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
 .bozp-page--dashboard .bozp-empty {
   width: 100%;
   max-width: 980px;
@@ -387,20 +457,118 @@ p {
   width: 100%;
   max-width: 980px;
 }
-.bozp-page--dashboard .bozp-table th {
+.bozp-page--dashboard .bozp-table table {
+  width: 100%;
+  border-spacing: 0 2px;
+}
+.bozp-page--dashboard .bozp-table tr th {
   color: var(--main-color);
   font-size: 1.75em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
+  text-align: left;
+  padding: 0.7em;
 }
-.bozp-page--dashboard .bozp-table td {
+.bozp-page--dashboard .bozp-table tr td {
   color: var(--main-color);
   font-size: 1.25em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
+  background-color: var(--background-color-pink);
   padding: 0.5em 1em;
+  transition: color 0.3s ease, background 0.3s ease;
+}
+.bozp-page--dashboard .bozp-table tr td a {
+  color: var(--main-color);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+.bozp-page--dashboard .bozp-table tr td:nth-child(1) {
+  border-radius: 2.5em 0 0 2.5em;
+}
+.bozp-page--dashboard .bozp-table tr td:nth-child(5) {
+  border-radius: 0 2.5em 2.5em 0;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status {
+  font-size: 1em;
+  line-height: 1.2em;
+  white-space: nowrap;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--draft {
+  color: #6b7280;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--submitted {
+  color: #d97706;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--approved {
+  color: #16a34a;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--rejected {
+  color: #dc2626;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--signed {
+  color: #2563eb;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--active {
+  color: #0891b2;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--pending_closure {
+  color: #ea580c;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--pending {
+  color: #d97706;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--closed {
+  color: #374151;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--cancelled {
+  color: #991b1b;
+}
+.bozp-page--dashboard .bozp-table tr td .bozp-status.bozp-status--expired {
+  color: #9f1239;
+}
+.bozp-page--dashboard .bozp-table tr:hover td {
+  color: var(--main-color-light);
+  background-color: var(--main-color);
+}
+.bozp-page--dashboard .bozp-table tr:hover td a {
+  color: var(--main-color-light);
+}
+@media (max-width: 1200px) {
+  .bozp-page--dashboard {
+    padding: 5em 2.5em;
+  }
+  .bozp-page--dashboard .bozp-table tr th {
+    font-size: 1.25em;
+    padding: 0.7em;
+  }
+  .bozp-page--dashboard .bozp-table tr td {
+    font-size: 1em;
+    padding: 0.5em 1em;
+    white-space: nowrap;
+  }
+}
+@media (max-width: 600px) {
+  .bozp-page--dashboard {
+    gap: 2.5em;
+    padding: 5em 10px;
+  }
+  .bozp-page--dashboard .bozp-page__header {
+    flex-direction: column;
+    align-items: center;
+  }
+  .bozp-page--dashboard .bozp-page__header .bozp-btn {
+    width: 100%;
+    max-width: 100%;
+  }
+  .bozp-page--dashboard .bozp-table {
+    overflow-x: auto;
+  }
 }
 
 .bozp-page--permit-form {
@@ -412,9 +580,16 @@ p {
   width: 100%;
   max-width: 980px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 2.5em;
+}
+.bozp-page--permit-form .bozp-page__header h1 {
+  color: var(--main-color);
+  font-size: 3.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
 }
 .bozp-page--permit-form .bozp-form {
   width: 100%;
@@ -423,28 +598,86 @@ p {
   flex-direction: column;
   gap: 2.5em;
 }
-.bozp-page--permit-form .bozp-form .bozp-form__section {
-  width: 100%;
+.bozp-page--permit-form .bozp-form .bozp-form__yesno {
   display: flex;
-  flex-direction: column;
-  gap: 1.25em;
-  padding: 1.25em;
+  align-items: center;
+  gap: 20px;
 }
-.bozp-page--permit-form .bozp-form .bozp-form__section legend {
+.bozp-page--permit-form .bozp-form .bozp-form__yesno .bozp-form__yesno-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__yesno .bozp-form__yesno-opt input {
+  position: absolute;
+  left: 0;
+  width: 1.625em;
+  height: 1.625em;
+  opacity: 0;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__yesno .bozp-form__yesno-opt .custom_radio {
+  width: 1.625em;
+  height: 1.625em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--main-color);
+}
+.bozp-page--permit-form .bozp-form .bozp-form__yesno .bozp-form__yesno-opt .custom_radio::after {
+  content: "";
+  position: absolute;
+  width: 1.125em;
+  height: 1.125em;
+  border-radius: 50%;
+  background-color: var(--main-color);
+  transform: scale(0);
+  transition: all 0.3s ease;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__yesno .bozp-form__yesno-opt input:checked ~ .custom_radio::after {
+  transform: scale(1);
+}
+.bozp-page--permit-form .bozp-form .bozp-form__yesno .bozp-form__yesno-opt span {
   color: var(--main-color);
   font-size: 1.25em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
 }
+.bozp-page--permit-form .bozp-form .bozp-form__section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25em;
+  background-color: var(--background-color-pink);
+  border-radius: 1.25em;
+  border: none;
+  padding: 1.25em 1.25em 2.5em 1.25em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section legend {
+  color: var(--main-color);
+  font-size: 2.5em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hint {
+  width: 100%;
+  max-width: 500px;
+  color: var(--main-color);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 1.25em;
+  gap: 3.125em;
 }
-.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > label {
-  width: calc(50% - 0.625em);
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > label, .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field .bozp-form__label {
+  width: calc(50% - 1.5625em);
   min-width: 300px;
   color: var(--main-color);
   font-size: 1.25em;
@@ -453,51 +686,127 @@ p {
   text-transform: uppercase;
 }
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > input {
-  width: calc(50% - 0.625em);
+  width: calc(50% - 1.5625em);
   min-width: 300px;
-  color: var(--main-color-light) !important;
+  min-height: 4em;
+  color: var(--main-color) !important;
   font-size: 1em;
   font-weight: 400;
   line-height: 1.2em;
-  border: 1px solid var(--form-input-border) !important;
-  border-radius: 8px;
-  background-color: var(--form-input-bg) !important;
+  border: 2px solid var(--main-color) !important;
+  border-radius: 0.4em;
+  background-color: var(--form-input-bg-light) !important;
   padding: 0.5em 1em;
 }
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > textarea {
-  width: calc(50% - 0.625em);
-  color: var(--main-color-light) !important;
+  width: calc(50% - 1.5625em);
+  color: var(--main-color) !important;
   font-size: 1em;
   font-weight: 400;
   line-height: 1.2em;
-  border: 1px solid var(--form-input-border) !important;
-  border-radius: 8px;
-  background-color: var(--form-input-bg) !important;
+  border: 2px solid var(--main-color) !important;
+  border-radius: 0.4em;
+  background-color: var(--form-input-bg-light) !important;
   padding: 0.5em 1em;
 }
-.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field .bozp-form__hint {
-  width: 100%;
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > select {
+  width: calc(50% - 1.5625em);
+  min-width: 300px;
+  min-height: 4em;
+  color: var(--main-color) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 2px solid var(--main-color) !important;
+  border-radius: 0.4em;
+  background-color: var(--form-input-bg-light) !important;
+  padding: 0.5em 1em;
 }
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards {
   width: 100%;
-}
-.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards {
-  width: 100%;
+  overflow-x: auto;
 }
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards th {
+  color: var(--main-color);
+  font-size: 1.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0.2857em 0.5714em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards th:first-child {
+  text-align: left;
+  padding: 0.2857em 0.5714em 0.2857em 0;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards th:last-child {
+  padding: 0.2857em 0 0.2857em 0.5714em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row th {
   color: var(--main-color);
   font-size: 1.25em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
+  text-align: left;
 }
-.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards td {
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row .label_wrapper {
+  max-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row .label_wrapper img {
+  width: 2.5em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row td {
   color: var(--main-color);
   font-size: 1em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
   padding: 0.5em 1em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row td:first-child {
+  padding: 0.5em 0.1em 0.5em 0;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row td:last-child {
+  padding: 0.5em 0 0.5em 0.1em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row td.bozp-hazards__measure textarea {
+  width: 100%;
+  height: calc(4.1875em + 10px);
+  color: var(--main-color) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 2px solid var(--main-color) !important;
+  border-radius: 0.4em;
+  background-color: var(--form-input-bg-light) !important;
+  padding: 0.25em 0.5em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row td.bozp-hazards__control select {
+  width: 100%;
+  color: var(--main-color) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 2px solid var(--main-color) !important;
+  border-radius: 0.4em;
+  background-color: var(--form-input-bg-light) !important;
+  padding: 0.25em 0.5em;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__hazards .bozp-hazards .bozp-hazards__row td.bozp-hazards__control input {
+  width: 100%;
+  color: var(--main-color) !important;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.2em;
+  border: 2px solid var(--main-color) !important;
+  border-radius: 0.4em;
+  background-color: var(--form-input-bg-light) !important;
+  padding: 0.25em 0.5em;
+  margin-top: 10px;
 }
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types {
   display: flex;
@@ -507,15 +816,42 @@ p {
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt {
   display: flex;
   align-items: center;
-  gap: 0.625em;
+  gap: 10px;
 }
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt input {
-  width: 20px;
-  height: 20px;
+  position: absolute;
+  left: 0;
+  width: 1.625em;
+  height: 1.625em;
+  opacity: 0;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt .custom_checkbox {
+  width: 1.625em;
+  height: 1.625em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5em;
+  border: 2px solid var(--main-color);
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt .custom_checkbox::after {
+  content: "";
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  background-image: url("https://testing.takeitsro.sk/assets/svg/ok.svg");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: scale(0);
+  transition: all 0.3s ease;
+}
+.bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt input:checked ~ .custom_checkbox::after {
+  transform: scale(1);
 }
 .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__highrisk-types .bozp-form__highrisk-opt span {
   color: var(--main-color);
-  font-size: 1.5em;
+  font-size: 1.25em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
@@ -526,6 +862,51 @@ p {
   align-items: center;
   justify-content: flex-end;
   gap: 2.5em;
+}
+@media (max-width: 1200px) {
+  .bozp-page--permit-form {
+    padding: 5em 2.5em;
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field {
+    gap: 2.5em;
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > label, .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field .bozp-form__label {
+    width: calc(50% - 1.25em);
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > input {
+    width: calc(50% - 1.25em);
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > textarea {
+    width: calc(50% - 1.25em);
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > select {
+    width: calc(50% - 1.25em);
+  }
+}
+@media (max-width: 600px) {
+  .bozp-page--permit-form {
+    padding: 5em 10px;
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section {
+    padding: 1.25em 10px 2.5em 10px;
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field {
+    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > label, .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field .bozp-form__label {
+    width: 100%;
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > input {
+    width: 100%;
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > textarea {
+    width: 100%;
+  }
+  .bozp-page--permit-form .bozp-form .bozp-form__section .bozp-form__field > select {
+    width: 100%;
+  }
 }
 
 .bozp-page--permit-detail {
@@ -541,10 +922,67 @@ p {
   align-items: flex-start;
   gap: 1.25em;
 }
+.bozp-page--permit-detail .bozp-page__header h1 {
+  color: var(--main-color);
+  font-size: 3.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
 .bozp-page--permit-detail .bozp-page__header .bozp-page__back {
-  position: absolute;
-  top: 0;
-  right: 0;
+  align-self: flex-end;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5em;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35em 1em 0.5em 1em;
+  border-radius: 0.625em;
+  font-size: 1.25em;
+  font-weight: 600;
+  line-height: 1.2em;
+  white-space: nowrap;
+  color: #fff;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--draft {
+  background: #6b7280;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--submitted {
+  background: #d97706;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--approved {
+  background: #16a34a;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--rejected {
+  background: #dc2626;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--signed {
+  background: #2563eb;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--active {
+  background: #0891b2;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--pending_closure {
+  background: #ea580c;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--pending {
+  background: #d97706;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--closed {
+  background: #374151;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--cancelled {
+  background: #991b1b;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-status__wrapper .bozp-status.bozp-status--expired {
+  background: #9f1239;
 }
 .bozp-page--permit-detail .bozp-decision {
   width: 100%;
@@ -558,21 +996,30 @@ p {
   width: 100%;
   max-width: 980px;
   display: flex;
-  align-items: flex-start;
-  gap: 1.25em 0.625em;
+  gap: 1.25em;
   flex-wrap: wrap;
+  background-color: var(--background-color-pink);
+  border-radius: 1.25em;
+  border: none;
+  padding: 2.5em 1.25em;
 }
 .bozp-page--permit-detail .bozp-detail dt {
   width: calc(50% - 0.625em);
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
 }
 .bozp-page--permit-detail .bozp-detail dd {
   width: calc(50% - 0.625em);
-  color: var(--main-color);
+  color: var(--main-color) !important;
   font-size: 1em;
   font-weight: 400;
   line-height: 1.2em;
-  border: 1px solid var(--form-input-border);
-  border-radius: 8px;
+  border: 2px solid var(--main-color) !important;
+  border-radius: 0.4em;
+  background-color: var(--form-input-bg-light) !important;
   padding: 0.5em 1em;
 }
 .bozp-page--permit-detail .bozp-section {
@@ -582,24 +1029,71 @@ p {
   flex-direction: column;
   align-items: flex-start;
   gap: 1.25em;
+  background-color: var(--background-color-pink);
+  border-radius: 1.25em;
+  border: none;
+  padding: 2.5em 1.25em;
+}
+.bozp-page--permit-detail .bozp-section h2 {
+  color: var(--main-color);
+  font-size: 2.5em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--permit-detail .bozp-section .bozp-detail {
+  padding: 0;
 }
 .bozp-page--permit-detail .bozp-section .bozp-hazards {
   width: 100%;
 }
 .bozp-page--permit-detail .bozp-section .bozp-hazards th {
   color: var(--main-color);
+  font-size: 1.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0.2857em 0.5714em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards th:first-child {
+  text-align: left;
+  padding: 0.2857em 0.5714em 0.2857em 0;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards th:last-child {
+  padding: 0.2857em 0 0.2857em 0.5714em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards tbody th {
+  color: var(--main-color);
   font-size: 1.25em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
+  text-align: left;
 }
-.bozp-page--permit-detail .bozp-section .bozp-hazards td {
+.bozp-page--permit-detail .bozp-section .bozp-hazards tbody .label_wrapper {
+  max-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards tbody .label_wrapper img {
+  width: 2.5em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards tbody td {
   color: var(--main-color);
   font-size: 1em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
+  text-align: center;
   padding: 0.5em 1em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards tbody td:first-child {
+  padding: 0.5em 0.1em 0.5em 0;
+}
+.bozp-page--permit-detail .bozp-section .bozp-hazards tbody td:last-child {
+  padding: 0.5em 0 0.5em 0.1em;
 }
 .bozp-page--permit-detail .bozp-section .bozp-section__header {
   width: 100%;
@@ -623,6 +1117,54 @@ p {
   font-size: 1em;
   font-weight: 400;
   line-height: 1.2em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-section--attachments .bozp-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bozp-page--permit-detail .bozp-section .bozp-section--attachments .bozp-empty img {
+  width: 1.5em;
+}
+.bozp-page--permit-detail .bozp-section .bozp-section--attachments .bozp-empty span {
+  color: var(--main-color);
+  font-size: 1.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--permit-detail .bozp-section .bozp-section--attachments .bozp-form--upload {
+  width: 100%;
+}
+.bozp-page--permit-detail .bozp-section .bozp-section--attachments .bozp-form--upload .bozp-form__field {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.bozp-page--permit-detail .bozp-section .bozp-section--attachments .bozp-form--upload .bozp-form__field .form__field_wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bozp-page--permit-detail .bozp-section .bozp-section--attachments .bozp-form--upload .bozp-form__field .form__field_wrapper label {
+  color: var(--main-color);
+  font-size: 1.25em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+@media (max-width: 1200px) {
+  .bozp-page--permit-detail {
+    padding: 5em 2.5em;
+  }
+}
+@media (max-width: 600px) {
+  .bozp-page--permit-detail {
+    padding: 5em 10px;
+  }
 }
 
 .bozp-page--subpermit-select {

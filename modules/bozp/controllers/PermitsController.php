@@ -524,6 +524,7 @@ class PermitsController extends BaseSiteController
         }
 
         return [
+            'zoneId' => null,
             'preparation' => [
                 'conditionsSuitable' => '',
                 'toolsInGoodCondition' => '',
@@ -558,7 +559,7 @@ class PermitsController extends BaseSiteController
             'workLocation'         => trim((string) $request->getBodyParam('workLocation', '')),
             'workOverview'         => trim((string) $request->getBodyParam('workOverview', '')),
             'validFrom'            => trim((string) $request->getBodyParam('validFrom', '')),
-            'zoneIds'              => (array) $request->getBodyParam('zoneIds', []),
+            'zoneId'               => (int) $request->getBodyParam('zoneId', 0) ?: null,
             'preparation'          => $this->normalizePreparation((array) $request->getBodyParam('preparation', [])),
             'hazards'              => $this->normalizeHazards((array) $request->getBodyParam('hazards', [])),
             'requiresHighRisk'     => $this->normalizeRequiresHighRisk((array) $request->getBodyParam('requiresHighRisk', [])),
@@ -622,7 +623,14 @@ class PermitsController extends BaseSiteController
                 throw new \RuntimeException('Save failed: ' . print_r($permit->getErrors(), true));
             }
 
-            $this->syncZones($permit->id, $values['zoneIds']);
+            // Persist single-zone assignment.
+            if ($values['zoneId'] !== null) {
+                PermitRecord::updateAll(
+                    ['zoneId' => $values['zoneId']],
+                    ['id' => $permit->id]
+                );
+                $permit->zoneId = $values['zoneId'];
+            }
             $this->syncHazards((int) $permit->id, $values['hazards']);
 
             $module->auditLogger->log(
@@ -834,46 +842,20 @@ class PermitsController extends BaseSiteController
             ->execute();
     }
 
-    /** @return ZoneRecord[] */
+    /**
+     * Return the single zone for a permit, wrapped in an array so existing
+     * detail/PDF templates that iterate `{% for zone in zones %}` keep working.
+     *
+     * @return ZoneRecord[]
+     */
     private function loadZonesFor(int $permitId): array
     {
-        $zoneIds = (new \yii\db\Query())
-            ->select('zoneId')
-            ->from('{{%bozp_permit_zones}}')
-            ->where(['permitId' => $permitId])
-            ->column();
-
-        if ($zoneIds === []) {
+        /** @var PermitRecord|null $permit */
+        $permit = PermitRecord::findOne(['id' => $permitId]);
+        if (!$permit || empty($permit->zoneId)) {
             return [];
         }
-
-        return ZoneRecord::find()
-            ->where(['id' => $zoneIds])
-            ->orderBy(['sortOrder' => SORT_ASC, 'name' => SORT_ASC])
-            ->all();
-    }
-
-    /** @param array<int, string|int> $zoneIds */
-    private function syncZones(int $permitId, array $zoneIds): void
-    {
-        $zoneIds = array_values(array_unique(array_map('intval', $zoneIds)));
-        if ($zoneIds === []) {
-            return;
-        }
-
-        $db = Craft::$app->getDb();
-        $now = date('Y-m-d H:i:s');
-        $rows = [];
-        foreach ($zoneIds as $zoneId) {
-            $rows[] = [$permitId, $zoneId, $now, $now, \craft\helpers\StringHelper::UUID()];
-        }
-
-        $db->createCommand()
-            ->batchInsert(
-                '{{%bozp_permit_zones}}',
-                ['permitId', 'zoneId', 'dateCreated', 'dateUpdated', 'uid'],
-                $rows,
-            )
-            ->execute();
+        $zone = ZoneRecord::findOne(['id' => (int) $permit->zoneId]);
+        return $zone ? [$zone] : [];
     }
 }

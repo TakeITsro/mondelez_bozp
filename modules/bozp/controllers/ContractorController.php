@@ -22,7 +22,6 @@ use modules\bozp\records\PermitControlRecord;
 use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\PermitSignatureRecord;
-use modules\bozp\records\PermitZoneRecord;
 use modules\bozp\records\SubpermitRecord;
 use modules\bozp\records\ZoneRecord;
 use yii\web\ForbiddenHttpException;
@@ -825,14 +824,15 @@ class ContractorController extends Controller
     ): Response {
         $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
 
-        $zoneIds = PermitZoneRecord::find()
-            ->select(['zoneId'])
-            ->where(['permitId' => $permit->id])
-            ->orderBy(['sortOrder' => SORT_ASC])
-            ->column();
-        $zones = $zoneIds
-            ? ZoneRecord::find()->where(['id' => $zoneIds])->all()
-            : [];
+        // Single zone (FK on permit). Wrapped in an array so templates that
+        // iterate {% for zone in zones %} keep working.
+        $zones = [];
+        if (!empty($permit->zoneId)) {
+            $zone = ZoneRecord::findOne(['id' => (int) $permit->zoneId]);
+            if ($zone) {
+                $zones[] = $zone;
+            }
+        }
 
         $hazards = [];
         foreach (PermitHazardRecord::find()->where(['permitId' => $permit->id])->all() as $row) {

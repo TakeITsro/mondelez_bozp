@@ -41,22 +41,21 @@
 {% block content %}
     <section class="bozp-page bozp-page--permit-detail">
         <header class="bozp-page__header">
-            <p class="bozp-page__back">
+            <p class="bozp-page__back ">
                 <a href="{{ url('bozp') }}">← {{ 'Moje permity'|t('bozp') }}</a>
             </p>
             <h1>{{ permit.permitNumber }}</h1>
-            <p style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div. class="bozp-status__wrapper">
                 <span class="bozp-status bozp-status--{{ permit.status }}">
                     {{ statusLabels[permit.status] ?? permit.status }}
                 </span>
                 <a href="{{ url('bozp/permits/' ~ permit.id ~ '/pdf') }}"
                    target="_blank"
                    rel="noopener"
-                   class="bozp-btn bozp-btn--secondary bozp-btn--sm"
-                   style="font-size:12px;padding:4px 12px;">
+                   class="bozp-btn bozp-btn--primary">
                     ⬇ {{ 'Zobraziť PDF'|t('bozp') }}
                 </a>
-            </p>
+            </>
         </header>
 
         {# ---- HSE decision banner ---- #}
@@ -178,7 +177,12 @@
                             {% set row = hazards[cat.value] ?? null %}
                             {% if row %}
                                 <tr>
-                                    <th scope="row">{{ cat.label()|t('bozp') }}</th>
+                                    <th scope="row">
+                                        <div class="label_wrapper">
+                                            <img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
+                                            {{ cat.label()|t('bozp') }}
+                                        </div>
+                                    </th>
                                     <td>{{ _self.yn(row.exposed) }}</td>
                                     <td>{{ row.measure ? row.measure|nl2br : '—' }}</td>
                                     <td>
@@ -300,7 +304,10 @@
         <section class="bozp-section bozp-section--attachments">
             <h2>{{ 'Prílohy'|t('bozp') }}</h2>
             {% if attachments is not defined or attachments|length == 0 %}
-                <p class="bozp-empty">{{ 'Žiadne prílohy.'|t('bozp') }}</p>
+                <div class="bozp-empty">
+                    <img src="https://testing.takeitsro.sk/assets/svg/noFile.svg" alt="No file">
+                    <span>{{ 'Žiadne prílohy.'|t('bozp') }}</span>
+                </div>
             {% else %}
                 <ul class="bozp-attachments">
                     {% for a in attachments %}
@@ -324,12 +331,11 @@
                       action="{{ url('bozp/permits/' ~ permit.id ~ '/upload') }}"
                       enctype="multipart/form-data"
                       class="bozp-form bozp-form--upload"
-                      style="margin-top:16px;"
                       novalidate>
                     {{ csrfInput() }}
                     <input type="hidden" name="action" value="bozp/permits/upload-attachment">
-                    <div class="bozp-form__field" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-                        <div style="flex:1;min-width:200px;">
+                    <div class="bozp-form__field">
+                        <div class="bozp-form__field_wrapper">
                             <label for="issuer-attachment">
                                 {{ 'Nahrať prílohu (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp') }}
                             </label>
@@ -337,7 +343,7 @@
                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                                    required>
                         </div>
-                        <button type="submit" class="bozp-btn bozp-btn--secondary">
+                        <button type="submit" class="bozp-btn bozp-btn--primary">
                             {{ 'Nahrať'|t('bozp') }}
                         </button>
                     </div>

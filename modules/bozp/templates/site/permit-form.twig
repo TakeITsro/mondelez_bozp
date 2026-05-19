@@ -43,10 +43,12 @@
     <div class="bozp-form__yesno">
         <label class="bozp-form__yesno-opt">
             <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+            <div class="custom_radio"></div>
             <span>{{ 'Áno'|t('bozp') }}</span>
         </label>
         <label class="bozp-form__yesno-opt">
             <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+            <div class="custom_radio"></div>
             <span>{{ 'Nie'|t('bozp') }}</span>
         </label>
     </div>
@@ -103,6 +105,26 @@
                 </div>
             </fieldset>
 
+            {% if zones|length > 0 %}
+                <fieldset class="bozp-form__section">
+                    <legend>{{ 'Zóna'|t('bozp') }}</legend>
+                    <p class="bozp-form__hint">{{ 'Vyberte zónu, v ktorej sa práca vykonáva.'|t('bozp') }}</p>
+
+                    <div class="bozp-form__field">
+                        <label for="zoneId">{{ 'Zóna'|t('bozp') }}</label>
+                        <select name="zoneId" id="zoneId">
+                            <option value="">{{ '— Vyberte zónu —'|t('bozp') }}</option>
+                            {% for zone in zones %}
+                                <option value="{{ zone.id }}"
+                                        {% if (values.zoneId ?? null) == zone.id %}selected{% endif %}>
+                                    {{ zone.name }}{% if zone.code %} ({{ zone.code }}){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </fieldset>
+            {% endif %}
+
             <fieldset class="bozp-form__section">
                 <legend>{{ 'Práca'|t('bozp') }}</legend>
 
@@ -142,25 +164,6 @@
                 </div>
             </fieldset>
 
-            {% if zones|length > 0 %}
-                <fieldset class="bozp-form__section">
-                    <legend>{{ 'Zóny'|t('bozp') }}</legend>
-                    <p class="bozp-form__hint">{{ 'Vyberte jednu alebo viac zón, ktorých sa práca týka.'|t('bozp') }}</p>
-
-                    <div class="bozp-form__zones">
-                        {% for zone in zones %}
-                            <label class="bozp-form__zone">
-                                <input type="checkbox"
-                                       name="zoneIds[]"
-                                       value="{{ zone.id }}"
-                                       {% if zone.id in (values.zoneIds ?? []) %}checked{% endif %}>
-                                <span>{{ zone.name }}{% if zone.code %} <code>{{ zone.code }}</code>{% endif %}</span>
-                            </label>
-                        {% endfor %}
-                    </div>
-                </fieldset>
-            {% endif %}
-
             {# ----- Hazard matrix ----- #}
             {% if hazardCategories|length > 0 %}
                 <fieldset class="bozp-form__section bozp-form__section--hazards">
@@ -189,14 +192,16 @@
                                     {% set controlOther = row.controlOther ?? '' %}
                                     <tr class="bozp-hazards__row">
                                         <th scope="row" class="bozp-hazards__label">
-                                            {{ cat.label()|t('bozp') }}
+                                            <div class="label_wrapper">
+                                                <img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
+                                                {{ cat.label()|t('bozp') }}
+                                            </div>
                                         </th>
                                         <td class="bozp-hazards__exposed">
                                             {{ _self.yes_no('hazards[' ~ key ~ '][exposed]', exposed) }}
                                         </td>
                                         <td class="bozp-hazards__measure">
                                             <textarea name="hazards[{{ key }}][measure]"
-                                                      rows="2"
                                                       aria-label="{{ cat.label()|t('bozp') }} — {{ 'Opatrenie / OOPP'|t('bozp') }}">{{ measure }}</textarea>
                                         </td>
                                         <td class="bozp-hazards__control">
@@ -289,6 +294,7 @@
                                    name="requiresHighRisk[]"
                                    value="{{ type.value }}"
                                    {% if type.value in (values.requiresHighRisk ?? []) %}checked{% endif %}>
+                            <div class="custom_checkbox"></div>
                             <span>
                                 {{ type.label() }}
                             </span>

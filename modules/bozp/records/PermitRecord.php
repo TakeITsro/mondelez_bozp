@@ -21,6 +21,7 @@ use craft\db\ActiveRecord;
  *
  * @property string|null $workDate
  * @property string|null $workLocation
+ * @property int|null    $zoneId       Single zone (FK -> bozp_zones.id, nullable)
  * @property string|null $workOverview
  * @property string|null $workStep1
  * @property string|null $workStep2
