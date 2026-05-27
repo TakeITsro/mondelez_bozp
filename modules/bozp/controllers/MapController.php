@@ -16,9 +16,13 @@ use yii\web\Response;
  * MapController
  *
  * Front-end facility map. Renders an SVG of the production site overlaid with
- * five zone hot-spots. Each zone shows a live count of "active" permits
- * (statuses: approved, signed, active, pending_closure). Clicking a zone
- * opens a list of the permits currently in that zone.
+ * five zone hot-spots. Each zone shows a live count of "active" permits.
+ * Clicking a zone opens a list of the permits currently in that zone.
+ *
+ * "Active" here means the permit is HSE-approved and not yet closed — i.e.
+ * statuses `approved` and `pending_closure`. The `signed` and `active` states
+ * defined in the enum are not currently produced by the workflow, so they are
+ * excluded; if the issuance-signing flow gets wired up later, add them here.
  *
  * Access: anyone with bozp:viewMap (granted to issuers and HSE officers).
  */
@@ -31,8 +35,6 @@ class MapController extends BaseSiteController
      */
     private const ACTIVE_STATUSES = [
         PermitStatus::Approved,
-        PermitStatus::Signed,
-        PermitStatus::Active,
         PermitStatus::PendingClosure,
     ];
 

@@ -3,26 +3,26 @@
 {% set lq = values.liftingEquipment ?? [] %}
 
 {% macro yn_row(name, value, label) %}
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ label }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ label }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 {% endmacro %}
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Zdvíhacie zariadenie'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Zdvíhacie zariadenie'|t('bozp') }}</legend>
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Typ zdvíhacieho zariadenia'|t('bozp') }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Typ zdvíhacieho zariadenia'|t('bozp') }}</span>
         <div class="bozp-form__checklist">
             {% set lqOptions = {
                 'mobile_crane':    'Mobilný žeriav'|t('bozp'),
@@ -47,13 +47,13 @@
                maxlength="255" style="margin-top:6px">
     </div>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
             <label for="craneId">{{ 'Identifikácia žeriava / zariadenia'|t('bozp') }}</label>
             <input type="text" id="craneId" name="craneId"
                    value="{{ values.craneId ?? '' }}" maxlength="100">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="liftingCapacity">{{ 'Nosnosť zariadenia (t)'|t('bozp') }}</label>
             <input type="text" id="liftingCapacity" name="liftingCapacity"
                    value="{{ values.liftingCapacity ?? '' }}" maxlength="50" style="width:120px">
@@ -63,16 +63,16 @@
     {{ _self.yn_row('craneInspectionValid', values.craneInspectionValid ?? '', 'Zariadenie má platnú revíznu správu?'|t('bozp')) }}
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Bremeno a plán zdvihu'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Bremeno a plán zdvihu'|t('bozp') }}</legend>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
             <label for="loadWeight">{{ 'Hmotnosť bremena (kg)'|t('bozp') }}</label>
             <input type="text" id="loadWeight" name="loadWeight"
                    value="{{ values.loadWeight ?? '' }}" maxlength="50" style="width:140px">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="loadDescription">{{ 'Popis bremena'|t('bozp') }}</label>
             <input type="text" id="loadDescription" name="loadDescription"
                    value="{{ values.loadDescription ?? '' }}" maxlength="255">
@@ -85,16 +85,16 @@
     {{ _self.yn_row('overheadObstaclesClear', values.overheadObstaclesClear ?? '', 'Trasa zdvihu je voľná (bez prekážok, vedenia, konštrukcií)?'|t('bozp')) }}
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Personál'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Personál'|t('bozp') }}</legend>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
             <label for="operatorName">{{ 'Meno operátora žeriava / zariadenia'|t('bozp') }}</label>
             <input type="text" id="operatorName" name="operatorName"
                    value="{{ values.operatorName ?? '' }}" maxlength="255">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="riggerName">{{ 'Meno väzača bremien'|t('bozp') }}</label>
             <input type="text" id="riggerName" name="riggerName"
                    value="{{ values.riggerName ?? '' }}" maxlength="255">
@@ -104,7 +104,7 @@
     {{ _self.yn_row('operatorCertified', values.operatorCertified ?? '', 'Operátor má platné oprávnenie na obsluhu zdvíhacieho zariadenia?'|t('bozp')) }}
     {{ _self.yn_row('signallerAssigned', values.signallerAssigned ?? '', 'Je pridelený signalista / navádzač?'|t('bozp')) }}
 
-    <div class="bozp-form__field">
+    <div class="bozp-form-row">
         <label for="liftingAdditionalMeasures">{{ 'Ďalšie bezpečnostné opatrenia'|t('bozp') }}</label>
         <textarea id="liftingAdditionalMeasures" name="liftingAdditionalMeasures" rows="3">{{ values.liftingAdditionalMeasures ?? '' }}</textarea>
     </div>

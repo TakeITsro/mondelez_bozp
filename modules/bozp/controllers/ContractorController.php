@@ -413,8 +413,12 @@ class ContractorController extends Controller
 
     /**
      * GET bozp/c/<token>/subpermits/<id>/pdf — redirect to a subpermit PDF (requires password auth).
+     *
+     * `$id` is bound by Yii from the URL placeholder — declaring it as a
+     * method param is the only reliable way to receive it. `getParam('id')`
+     * returns null for route placeholders.
      */
-    public function actionSubpermitPdf(string $token): Response
+    public function actionSubpermitPdf(string $token, int $id): Response
     {
         $permit = $this->lookupPermit($token);
 
@@ -425,7 +429,6 @@ class ContractorController extends Controller
             return $this->renderPasswordPrompt($permit, []);
         }
 
-        $id = (int) Craft::$app->getRequest()->getParam('id');
         $subpermit = \modules\bozp\records\SubpermitRecord::findOne(['id' => $id, 'parentPermitId' => $permit->id]);
         if (!$subpermit) {
             throw new \yii\web\NotFoundHttpException('Subpermit not found.');
@@ -768,6 +771,14 @@ class ContractorController extends Controller
         /** @var Module $module */
         $module = Craft::$app->getModule('bozp');
 
+        // Both pre-work signatures must exist before closure can be signed.
+        if (!$module->subpermitSignatureService->isPreworkComplete($id)) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Najprv musia byť podpísané obidva podpisy pred začatím prác.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
         // Check not already signed by contractor
         if ($module->subpermitSignatureService->findSignature($id, SubpermitSignatureService::ROLE_CONTRACTOR)) {
             Craft::$app->getSession()->setError(
@@ -781,6 +792,25 @@ class ContractorController extends Controller
         $signerEmployer = trim((string) $request->getBodyParam('signerEmployer', $permit->contractorCompany ?? ''));
         $signatureDate = trim((string) $request->getBodyParam('signatureDate', date('Y-m-d')));
 
+        // Closure status (multi-select) + trial-operation flag.
+        $closureStatusJson = (string) $request->getBodyParam('closureStatusJson', '');
+        $closureStatus = $closureStatusJson !== '' ? (json_decode($closureStatusJson, true) ?: []) : [];
+        $closureStatus = is_array($closureStatus) ? array_values(array_filter(array_map('strval', $closureStatus))) : [];
+
+        $allowedClosure = [
+            'work_completed',
+            'equipment_operational',
+            'equipment_not_operational',
+            'personnel_and_materials_removed',
+            'work_suspended',
+        ];
+        $closureStatus = array_values(array_intersect($closureStatus, $allowedClosure));
+
+        $requiresTestRun = $request->getBodyParam('requiresTestRun');
+        if (!in_array($requiresTestRun, ['yes', 'no'], true)) {
+            $requiresTestRun = null;
+        }
+
         if ($signatureData === '' || !str_starts_with($signatureData, 'data:image/png;base64,')) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis dodávateľa je povinný.'));
             return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
@@ -788,6 +818,28 @@ class ContractorController extends Controller
         if ($signerName === '') {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Meno podpisujúceho je povinné.'));
             return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+        if (count($closureStatus) === 0) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Vyberte aspoň jeden stav po dokončení.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+        if ($requiresTestRun === null) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Označte, či sa vyžaduje skúšobná prevádzka.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        // Hot work + confined space require at least one contractor attachment
+        // on the parent permit before closure can be signed.
+        if (in_array($subpermit->type, ['hot_work', 'confined_space'], true)) {
+            $attachmentCount = (int) PermitAttachmentRecord::find()
+                ->where(['permitId' => $permit->id, 'attachmentType' => 'contractor_upload'])
+                ->count();
+            if ($attachmentCount < 1) {
+                Craft::$app->getSession()->setError(
+                    Craft::t('bozp', 'Pred uzavretím tohto subpermitu je potrebné nahrať aspoň jednu prílohu.')
+                );
+                return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            }
         }
 
         try {
@@ -799,6 +851,20 @@ class ContractorController extends Controller
                 $signatureDate,
                 $signatureData,
             );
+
+            // Persist closure status and trial-operation flag into subpermit.data
+            $data = is_string($subpermit->data)
+                ? (json_decode($subpermit->data, true) ?? [])
+                : (is_array($subpermit->data) ? $subpermit->data : []);
+            $data['closureStatus']   = $closureStatus;
+            $data['requiresTestRun'] = $requiresTestRun;
+            $subpermit->data = json_encode($data);
+            if (!$subpermit->save()) {
+                throw new \RuntimeException('Subpermit data save failed: ' . print_r($subpermit->getErrors(), true));
+            }
+
+            // Regenerate PDF so closure info appears
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
         } catch (Throwable $e) {
             Craft::error('Subpermit contractor sign failed: ' . $e->getMessage(), __METHOD__);
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis sa nepodarilo uložiť. Skúste znova.'));
@@ -806,6 +872,96 @@ class ContractorController extends Controller
         }
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol podpísaný.'));
+        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+    }
+
+    // ------------------------------------------------------------------
+    // Contractor pre-work signature — signed BEFORE HSE approval, AFTER
+    // issuer pre-work. HSE approval is gated on both preworks.
+    // ------------------------------------------------------------------
+    public function actionSignSubpermitPrework(): Response
+    {
+        $this->requirePostRequest();
+
+        $token  = Craft::$app->getRequest()->getRequiredBodyParam('token');
+        $permit = $this->lookupPermit($token);
+
+        if ($this->isExpired($permit)) {
+            return $this->renderExpired();
+        }
+        if (!$this->isAuthedFor($token)) {
+            return $this->renderPasswordPrompt($permit, []);
+        }
+
+        $request = Craft::$app->getRequest();
+        $id      = (int) $request->getRequiredBodyParam('id');
+
+        $subpermit = SubpermitRecord::findOne(['id' => $id, 'parentPermitId' => $permit->id]);
+        if (!$subpermit) {
+            throw new NotFoundHttpException('Subpermit not found.');
+        }
+
+        if ($subpermit->status !== 'pending') {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Predpracovný podpis je možný len pred schválením.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        // Issuer must have signed pre-work first
+        $issuerPrework = $module->subpermitSignatureService->findSignature(
+            $id,
+            SubpermitSignatureService::ROLE_ISSUER_PREWORK
+        );
+        if (!$issuerPrework) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Vydavateľ musí najprv podpísať pred začatím prác.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        // Already signed?
+        if ($module->subpermitSignatureService->findSignature($id, SubpermitSignatureService::ROLE_CONTRACTOR_PREWORK)) {
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Predpracovný podpis dodávateľa už bol zaznamenaný.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        $signatureData  = trim((string) $request->getBodyParam('signatureData', ''));
+        $signerName     = trim((string) $request->getBodyParam('signerName', $permit->contractorPersonName ?? ''));
+        $signerEmployer = trim((string) $request->getBodyParam('signerEmployer', $permit->contractorCompany ?? ''));
+        $signatureDate  = trim((string) $request->getBodyParam('signatureDate', date('Y-m-d')));
+
+        if ($signerName === '' || !str_starts_with($signatureData, 'data:image/png;base64,')) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Podpis a meno sú povinné.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        try {
+            $module->subpermitSignatureService->capture(
+                $subpermit,
+                SubpermitSignatureService::ROLE_CONTRACTOR_PREWORK,
+                $signerName,
+                $signerEmployer ?: null,
+                $signatureDate,
+                $signatureData,
+            );
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+        } catch (Throwable $e) {
+            Craft::error('Subpermit prework sign failed: ' . $e->getMessage(), __METHOD__);
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis sa nepodarilo uložiť. Skúste znova.'));
+            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        }
+
+        Craft::$app->getSession()->setNotice(
+            Craft::t('bozp', 'Predpracovný podpis dodávateľa bol zaznamenaný.')
+        );
         return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
     }
 
@@ -846,9 +1002,12 @@ class ContractorController extends Controller
 
         $recipientClosure = $this->signatures()->findSignature((int) $permit->id, SignatureRole::RecipientClosure);
 
-        // Load approved subpermits with their signatures
+        // Load subpermits the contractor needs to see. Under the new workflow
+        // they sign pre-work BEFORE HSE approval, so 'pending' rows must be
+        // visible too. Cancelled / rejected / expired stay hidden.
         $subpermits = SubpermitRecord::find()
-            ->where(['parentPermitId' => $permit->id, 'status' => 'approved'])
+            ->where(['parentPermitId' => $permit->id])
+            ->andWhere(['in', 'status', ['pending', 'approved']])
             ->orderBy(['dateCreated' => SORT_ASC])
             ->all();
 
@@ -859,7 +1018,12 @@ class ContractorController extends Controller
         foreach ($subpermits as $sp) {
             $sigs = $module->subpermitSignatureService->findAllForSubpermit((int) $sp->id);
             $subpermitSignatures[(int) $sp->id] = $sigs;
-            if (!isset($sigs[SubpermitSignatureService::ROLE_CONTRACTOR])) {
+            // Parent permit closure requires every subpermit fully closed:
+            // both contractor closure AND issuer closure signatures present.
+            if (
+                !isset($sigs[SubpermitSignatureService::ROLE_CONTRACTOR])
+                || !isset($sigs[SubpermitSignatureService::ROLE_ISSUER_CLOSURE])
+            ) {
                 $allSubpermitsSigned = false;
             }
         }
@@ -892,7 +1056,11 @@ class ContractorController extends Controller
             'canClose' => $actionable && !$recipientClosure && $allSubpermitsSigned,
             'canCancel' => $actionable && !$recipientClosure,
             'allSubpermitsSigned' => $allSubpermitsSigned,
-            'unsignedSubpermitCount' => count(array_filter($subpermits, fn($sp) => !isset($subpermitSignatures[(int)$sp->id][SubpermitSignatureService::ROLE_CONTRACTOR]))),
+            'unsignedSubpermitCount' => count(array_filter(
+                $subpermits,
+                fn($sp) => !isset($subpermitSignatures[(int)$sp->id][SubpermitSignatureService::ROLE_CONTRACTOR])
+                       || !isset($subpermitSignatures[(int)$sp->id][SubpermitSignatureService::ROLE_ISSUER_CLOSURE])
+            )),
             'closeErrors' => $closeErrors,
             'closeValues' => array_merge($defaultSign, ['closureStatus' => []], $closeValues),
             'cancelErrors' => $cancelErrors,

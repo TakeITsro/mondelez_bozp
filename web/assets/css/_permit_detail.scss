@@ -1,4 +1,219 @@
-.bozp-page--permit-detail {
+.bozp-detail-section {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+  background-color: var(--background-color-pink);
+  border-radius: 1.25em;
+  border: none;
+  padding: 2.5em 1.25em;
+
+  h2 {
+    color: var(--main-color);
+    font-size: 2.5em;
+    font-weight: 400;
+    line-height: 1.2em;
+    text-transform: uppercase;
+  }
+
+  .bozp-detail-list {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1.25em;
+  }
+
+  .bozp-detail-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 3.125em;
+    padding: 0;
+
+    .bozp-detail-row__label {
+      width: calc(50% - 1.5625em);
+      min-width: 300px;
+      color: var(--main-color);
+      font-size: 1.25em;
+      font-weight: 400;
+      line-height: 1.2em;
+      text-transform: uppercase;
+    }
+
+    .bozp-detail-row__value {
+      width: calc(50% - 1.5625em);
+      min-width: 300px;
+      min-height: 4em;
+      display: flex;
+      align-items: center;
+      color: var(--main-color) !important;
+      font-size: 1em;
+      font-weight: 400;
+      line-height: 1.2em;
+      border: 2px solid var(--main-color) !important;
+      border-radius: 0.4em;
+      background-color: var(--form-input-bg-light) !important;
+      padding: 0.5em 1em;
+    }
+  }
+
+  .bozp-hazards {
+    width: 100%;
+
+    th {
+      color: var(--main-color);
+      font-size: 1.75em;
+      font-weight: 400;
+      line-height: 1.2em;
+      text-transform: uppercase;
+      text-align: center;
+      padding: 0.2857em 0.5714em;
+
+      &:first-child {
+        text-align: left;
+        padding: 0.2857em 0.5714em 0.2857em 0;
+      }
+
+      &:last-child {
+        padding: 0.2857em 0 0.2857em 0.5714em;
+      }
+    }
+
+    tbody {
+      th {
+        color: var(--main-color);
+        font-size: 1.25em;
+        font-weight: 400;
+        line-height: 1.2em;
+        text-transform: uppercase;
+        text-align: left;
+      }
+
+      .label_wrapper {
+        max-width: 200px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        img {
+          width: 2.5em;
+        }
+      }
+
+      td {
+        color: var(--main-color);
+        font-size: 1em;
+        font-weight: 400;
+        line-height: 1.2em;
+        text-transform: uppercase;
+        text-align: center;
+        padding: 0.5em 1em;
+
+        &:first-child {
+          padding: 0.5em 0.1em 0.5em 0;
+        }
+
+        &:last-child {
+          padding: 0.5em 0 0.5em 0.1em;
+        }
+
+
+      }
+
+    }
+  }
+
+  .bozp-section__header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2.5em;
+  }
+
+  .bozp-subpermits-table {
+    width: 100%;
+    border-spacing: 1.25em 0.625em;
+
+    tr {
+      th {
+        color: var(--main-color);
+        font-size: 1.25em;
+        font-weight: 400;
+        line-height: 1.2em;
+        text-align: left;
+      }
+
+      td {
+        font-size: 1em;
+        font-weight: 400;
+        line-height: 1.2em;
+      }
+    }
+  }
+
+  .bozp-section--attachments {
+    .bozp-empty {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      img {
+        width: 1.5em;
+      }
+
+      span {
+        color: var(--main-color);
+        font-size: 1.75em;
+        font-weight: 400;
+        line-height: 1.2em;
+        text-transform: uppercase;
+      }
+    }
+
+    .bozp-attachments {
+
+    }
+
+    .bozp-form--upload {
+      width: 100%;
+
+      .bozp-form__field {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+
+        .form__field_wrapper {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          label {
+            color: var(--main-color);
+            font-size: 1.25em;
+            font-weight: 400;
+            line-height: 1.2em;
+            text-transform: uppercase;
+          }
+
+          input {
+
+          }
+        }
+      }
+    }
+  }
+}
+
+.bozp-page--permit-detail,
+.bozp-page--subpermit-view {
   min-height: calc(100vh - 3.75em);
   gap: 5em;
   padding: 5em;
@@ -69,19 +284,16 @@
     gap: 1.25em;
   }
 
-  .bozp-detail {
+  .bozp-detail-row {
     width: 100%;
     max-width: 980px;
     display: flex;
-    gap: 1.25em;
-    flex-wrap: wrap;
-    background-color: var(--background-color-pink);
-    border-radius: 1.25em;
-    border: none;
-    padding: 2.5em 1.25em;
+    gap: 1.25em 3.125em;
 
-    dt {
-      width: calc(50% - 0.625em);
+
+    .bozp-detail-row__label {
+      width: calc(50% - 1.5625em);
+      min-width: 300px;
       color: var(--main-color);
       font-size: 1.25em;
       font-weight: 400;
@@ -89,8 +301,10 @@
       text-transform: uppercase;
     }
 
-    dd {
-      width: calc(50% - 0.625em);
+    .bozp-detail-row__value {
+      width: calc(50% - 1.5625em);
+      min-width: 300px;
+      min-height: 4em;
       color: var(--main-color) !important;
       font-size: 1em;
       font-weight: 400;
@@ -99,181 +313,7 @@
       border-radius: 0.4em;
       background-color: var(--form-input-bg-light) !important;
       padding: 0.5em 1em;
-    }
-  }
-
-  .bozp-section {
-    width: 100%;
-    max-width: 980px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.25em;
-    background-color: var(--background-color-pink);
-    border-radius: 1.25em;
-    border: none;
-    padding: 2.5em 1.25em;
-
-    h2 {
-      color: var(--main-color);
-      font-size: 2.5em;
-      font-weight: 400;
-      line-height: 1.2em;
-      text-transform: uppercase;
-    }
-
-    .bozp-detail {
-      padding: 0;
-    }
-
-    .bozp-hazards {
-      width: 100%;
-
-      th {
-        color: var(--main-color);
-        font-size: 1.75em;
-        font-weight: 400;
-        line-height: 1.2em;
-        text-transform: uppercase;
-        text-align: center;
-        padding: 0.2857em 0.5714em;
-
-        &:first-child {
-          text-align: left;
-          padding: 0.2857em 0.5714em 0.2857em 0;
-        }
-
-        &:last-child {
-          padding: 0.2857em 0 0.2857em 0.5714em;
-        }
-      }
-
-      tbody {
-        th {
-          color: var(--main-color);
-          font-size: 1.25em;
-          font-weight: 400;
-          line-height: 1.2em;
-          text-transform: uppercase;
-          text-align: left;
-        }
-
-        .label_wrapper {
-          max-width: 200px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-
-          img {
-            width: 2.5em;
-          }
-        }
-
-        td {
-          color: var(--main-color);
-          font-size: 1em;
-          font-weight: 400;
-          line-height: 1.2em;
-          text-transform: uppercase;
-          text-align: center;
-          padding: 0.5em 1em;
-
-          &:first-child {
-            padding: 0.5em 0.1em 0.5em 0;
-          }
-
-          &:last-child {
-            padding: 0.5em 0 0.5em 0.1em;
-          }
-
-
-        }
-
-      }
-    }
-
-    .bozp-section__header {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 2.5em;
-    }
-
-    .bozp-subpermits-table {
-      width: 100%;
-      border-spacing: 1.25em 0.625em;
-
-      tr {
-        th {
-          color: var(--main-color);
-          font-size: 1.25em;
-          font-weight: 400;
-          line-height: 1.2em;
-          text-align: left;
-        }
-
-        td {
-          font-size: 1em;
-          font-weight: 400;
-          line-height: 1.2em;
-        }
-      }
-    }
-
-    .bozp-section--attachments {
-      .bozp-empty {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        img {
-          width: 1.5em;
-        }
-
-        span {
-          color: var(--main-color);
-          font-size: 1.75em;
-          font-weight: 400;
-          line-height: 1.2em;
-          text-transform: uppercase;
-        }
-      }
-
-      .bozp-attachments {
-
-      }
-
-      .bozp-form--upload {
-        width: 100%;
-
-        .bozp-form__field {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-
-          .form__field_wrapper {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-
-            label {
-              color: var(--main-color);
-              font-size: 1.25em;
-              font-weight: 400;
-              line-height: 1.2em;
-              text-transform: uppercase;
-            }
-
-            input {
-
-            }
-          }
-        }
-      }
+      vertical-align: center;
     }
   }
 

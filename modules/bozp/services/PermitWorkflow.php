@@ -30,16 +30,18 @@ class PermitWorkflow extends Component
      * Anything not in this map is rejected.
      */
     private const TRANSITIONS = [
-        'draft'           => ['submitted', 'cancelled'],
-        'submitted'       => ['approved', 'rejected', 'cancelled'],
-        'approved'        => ['signed', 'cancelled', 'pending_closure'],
-        'rejected'        => ['draft', 'cancelled'],
-        'signed'          => ['active', 'cancelled'],
-        'active'          => ['pending_closure', 'expired', 'cancelled'],
-        'pending_closure' => ['closed', 'cancelled', 'active'],
-        'closed'          => [],
-        'cancelled'       => [],
-        'expired'         => [],
+        'awaiting_assessment'   => ['draft', 'cancelled'],
+        'draft'                 => ['submitted', 'cancelled'],
+        'submitted'             => ['approved', 'rejected', 'cancelled'],
+        'approved'              => ['signed', 'cancelled', 'pending_closure'],
+        'rejected'              => ['draft', 'cancelled'],
+        'signed'                => ['active', 'cancelled'],
+        'active'                => ['pending_closure', 'expired', 'cancelled'],
+        'pending_closure'       => ['awaiting_hse_closure', 'cancelled', 'active'],
+        'awaiting_hse_closure'  => ['closed', 'cancelled'],
+        'closed'                => [],
+        'cancelled'             => [],
+        'expired'               => [],
     ];
 
     /**
@@ -124,6 +126,41 @@ class PermitWorkflow extends Component
         if (!$permit->save()) {
             throw new \RuntimeException(
                 'Failed to save permit during access regeneration: ' . print_r($permit->getErrors(), true)
+            );
+        }
+
+        return $plaintext;
+    }
+
+    /**
+     * Ensure the permit has contractor access credentials (accessToken +
+     * accessPasswordHash). If already present, returns null. If freshly
+     * generated, returns the plaintext password so the caller can mail it.
+     *
+     * Used by the new subpermit workflow where the contractor must sign
+     * pre-work BEFORE HSE approves the permit, so credentials need to exist
+     * before the approve() step would normally create them.
+     */
+    public function ensureContractorAccess(PermitRecord $permit): ?string
+    {
+        if (!empty($permit->accessToken) && !empty($permit->accessPasswordHash)) {
+            return null;
+        }
+
+        $security = Craft::$app->getSecurity();
+        $plaintext = $this->generateContractorPassword();
+
+        $permit->accessToken = $security->generateRandomString(48);
+        $permit->accessPasswordHash = $security->hashPassword($plaintext);
+        // No validTo yet (permit not approved); give the contractor 14 days
+        // to come sign. approve() will overwrite this with validTo.
+        if (empty($permit->accessExpiresAt)) {
+            $permit->accessExpiresAt = date('Y-m-d H:i:s', strtotime('+14 days'));
+        }
+
+        if (!$permit->save()) {
+            throw new \RuntimeException(
+                'Failed to save permit during access provisioning: ' . print_r($permit->getErrors(), true)
             );
         }
 
@@ -271,8 +308,10 @@ class PermitWorkflow extends Component
     }
 
     /**
-     * Issuer final closure — only allowed once the contractor has
-     * signed RecipientClosure (i.e. status is "pending_closure").
+     * Issuer (employee) closure signature — only allowed once the contractor
+     * has signed RecipientClosure (status "pending_closure"). Transitions to
+     * "awaiting_hse_closure"; the HSE officer must still countersign in CP
+     * before the permit is fully closed.
      */
     public function closeByIssuer(
         PermitRecord $permit,
@@ -288,15 +327,38 @@ class PermitWorkflow extends Component
 
         $this->transition(
             $permit,
-            PermitStatus::Closed,
+            PermitStatus::AwaitingHseClosure,
             $actorUserId,
             extraColumns: [
                 'issuerClosureStatus' => 'work_completed_loto_removed',
                 'issuerClosureSignedAt' => date('Y-m-d H:i:s'),
                 'requiresTrialOperation' => $requiresTrialOperation,
-                'closedAt' => date('Y-m-d H:i:s'),
             ],
             auditAction: 'issuer_closed',
+        );
+    }
+
+    /**
+     * HSE officer final closure signature — fully closes the permit.
+     * Only allowed once the issuer has signed (status "awaiting_hse_closure").
+     */
+    public function closeByHse(PermitRecord $permit, int $hseUserId): void
+    {
+        if ($permit->status !== 'awaiting_hse_closure') {
+            throw new InvalidArgumentException(
+                "Cannot close as HSE from status '{$permit->status}'. "
+                . 'Issuer closure must be signed first.'
+            );
+        }
+
+        $this->transition(
+            $permit,
+            PermitStatus::Closed,
+            $hseUserId,
+            extraColumns: [
+                'closedAt' => date('Y-m-d H:i:s'),
+            ],
+            auditAction: 'hse_closed',
         );
     }
 
@@ -323,13 +385,31 @@ class PermitWorkflow extends Component
             ));
         }
 
+        // Update only the columns affected by this transition. Using updateAll
+        // here (instead of $permit->save()) avoids re-binding unrelated JSON
+        // columns like recipientClosureStatus / requiresHighRisk that Yii loads
+        // as PHP arrays — those would otherwise trigger "Array to string
+        // conversion" when AR tries to bind the whole record on save.
+        //
+        // Any array passed as an extraColumn value is JSON-encoded for safe
+        // binding to a JSON/longtext column.
+        $persisted = ['status' => $to->value];
+        foreach ($extraColumns as $col => $val) {
+            $persisted[$col] = is_array($val) ? json_encode($val, JSON_UNESCAPED_UNICODE) : $val;
+        }
+
+        $affected = PermitRecord::updateAll($persisted, ['id' => $permit->id]);
+        if ($affected < 1) {
+            throw new \RuntimeException("Failed to update permit #{$permit->id} during transition.");
+        }
+
+        // Sync the in-memory record so subsequent code (PDF render, mailer)
+        // sees the new values without a separate findOne() call. Keep the
+        // original (possibly array) values on the in-memory object so
+        // downstream readers see the natural type.
         $permit->status = $to->value;
         foreach ($extraColumns as $col => $val) {
             $permit->{$col} = $val;
-        }
-
-        if (!$permit->save()) {
-            throw new \RuntimeException('Failed to save permit during transition: ' . print_r($permit->getErrors(), true));
         }
 
         $this->auditLogger()->log(

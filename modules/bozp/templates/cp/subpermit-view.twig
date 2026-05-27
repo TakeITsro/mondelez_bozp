@@ -140,9 +140,60 @@
         </tbody>
     </table>
 
+    {# ---- Command B — action grid rendered separately (nested array) ---- #}
+    {% set commandBActions = (subpermitType and subpermitType.value == 'command_b')
+        ? (values.actions ?? {})
+        : {} %}
+    {% if commandBActions|length > 0 %}
+        {% set commandBGroups = {
+            'turn_off':              'Vypnúť'|t('bozp'),
+            'disconnected':          'Odpojené'|t('bozp'),
+            'further_measures':      'Ďalšie opatrenia'|t('bozp'),
+            'check_de_energized':    'Ako overiť, že inštalácia je bez napätia'|t('bozp'),
+            'grounding_shorting':    'Uzemnenie a skratovanie'|t('bozp'),
+            'workplace_marking':     'Spôsob označenia pracoviska'|t('bozp'),
+            'workplace_definition':  'Vymedzenie pracoviska'|t('bozp'),
+            'additional_safety':     'Doplnkové bezpečnostné opatrenia'|t('bozp'),
+        } %}
+        <h3 style="margin-top:24px;">{{ 'Opatrenia na zabezpečenie pracoviska'|t('bozp') }}</h3>
+        {% for groupKey, groupLabel in commandBGroups %}
+            {% set rows = commandBActions[groupKey] ?? [] %}
+            {% if rows|length > 0 %}
+                <h4>{{ groupLabel }}</h4>
+                <table class="data fullwidth" style="margin-bottom:12px;">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Miesto'|t('bozp') }}</th>
+                            <th>{{ 'Úkon'|t('bozp') }}</th>
+                            <th>{{ 'Por. č.'|t('bozp') }}</th>
+                            <th>{{ 'Zodpovedný'|t('bozp') }}</th>
+                            <th>{{ 'Dátum / čas'|t('bozp') }}</th>
+                            <th>{{ 'Podpis'|t('bozp') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td>{{ row.place ?: '—' }}</td>
+                                <td>{{ row.description ?: '—' }}</td>
+                                <td>{{ row.serialNumber ?: '—' }}</td>
+                                <td>{{ row.responsible ?: '—' }}</td>
+                                <td>{{ row.performedAt ? row.performedAt|replace({'T': ' '}) : '—' }}</td>
+                                <td>{{ row.signatureName ?: '—' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
     {# ---- Type-specific fields ---- #}
+    {# 'actions' excluded — rendered above for command_b, and would break the
+       generic |join() on its nested structure for any other type that adopts
+       a similar shape. #}
     {% set commonKeys = ['date','placeOfWork','responsiblePerson','participants','workDescription',
-        'workStep1','workStep2','workStep3','workStep4','workStep5'] %}
+        'workStep1','workStep2','workStep3','workStep4','workStep5','actions'] %}
     {% set typeValues = {} %}
     {% for k, v in values %}
         {% if k not in commonKeys and v is not empty %}
@@ -159,7 +210,16 @@
                         <th style="width:220px;">{{ k }}</th>
                         <td>
                             {% if v is iterable %}
-                                {{ v|join(', ') }}
+                                {# Guard against nested arrays — flat |join would PHP-throw
+                                   "Array to string conversion" if any inner element is itself
+                                   an array. Show a placeholder for nested data instead. #}
+                                {% set hasNested = false %}
+                                {% for el in v %}{% if el is iterable %}{% set hasNested = true %}{% endif %}{% endfor %}
+                                {% if hasNested %}
+                                    <em class="light">{{ '(zložené dáta)'|t('bozp') }}</em>
+                                {% else %}
+                                    {{ v|join(', ') }}
+                                {% endif %}
                             {% elseif v == 'yes' %}
                                 {{ 'Áno'|t('bozp') }}
                             {% elseif v == 'no' %}
@@ -175,42 +235,79 @@
     {% endif %}
 
     {# ---- Signatures ---- #}
-    <h3 style="margin-top:24px;">{{ 'Podpisy'|t('bozp') }}</h3>
-    <div class="bozp-sp-sig-grid">
-        {% for role, label in {'issuer': 'Vydavateľ'|t('bozp'), 'contractor': 'Dodávateľ'|t('bozp')} %}
-            {% set sig = signatures[role] ?? null %}
-            <div class="bozp-sp-sig-slot">
-                <h4>{{ label }}</h4>
-                {% if sig %}
-                    {% set sigAsset = craft.assets().id(sig.signatureAssetId).one() %}
-                    {% if sigAsset %}
-                        <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}">
-                    {% endif %}
-                    <table class="data" style="font-size:12px;">
-                        <tr><th style="width:100px;">{{ 'Meno'|t('bozp') }}</th><td>{{ sig.signerName }}</td></tr>
-                        {% if sig.signerEmployer %}
-                            <tr><th>{{ 'Firma'|t('bozp') }}</th><td>{{ sig.signerEmployer }}</td></tr>
-                        {% endif %}
-                        <tr>
-                            <th>{{ 'Dátum'|t('bozp') }}</th>
-                            <td>{{ sig.signatureDate ? sig.signatureDate|date('d.m.Y') : '—' }}</td>
-                        </tr>
-                        <tr>
-                            <th>{{ 'Podpísané'|t('bozp') }}</th>
-                            <td>{{ sig.signedAt ? sig.signedAt|date('d.m.Y H:i') : '—' }}</td>
-                        </tr>
-                    </table>
-                {% else %}
-                    <p class="light" style="font-size:13px;">{{ 'Nepodpísané'|t('bozp') }}</p>
+    {% macro sigSlot(sig, label) %}
+        <div class="bozp-sp-sig-slot">
+            <h4>{{ label }}</h4>
+            {% if sig %}
+                {% set sigAsset = craft.assets().id(sig.signatureAssetId).one() %}
+                {% if sigAsset %}
+                    <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}">
                 {% endif %}
-            </div>
+                <table class="data" style="font-size:12px;">
+                    <tr><th style="width:100px;">{{ 'Meno'|t('bozp') }}</th><td>{{ sig.signerName }}</td></tr>
+                    {% if sig.signerEmployer %}
+                        <tr><th>{{ 'Firma'|t('bozp') }}</th><td>{{ sig.signerEmployer }}</td></tr>
+                    {% endif %}
+                    <tr>
+                        <th>{{ 'Dátum'|t('bozp') }}</th>
+                        <td>{{ sig.signatureDate ? sig.signatureDate|date('d.m.Y') : '—' }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Podpísané'|t('bozp') }}</th>
+                        <td>{{ sig.signedAt ? sig.signedAt|date('d.m.Y H:i') : '—' }}</td>
+                    </tr>
+                </table>
+            {% else %}
+                <p class="light" style="font-size:13px;">{{ 'Nepodpísané'|t('bozp') }}</p>
+            {% endif %}
+        </div>
+    {% endmacro %}
+
+    <h3 style="margin-top:24px;">{{ 'Podpisy pred prácou'|t('bozp') }}</h3>
+    <div class="bozp-sp-sig-grid">
+        {% for role, label in {
+            'issuer_prework':     'Vydavateľ — pred prácou'|t('bozp'),
+            'contractor_prework': 'Dodávateľ — pred prácou'|t('bozp'),
+        } %}
+            {{ _self.sigSlot(signatures[role] ?? null, label) }}
         {% endfor %}
     </div>
 
+    <h3 style="margin-top:24px;">{{ 'Podpisy pri uzavretí'|t('bozp') }}</h3>
+    <div class="bozp-sp-sig-grid">
+        {% for role, label in {
+            'contractor':     'Dodávateľ — uzavretie'|t('bozp'),
+            'issuer_closure': 'Vydavateľ — uzavretie'|t('bozp'),
+        } %}
+            {{ _self.sigSlot(signatures[role] ?? null, label) }}
+        {% endfor %}
+    </div>
+
+    {# Legacy 'issuer' role — only render if data exists from pre-reorder rows. #}
+    {% if signatures['issuer'] is defined and signatures['issuer'] %}
+        <h3 style="margin-top:24px;">{{ 'Podpisy (legacy)'|t('bozp') }}</h3>
+        <div class="bozp-sp-sig-grid">
+            {{ _self.sigSlot(signatures['issuer'], 'Vydavateľ (legacy)'|t('bozp')) }}
+        </div>
+    {% endif %}
+
     {# ---- HSE approve / reject (only if pending) ---- #}
     {% if subpermit.status == 'pending' and canApprove %}
+        {% set preworkReady = (signatures['issuer_prework'] ?? null) and (signatures['contractor_prework'] ?? null) %}
+
         <hr style="margin-top:32px;">
         <h3>{{ 'Rozhodnutie HSE'|t('bozp') }}</h3>
+
+        {% if not preworkReady %}
+            <p class="warning" style="background:#fff4e0;border-left:4px solid #d97706;padding:10px 14px;color:#7a3e00;">
+                <strong>{{ 'Nie je možné schváliť'|t('bozp') }}:</strong>
+                {% if not (signatures['issuer_prework'] ?? null) %}
+                    {{ 'chýba predpracovný podpis vydavateľa.'|t('bozp') }}
+                {% elseif not (signatures['contractor_prework'] ?? null) %}
+                    {{ 'chýba predpracovný podpis dodávateľa.'|t('bozp') }}
+                {% endif %}
+            </p>
+        {% endif %}
 
         <div class="flex" style="gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <form method="post" accept-charset="UTF-8">
@@ -218,7 +315,9 @@
                 <input type="hidden" name="action" value="bozp/queue/approve-subpermit">
                 <input type="hidden" name="permitId" value="{{ permit.id }}">
                 <input type="hidden" name="id" value="{{ subpermit.id }}">
-                <button type="submit" class="btn submit">{{ 'Schváliť subpermit'|t('bozp') }}</button>
+                <button type="submit" class="btn submit" {% if not preworkReady %}disabled{% endif %}>
+                    {{ 'Schváliť subpermit'|t('bozp') }}
+                </button>
                 <span class="light" style="font-size:12px;margin-left:6px;">
                     {{ 'Platnosť 8 hodín od schválenia'|t('bozp') }}
                 </span>

@@ -1,0 +1,64 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Sent to HSE officer when the issuer has signed the closure but the permit
+   still needs the HSE countersignature before it can be marked as closed.
+   Variables: permit, permitUrl (CP), signerName (issuer's name) #}
+
+{% block subject %}
+    {{ 'Permit {n} čaká na podpis HSE'|t('bozp', {n: permit.permitNumber}) }}
+{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Uzavretie permitu'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Permit čaká na váš podpis'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
+        {{
+            'Vydavateľ <strong>{signer}</strong> podpísal uzavretie permitu <strong>{n}</strong>. Pre dokončenie procesu je potrebný váš podpis v administrácii.'|t('bozp', {
+                signer: signerName,
+                n: permit.permitNumber
+            })|raw
+        }}
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:14px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="4">
+                    <tr>
+                        <td style="font-size:13px;color:#000000;width:140px;padding-bottom:4px;">{{ 'Číslo permitu'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;padding-bottom:4px;">{{ permit.permitNumber }}</td>
+                    </tr>
+                    {% if permit.contractorCompany %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:4px;">{{ 'Dodávateľ'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:4px;">{{ permit.contractorCompany }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td style="font-size:13px;color:#000000;">{{ 'Podpísal vydavateľ'|t('bozp') }}</td>
+                        <td style="font-size:13px;">{{ signerName }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+        <tr>
+            <td style="background:#4F2170;border-radius:4px;">
+                <a href="{{ permitUrl }}"
+                   style="display:inline-block;padding:12px 28px;color:#FEFFFD;font-size:15px;font-weight:700;text-decoration:none;">
+                    {{ 'Otvoriť v administrácii'|t('bozp') }} →
+                </a>
+            </td>
+        </tr>
+    </table>
+{% endblock %}

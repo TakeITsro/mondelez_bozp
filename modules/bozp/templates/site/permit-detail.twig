@@ -88,76 +88,110 @@
         {% endif %}
 
         {# ---- Core details ---- #}
-        <dl class="bozp-detail">
-            <dt>{{ 'Dodávateľ'|t('bozp') }}</dt>
-            <dd>{{ permit.contractorCompany ?: '—' }}</dd>
+        <section class="bozp-detail-section bozp-detail-section--core">
+            <div class="bozp-detail-list">
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'Dodávateľ'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">{{ permit.contractorCompany ?: '—' }}</div>
+            </div>
 
-            <dt>{{ 'Kontaktná osoba'|t('bozp') }}</dt>
-            <dd>{{ permit.contractorPersonName ?: '—' }}</dd>
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'Kontaktná osoba'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">{{ permit.contractorPersonName ?: '—' }}</div>
+            </div>
 
-            <dt>{{ 'E-mail'|t('bozp') }}</dt>
-            <dd>
-                {%- if permit.contractorEmail -%}
-                    <a href="mailto:{{ permit.contractorEmail }}">{{ permit.contractorEmail }}</a>
-                {%- else -%}—{%- endif -%}
-            </dd>
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'E-mail'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">
+                    {%- if permit.contractorEmail -%}
+                        <a href="mailto:{{ permit.contractorEmail }}">{{ permit.contractorEmail }}</a>
+                    {%- else -%}—{%- endif -%}
+                </div>
+            </div>
 
-            <dt>{{ 'Miesto výkonu'|t('bozp') }}</dt>
-            <dd>{{ permit.workLocation ?: '—' }}</dd>
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'Miesto výkonu'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">{{ permit.workLocation ?: '—' }}</div>
+            </div>
 
-            <dt>{{ 'Popis prác'|t('bozp') }}</dt>
-            <dd>{{ permit.workOverview|nl2br ?: '—' }}</dd>
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'Popis prác'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">{{ permit.workOverview|nl2br ?: '—' }}</div>
+            </div>
 
-            <dt>{{ 'Platnosť od'|t('bozp') }}</dt>
-            <dd>{{ permit.validFrom ? permit.validFrom|date('d.m.Y') : '—' }}</dd>
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'Platnosť od'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">{{ permit.validFrom ? permit.validFrom|date('d.m.Y') : '—' }}</div>
+            </div>
 
-            <dt>{{ 'Platnosť do'|t('bozp') }}</dt>
-            <dd>{{ permit.validTo ? permit.validTo|date('d.m.Y H:i') : '—' }}</dd>
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'Platnosť do'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">{{ permit.validTo ? permit.validTo|date('d.m.Y H:i') : '—' }}</div>
+            </div>
 
-            <dt>{{ 'Zóny'|t('bozp') }}</dt>
-            <dd>
-                {%- if zones|length > 0 -%}
-                    {% for zone in zones %}
-                        <span class="bozp-tag">{{ zone.name }}{% if zone.code %} ({{ zone.code }}){% endif %}</span>
-                    {% endfor %}
-                {%- else -%}—{%- endif -%}
-            </dd>
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'Zóny'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">
+                    {%- if zones|length > 0 -%}
+                        {% for zone in zones %}
+                            <span class="bozp-tag">{{ zone.name }}{% if zone.code %} ({{ zone.code }}){% endif %}</span>
+                        {% endfor %}
+                    {%- else -%}—{%- endif -%}
+                </div>
+            </div>
 
-            <dt>{{ 'Vytvorené'|t('bozp') }}</dt>
-            <dd>{{ permit.dateCreated|date('d.m.Y H:i') }}</dd>
+            <div class="bozp-detail-row">
+                <div class="bozp-detail-row__label">{{ 'Vytvorené'|t('bozp') }}</div>
+                <div class="bozp-detail-row__value">{{ permit.dateCreated|date('d.m.Y H:i') }}</div>
+            </div>
 
             {% if permit.submittedAt %}
-                <dt>{{ 'Odoslané'|t('bozp') }}</dt>
-                <dd>{{ permit.submittedAt|date('d.m.Y H:i') }}</dd>
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Odoslané'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">{{ permit.submittedAt|date('d.m.Y H:i') }}</div>
+                </div>
             {% endif %}
-        </dl>
+        </div>
+        </section>
 
         {# ---- Preparation checks ---- #}
-        <section class="bozp-section bozp-section--prep">
+        <section class="bozp-detail-section bozp-detail-section--prep">
             <h2>{{ 'Príprava pracoviska'|t('bozp') }}</h2>
-            <dl class="bozp-detail">
-                <dt>{{ 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp') }}</dt>
-                <dd>{{ _self.yn(permit.conditionsSuitable) }}</dd>
+            <div class="bozp-detail-list">
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">{{ _self.yn(permit.conditionsSuitable) }}</div>
+                </div>
 
-                <dt>{{ 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp') }}</dt>
-                <dd>{{ _self.yn(permit.toolsInGoodCondition) }}</dd>
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">{{ _self.yn(permit.toolsInGoodCondition) }}</div>
+                </div>
 
-                <dt>{{ 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp') }}</dt>
-                <dd>{{ _self.yn(permit.hasStopConditions) }}</dd>
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">{{ _self.yn(permit.hasStopConditions) }}</div>
+                </div>
 
-                <dt>{{ 'Popis podmienok pre zastavenie prác'|t('bozp') }}</dt>
-                <dd>{{ permit.stopConditionsDescription ? permit.stopConditionsDescription|nl2br : '—' }}</dd>
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Popis podmienok pre zastavenie prác'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">{{ permit.stopConditionsDescription ? permit.stopConditionsDescription|nl2br : '—' }}</div>
+                </div>
 
-                <dt>{{ 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp') }}</dt>
-                <dd>{{ _self.yn(permit.lotoImplemented) }}</dd>
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">{{ _self.yn(permit.lotoImplemented) }}</div>
+                </div>
 
-                <dt>{{ 'Núdzový plán / postup v prípade mimoriadnej udalosti'|t('bozp') }}</dt>
-                <dd>{{ permit.emergencyPlan ? permit.emergencyPlan|nl2br : '—' }}</dd>
-            </dl>
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Núdzový plán / postup v prípade mimoriadnej udalosti'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">{{ permit.emergencyPlan ? permit.emergencyPlan|nl2br : '—' }}</div>
+                </div>
+            </div>
         </section>
 
         {# ---- Hazards matrix ---- #}
-        <section class="bozp-section bozp-section--hazards">
+        <section class="bozp-detail-section bozp-detail-section--hazards">
             <h2>{{ 'Riziká a OOPP'|t('bozp') }}</h2>
             {% set hasHazards = hazards is defined and hazards|length > 0 %}
             {% if not hasHazards %}
@@ -213,8 +247,8 @@
         {% endif %}
 
         {% if requiredSubpermitTypes|length > 0 or subpermits|length > 0 %}
-            <section class="bozp-section bozp-section--subpermits">
-                <div class="bozp-section__header">
+            <section class="bozp-detail-section bozp-detail-section--subpermits">
+                <div class="bozp-detail-section__header">
                     <h2>{{ 'Subpermity zvýšeného rizika'|t('bozp') }}</h2>
                     {% if isIssuer is defined and isIssuer %}
                         <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/new') }}"
@@ -301,7 +335,7 @@
         {% endif %}
 
         {# ---- Attachments (list + upload form for issuer) ---- #}
-        <section class="bozp-section bozp-section--attachments">
+        <section class="bozp-detail-section bozp-detail-section--attachments">
             <h2>{{ 'Prílohy'|t('bozp') }}</h2>
             {% if attachments is not defined or attachments|length == 0 %}
                 <div class="bozp-empty">
@@ -334,8 +368,8 @@
                       novalidate>
                     {{ csrfInput() }}
                     <input type="hidden" name="action" value="bozp/permits/upload-attachment">
-                    <div class="bozp-form__field">
-                        <div class="bozp-form__field_wrapper">
+                    <div class="bozp-form-row">
+                        <div class="bozp-form-row_wrapper">
                             <label for="issuer-attachment">
                                 {{ 'Nahrať prílohu (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp') }}
                             </label>
@@ -353,7 +387,7 @@
 
         {# ---- Issuer closure / cancel ---- #}
         {% if isIssuer is defined and isIssuer and (canCancel or canClose or issuerClosureSignature) %}
-            <section class="bozp-section bozp-section--issuer-closure">
+            <section class="bozp-detail-section bozp-detail-section--issuer-closure">
                 <h2>{{ 'Uzavretie permitu'|t('bozp') }}</h2>
 
                 {% if issuerClosureSignature %}
@@ -364,26 +398,34 @@
                                  class="bozp-signature__image"
                                  style="max-width:360px;max-height:140px;border:1px solid #ddd;background:#fff;">
                         {% endif %}
-                        <dl class="bozp-signature__meta">
-                            <dt>{{ 'Stav'|t('bozp') }}</dt>
-                            <dd>
-                                {% if permit.issuerClosureStatus == 'work_canceled_equipment_isolated' %}
-                                    {{ 'Práca zrušená / pozastavená'|t('bozp') }}
-                                {% elseif permit.issuerClosureStatus == 'work_completed_loto_removed' %}
-                                    {{ 'Práce dokončené, LOTO odstránené'|t('bozp') }}
-                                {% else %}
-                                    {{ permit.issuerClosureStatus ?: '—' }}
-                                {% endif %}
-                            </dd>
-                            <dt>{{ 'Podpísal'|t('bozp') }}</dt>
-                            <dd>{{ issuerClosureSignature.signerName }}</dd>
-                            <dt>{{ 'Dátum podpisu'|t('bozp') }}</dt>
-                            <dd>{{ issuerClosureSignature.signatureDate ? issuerClosureSignature.signatureDate|date('d.m.Y') : '—' }}</dd>
+                        <div class="bozp-detail-list bozp-signature__meta">
+                            <div class="bozp-detail-row">
+                                <div class="bozp-detail-row__label">{{ 'Stav'|t('bozp') }}</div>
+                                <div class="bozp-detail-row__value">
+                                    {% if permit.issuerClosureStatus == 'work_canceled_equipment_isolated' %}
+                                        {{ 'Práca zrušená / pozastavená'|t('bozp') }}
+                                    {% elseif permit.issuerClosureStatus == 'work_completed_loto_removed' %}
+                                        {{ 'Práce dokončené, LOTO odstránené'|t('bozp') }}
+                                    {% else %}
+                                        {{ permit.issuerClosureStatus ?: '—' }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="bozp-detail-row">
+                                <div class="bozp-detail-row__label">{{ 'Podpísal'|t('bozp') }}</div>
+                                <div class="bozp-detail-row__value">{{ issuerClosureSignature.signerName }}</div>
+                            </div>
+                            <div class="bozp-detail-row">
+                                <div class="bozp-detail-row__label">{{ 'Dátum podpisu'|t('bozp') }}</div>
+                                <div class="bozp-detail-row__value">{{ issuerClosureSignature.signatureDate ? issuerClosureSignature.signatureDate|date('d.m.Y') : '—' }}</div>
+                            </div>
                             {% if permit.requiresTrialOperation is not null %}
-                                <dt>{{ 'Vyžaduje sa skúšobná prevádzka'|t('bozp') }}</dt>
-                                <dd>{{ permit.requiresTrialOperation ? 'Áno'|t('bozp') : 'Nie'|t('bozp') }}</dd>
+                                <div class="bozp-detail-row">
+                                    <div class="bozp-detail-row__label">{{ 'Vyžaduje sa skúšobná prevádzka'|t('bozp') }}</div>
+                                    <div class="bozp-detail-row__value">{{ permit.requiresTrialOperation ? 'Áno'|t('bozp') : 'Nie'|t('bozp') }}</div>
+                                </div>
                             {% endif %}
-                        </dl>
+                        </div>
                     </div>
                 {% else %}
                     {% set hasContractorClosure = recipientClosureSignature is defined and recipientClosureSignature %}
@@ -414,11 +456,11 @@
                         {% set ce = cancelErrors ?? {} %}
                         {% set cv = cancelValues ?? {} %}
                         {% set cancelExtra %}
-                            <div class="bozp-form__field{% if ce.reason is defined %} bozp-form__field--error{% endif %}">
-                                <label>{{ 'Dôvod zrušenia'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                            <div class="bozp-form-row{% if ce.reason is defined %} bozp-form-row--error{% endif %}">
+                                <label>{{ 'Dôvod zrušenia'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                                 <textarea name="reason" rows="3" required>{{ cv.reason ?? '' }}</textarea>
                                 {% if ce.reason is defined %}
-                                    <p class="bozp-form__error">{{ ce.reason }}</p>
+                                    <p class="bozp-form-row__error">{{ ce.reason }}</p>
                                 {% endif %}
                             </div>
                         {% endset %}
@@ -442,7 +484,7 @@
                         {% set xe = closeErrors ?? {} %}
                         {% set xv = closeValues ?? {} %}
                         {% set closeExtra %}
-                            <div class="bozp-form__field">
+                            <div class="bozp-form-row">
                                 <label>{{ 'Vyžaduje sa skúšobná prevádzka?'|t('bozp') }}</label>
                                 <label class="bozp-form__radio" style="display:inline-flex;gap:6px;align-items:center;margin-right:16px;">
                                     <input type="radio" name="requiresTrialOperation" value="yes"
@@ -550,7 +592,7 @@
 
         {# ---- Recipient closure (read-only display) ---- #}
         {% if recipientClosureSignature is defined and recipientClosureSignature %}
-            <section class="bozp-section bozp-section--recipient-closure">
+            <section class="bozp-detail-section bozp-detail-section--recipient-closure">
                 <h2>{{ 'Dokončenie dodávateľa'|t('bozp') }}</h2>
                 {% set sigAsset = craft.assets().id(recipientClosureSignature.signatureAssetId).one() %}
                 <div class="bozp-signature bozp-signature--signed">
@@ -574,12 +616,16 @@
                              class="bozp-signature__image"
                              style="max-width:360px;max-height:140px;border:1px solid #ddd;background:#fff;">
                     {% endif %}
-                    <dl class="bozp-signature__meta">
-                        <dt>{{ 'Podpísal'|t('bozp') }}</dt>
-                        <dd>{{ recipientClosureSignature.signerName }}</dd>
-                        <dt>{{ 'Dátum podpisu'|t('bozp') }}</dt>
-                        <dd>{{ recipientClosureSignature.signatureDate ? recipientClosureSignature.signatureDate|date('d.m.Y') : '—' }}</dd>
-                    </dl>
+                    <div class="bozp-detail-list bozp-signature__meta">
+                        <div class="bozp-detail-row">
+                            <div class="bozp-detail-row__label">{{ 'Podpísal'|t('bozp') }}</div>
+                            <div class="bozp-detail-row__value">{{ recipientClosureSignature.signerName }}</div>
+                        </div>
+                        <div class="bozp-detail-row">
+                            <div class="bozp-detail-row__label">{{ 'Dátum podpisu'|t('bozp') }}</div>
+                            <div class="bozp-detail-row__value">{{ recipientClosureSignature.signatureDate ? recipientClosureSignature.signatureDate|date('d.m.Y') : '—' }}</div>
+                        </div>
+                    </div>
                 </div>
             </section>
         {% endif %}
@@ -592,7 +638,7 @@
                 'stopped': 'Práce zastavené'|t('bozp'),
             } %}
             {% set resultColors = {'ok': '#16a34a', 'issues': '#d97706', 'stopped': '#dc2626'} %}
-            <section class="bozp-section bozp-section--controls">
+            <section class="bozp-detail-section bozp-detail-section--controls">
                 <h2>{{ 'Kontroly prevádzky'|t('bozp') }}</h2>
                 <table style="width:100%;border-collapse:collapse;">
                     <thead>

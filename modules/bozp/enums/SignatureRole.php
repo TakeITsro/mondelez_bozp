@@ -18,6 +18,7 @@ enum SignatureRole: string
     case RecipientIssuance = 'recipient_issuance';
     case RecipientClosure = 'recipient_closure';
     case IssuerClosure = 'issuer_closure';
+    case HseClosure = 'hse_closure';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum SignatureRole: string
             self::RecipientIssuance => 'Prijímateľ povolenia (prevzatie)',
             self::RecipientClosure => 'Prijímateľ povolenia (ukončenie)',
             self::IssuerClosure => 'Vydavateľ povolenia (uzavretie)',
+            self::HseClosure => 'HSE officer (uzavretie)',
         };
     }
 
@@ -36,6 +38,6 @@ enum SignatureRole: string
 
     public function isClosureTime(): bool
     {
-        return in_array($this, [self::RecipientClosure, self::IssuerClosure], true);
+        return in_array($this, [self::RecipientClosure, self::IssuerClosure, self::HseClosure], true);
     }
 }

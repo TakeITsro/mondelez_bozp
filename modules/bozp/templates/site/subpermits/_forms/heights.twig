@@ -2,30 +2,93 @@
 
 {% set fp = values.fallProtection ?? [] %}
 {% set eu = values.equipmentUsed ?? [] %}
+{% set fr = values.fallRisks ?? {} %}
 
 {% macro yn_row(name, value, label) %}
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ label }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ label }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 {% endmacro %}
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Ochrana pred pádom'|t('bozp') }}</legend>
+{% macro yn_cell(name, value) %}
+    <label class="bozp-fall-risks__opt">
+        <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+        <div class="custom_radio"></div>
+        <span>{{ 'Áno'|t('bozp') }}</span>
+    </label>
+    <label class="bozp-fall-risks__opt">
+        <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+        <div class="custom_radio"></div>
+        <span>{{ 'Nie'|t('bozp') }}</span>
+    </label>
+{% endmacro %}
+
+{% set fallRiskItems = {
+    'elevated_walkways':  'Vyvýšené prechodové/pracovné plochy 1,2 metra alebo viac nad úrovňou podlahy.'|t('bozp'),
+    'roof_work':          'Práca na strechách, na ktoré pracovníci vstupujú, kde môžu spadnúť cez strešné okno, otvor, práca na okraji hrany pádu, kde hrozí spadnutie.'|t('bozp'),
+    'wall_openings':      'Stenové otvory (napríklad: okná alebo dvere, cez ktoré by pracovníci mohli spadnúť).'|t('bozp'),
+    'pits_excavations':   'Výkopy a jamy, ktoré nie sú ľahko viditeľné a pracovníci by mohli do nich spadnúť.'|t('bozp'),
+    'mobile_platforms':   'Mobilné pracovné plošiny.'|t('bozp'),
+    'removed_handrails':  'Vyvýšené priestory, kde boli odstránené zábradlia.'|t('bozp'),
+    'unprotected_edges':  'Strany/okraje prechodových/pracovných plôch, ako sú podlahy, medziposchodia, balkóny a chodníky, ktoré sú 1,2 m alebo viac nad úrovňou podlahy a nie sú chránené zábradlím.'|t('bozp'),
+    'unprotected_ramps':  'Rampy, prechody a cesty, ktoré nie sú chránené zábradlím.'|t('bozp'),
+    'floor_openings':     'Studne, podlahové otvory, jamy alebo šachty, ktoré nie sú chránené zábradlím, plotmi, bariérami alebo krytmi.'|t('bozp'),
+} %}
+
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Nebezpečenstvo pádu'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Pri každom riziku označte, či je aplikovateľné, a či bola vykonaná kontrola na pracovisku.'|t('bozp') }}
+    </p>
+
+    <table class="bozp-fall-risks">
+        <thead>
+            <tr>
+                <th scope="col">{{ 'Nebezpečenstvo pádu'|t('bozp') }}</th>
+                <th scope="col">{{ 'Aplikované'|t('bozp') }}</th>
+                <th scope="col">{{ 'Kontrola na pracovisku'|t('bozp') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, label in fallRiskItems %}
+                {% set row = fr[key] ?? {} %}
+                <tr class="bozp-fall-risks__row">
+                    <th scope="row" class="bozp-fall-risks__label">{{ label }}</th>
+                    <td>
+                        <div class="bozp-fall-risks__applied">
+                            {{ _self.yn_cell('fallRisks[' ~ key ~ '][applied]', row.applied ?? '') }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="bozp-fall-risks__controlled">
+                            {{ _self.yn_cell('fallRisks[' ~ key ~ '][controlled]', row.controlled ?? '') }}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</fieldset>
+
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Ochrana pred pádom'|t('bozp') }}</legend>
 
     {{ _self.yn_row('avoidFallPossible', values.avoidFallPossible ?? '', 'Je možné vyhnúť sa riziku pádu (predĺžené nástroje, práca na úrovni podlahy)?'|t('bozp')) }}
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Použitý systém ochrany pred pádom'|t('bozp') }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Použitý systém ochrany pred pádom'|t('bozp') }}</span>
         <div class="bozp-form__checklist">
             {% set fpOptions = {
                 'guardrail':          'Zábradlový systém (zabraňuje pádom)'|t('bozp'),
@@ -38,6 +101,7 @@
                 <label class="bozp-form__check">
                     <input type="checkbox" name="fallProtection[]" value="{{ key }}"
                            {% if key in fp %}checked{% endif %}>
+                    <div class="custom_checkbox"></div>
                     <span>{{ label }}</span>
                 </label>
             {% endfor %}
@@ -51,21 +115,21 @@
     {{ _self.yn_row('workerTrained', values.workerTrained ?? '', 'Pracovník je vyškolený, oprávnený a kvalifikovaný na prácu vo výškach?'|t('bozp')) }}
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Príprava pracoviska'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Príprava pracoviska'|t('bozp') }}</legend>
 
     {{ _self.yn_row('constructionSuitable', values.constructionSuitable ?? '', 'Konštrukčné podmienky sú vhodné pre prácu (dostatočná nosnosť)?'|t('bozp')) }}
     {{ _self.yn_row('fenceRequired', values.fenceRequired ?? '', 'Je potrebné ohradiť priestor kvôli pohybu osôb a zariadení?'|t('bozp')) }}
     {{ _self.yn_row('anchorPointUsed', values.anchorPointUsed ?? '', 'Bol použitý kotevný bod?'|t('bozp')) }}
 
-    <div class="bozp-form__field">
+    <div class="bozp-form-row">
         <label for="anchorPointDescription">{{ 'Popis kotevného bodu'|t('bozp') }}</label>
         <input type="text" id="anchorPointDescription" name="anchorPointDescription"
                value="{{ values.anchorPointDescription ?? '' }}" maxlength="255">
     </div>
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Použité zariadenia'|t('bozp') }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Použité zariadenia'|t('bozp') }}</span>
         <div class="bozp-form__checklist">
             {% set euOptions = {
                 'portable_ladders':      'Prenosné rebríky'|t('bozp'),
@@ -79,6 +143,7 @@
                 <label class="bozp-form__check">
                     <input type="checkbox" name="equipmentUsed[]" value="{{ key }}"
                            {% if key in eu %}checked{% endif %}>
+                    <div class="custom_checkbox"></div>
                     <span>{{ label }}</span>
                 </label>
             {% endfor %}

@@ -8,6 +8,31 @@
     { label: "BOZP Permity"|t('bozp'), url: cpUrl('bozp') }
 ] %}
 
+{% css %}
+    .bozp-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 8px;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.4;
+        white-space: nowrap;
+        vertical-align: middle;
+        background: #f3f0f7;
+        color: #4F2170;
+        border: 1px solid #d9cde6;
+    }
+    .bozp-pill--warning {
+        background: #fff4e0;
+        color: #8a4b00;
+        border-color: #f7c97a;
+    }
+    .bozp-pill .status { margin: 0; }
+{% endcss %}
+
 {% block content %}
     <div class="content-pane">
         <h2>
@@ -19,7 +44,8 @@
             <p class="zilch">
                 {{ "Žiadne permity nečakajú na schválenie."|t('bozp') }}
             </p>
-        {% else %}
+        {% endif %}
+        {% if pendingPermits|length > 0 %}
             <table class="data fullwidth">
                 <thead>
                     <tr>
@@ -33,10 +59,12 @@
                 <tbody>
                     {% for permit in pendingPermits %}
                         <tr>
-                            <td>
+                            <td style="white-space:nowrap;">
                                 <strong>{{ permit.permitNumber }}</strong>
                                 {% if permit.id in incompletePermitIds|keys %}
-                                    <span class="status orange" title="{{ 'Chýbajúce subpermity'|t('bozp') }}">
+                                    <span class="bozp-pill bozp-pill--warning"
+                                          title="{{ 'Chýbajúce subpermity'|t('bozp') }}">
+                                        <span class="status orange"></span>
                                         {{ 'Chýba subpermit'|t('bozp') }}
                                     </span>
                                 {% endif %}
@@ -50,6 +78,44 @@
                             </td>
                             <td>
                                 <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn small">{{ "Otvoriť"|t('bozp') }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {# ── Awaiting HSE closure signature ────────────────────────────── #}
+        {% if (awaitingClosurePermits ?? [])|length > 0 %}
+            <h2 style="margin-top:32px;">
+                {{ "Permity čakajúce na podpis HSE"|t('bozp') }}
+                <span class="badge">{{ awaitingClosureCount }}</span>
+            </h2>
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ "Číslo"|t('bozp') }}</th>
+                        <th>{{ "Dodávateľ"|t('bozp') }}</th>
+                        <th>{{ "Miesto výkonu"|t('bozp') }}</th>
+                        <th>{{ "Podpísal vydavateľ"|t('bozp') }}</th>
+                        <th>{{ "Akcie"|t('bozp') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for permit in awaitingClosurePermits %}
+                        <tr>
+                            <td style="white-space:nowrap;"><strong>{{ permit.permitNumber }}</strong></td>
+                            <td>{{ permit.contractorCompany ?: '—' }}</td>
+                            <td>{{ permit.workLocation ?: '—' }}</td>
+                            <td>
+                                {%- if permit.issuerClosureSignedAt -%}
+                                    {{ permit.issuerClosureSignedAt|date('d.m.Y H:i') }}
+                                {%- else -%}—{%- endif -%}
+                            </td>
+                            <td>
+                                <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn small submit">
+                                    {{ "Podpísať a uzavrieť"|t('bozp') }}
+                                </a>
                             </td>
                         </tr>
                     {% endfor %}

@@ -31,7 +31,7 @@ use yii\web\Response;
  */
 class SubpermitsController extends BaseSiteController
 {
-    public array|bool|int $allowAnonymous = ['new', 'form', 'save', 'view', 'cancel', 'pdf'];
+    public array|bool|int $allowAnonymous = ['new', 'form', 'save', 'view', 'cancel', 'pdf', 'sign-prework'];
 
     // -------------------------------------------------------------------------
     // Type selector
@@ -188,12 +188,13 @@ class SubpermitsController extends BaseSiteController
                 throw new \RuntimeException('Save failed: ' . print_r($subpermit->getErrors(), true));
             }
 
-            // Capture issuer signature
+            // Capture issuer pre-work signature (Step 2 of the new workflow:
+            // create → issuer prework → contractor prework → HSE approve …).
             /** @var Module $module */
             $module = Craft::$app->getModule('bozp');
             $module->subpermitSignatureService->capture(
                 $subpermit,
-                SubpermitSignatureService::ROLE_ISSUER,
+                SubpermitSignatureService::ROLE_ISSUER_PREWORK,
                 $signerName,
                 null,
                 $signatureDate,
@@ -214,6 +215,23 @@ class SubpermitsController extends BaseSiteController
 
             // Generate initial subpermit PDF (silently skips on failure)
             $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+
+            // Provision contractor access (token + password) if not already
+            // present, then mail the contractor an invite to come sign their
+            // pre-work. Required before HSE approval under the new flow.
+            try {
+                $freshPassword = $module->permitWorkflow->ensureContractorAccess($permit);
+                $module->permitMailer->notifyContractorOfSubpermitInvite(
+                    $permit,
+                    $subpermit,
+                    $freshPassword,
+                );
+            } catch (Throwable $mailErr) {
+                Craft::error(
+                    'Subpermit contractor invite failed: ' . $mailErr->getMessage(),
+                    __METHOD__,
+                );
+            }
         } catch (Throwable $e) {
             Craft::error('Subpermit save failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
             $msg = (string) Craft::t('bozp', 'Subpermit sa nepodarilo uložiť. Skúste znova.');
@@ -321,6 +339,168 @@ class SubpermitsController extends BaseSiteController
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol zrušený.'));
         return $this->redirect("bozp/permits/{$permitId}");
+    }
+
+    // -------------------------------------------------------------------------
+    // Pre-work signature (issuer) — signed BEFORE HSE approval. HSE approve is
+    // gated on both preworks being present.
+    // -------------------------------------------------------------------------
+
+    public function actionSignPrework(): ?Response
+    {
+        $this->requirePostRequest();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $request = Craft::$app->getRequest();
+        $permitId = (int) $request->getRequiredBodyParam('permitId');
+        $id       = (int) $request->getRequiredBodyParam('id');
+
+        $permit    = $this->findPermit($permitId);
+        $this->requireIsIssuer($permit);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        if ($subpermit->status !== SubpermitStatus::Pending->value) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Predpracovný podpis je možný len pred schválením (stav „čaká na schválenie").')
+            );
+            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        }
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        // Already signed?
+        if ($module->subpermitSignatureService->findSignature(
+            (int) $subpermit->id,
+            SubpermitSignatureService::ROLE_ISSUER_PREWORK
+        )) {
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Predpracovný podpis vydavateľa už bol zaznamenaný.')
+            );
+            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        }
+
+        $signatureData = trim((string) $request->getBodyParam('signatureData', ''));
+        $signerName    = trim((string) $request->getBodyParam('signerName', ''));
+        $signatureDate = trim((string) $request->getBodyParam('signatureDate', date('Y-m-d')));
+
+        if ($signerName === '' || !str_starts_with($signatureData, 'data:image/png;base64,')) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Podpis a meno sú povinné.')
+            );
+            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        }
+
+        try {
+            $module->subpermitSignatureService->capture(
+                $subpermit,
+                SubpermitSignatureService::ROLE_ISSUER_PREWORK,
+                $signerName,
+                null,
+                $signatureDate,
+                $signatureData,
+            );
+            // Regenerate PDF so the new signature appears
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+        } catch (Throwable $e) {
+            Craft::error('Pre-work issuer sign failed: ' . $e->getMessage(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Podpis sa nepodarilo uložiť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        }
+
+        Craft::$app->getSession()->setNotice(
+            Craft::t('bozp', 'Predpracovný podpis vydavateľa bol zaznamenaný.')
+        );
+        return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+    }
+
+    // -------------------------------------------------------------------------
+    // Issuer closure signature — signed AFTER contractor closure.
+    // Marks subpermit as fully closed by the issuer.
+    // -------------------------------------------------------------------------
+
+    public function actionSignClosure(): ?Response
+    {
+        $this->requirePostRequest();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $request = Craft::$app->getRequest();
+        $permitId = (int) $request->getRequiredBodyParam('permitId');
+        $id       = (int) $request->getRequiredBodyParam('id');
+
+        $permit    = $this->findPermit($permitId);
+        $this->requireIsIssuer($permit);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        // Contractor must have signed closure first.
+        $contractorSig = $module->subpermitSignatureService->findSignature(
+            (int) $subpermit->id,
+            SubpermitSignatureService::ROLE_CONTRACTOR
+        );
+        if (!$contractorSig) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Dodávateľ musí najprv podpísať uzavretie.')
+            );
+            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        }
+
+        // Already signed?
+        if ($module->subpermitSignatureService->findSignature(
+            (int) $subpermit->id,
+            SubpermitSignatureService::ROLE_ISSUER_CLOSURE
+        )) {
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Uzávierkový podpis vydavateľa už bol zaznamenaný.')
+            );
+            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        }
+
+        $signatureData = trim((string) $request->getBodyParam('signatureData', ''));
+        $signerName    = trim((string) $request->getBodyParam('signerName', ''));
+        $signatureDate = trim((string) $request->getBodyParam('signatureDate', date('Y-m-d')));
+
+        if ($signerName === '' || !str_starts_with($signatureData, 'data:image/png;base64,')) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Podpis a meno sú povinné.')
+            );
+            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        }
+
+        try {
+            $module->subpermitSignatureService->capture(
+                $subpermit,
+                SubpermitSignatureService::ROLE_ISSUER_CLOSURE,
+                $signerName,
+                null,
+                $signatureDate,
+                $signatureData,
+            );
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+        } catch (Throwable $e) {
+            Craft::error('Issuer closure sign failed: ' . $e->getMessage(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Podpis sa nepodarilo uložiť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        }
+
+        Craft::$app->getSession()->setNotice(
+            Craft::t('bozp', 'Uzávierkový podpis vydavateľa bol zaznamenaný.')
+        );
+        return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
     }
 
     // -------------------------------------------------------------------------
@@ -579,23 +759,45 @@ class SubpermitsController extends BaseSiteController
                 'workDiscussed'              => $str('workDiscussed'),
             ],
             SubpermitType::CommandB => [
-                'riskAssessmentComplete'     => $str('riskAssessmentComplete'),
-                'orderNumber'                => $str('orderNumber'),
-                'supervisorName'             => $str('supervisorName'),
-                'groupWorkers'               => $str('groupWorkers'),
-                'workWithVoltage'            => $str('workWithVoltage'),
-                'turnedOffSecured'           => $str('turnedOffSecured'),
-                'remainsUnderVoltage'        => $str('remainsUnderVoltage'),
-                'orderDeliveredBy'           => $str('orderDeliveredBy'),
-                'issuedByName'               => $str('issuedByName'),
-                'receivedByName'             => $str('receivedByName'),
-                'checkDeenergizedMethod'     => $str('checkDeenergizedMethod'),
-                'groundingMethod'            => $str('groundingMethod'),
-                'workplaceMarking'           => $str('workplaceMarking'),
-                'workplaceDefinition'        => $str('workplaceDefinition'),
-                'additionalSafetyPrecautions' => $str('additionalSafetyPrecautions'),
-                'nearestVoltageParts'        => $str('nearestVoltageParts'),
-                'atmosphericConditions'      => $str('atmosphericConditions'),
+                // Identification
+                'orderNumber'           => $str('orderNumber'),
+                'supervisorName'        => $str('supervisorName'),
+                'supervisorGroupSize'   => $str('supervisorGroupSize'),
+                'supervisionName'       => $str('supervisionName'),
+                'supervisionGroupSize'  => $str('supervisionGroupSize'),
+
+                // Time + scope
+                'day'                   => $str('day'),
+                'fromTime'              => $str('fromTime'),
+                'untilTime'             => $str('untilTime'),
+                'locationType'          => $str('locationType'),   // 'on' | 'near'
+                'voltageMode'           => $str('voltageMode'),    // 'with' | 'without'
+
+                // Workplace securing
+                'workplaceTurnOff'      => $str('workplaceTurnOff'),
+                'workplaceSecure'       => $str('workplaceSecure'),
+                'remainUnderVoltage'    => $str('remainUnderVoltage'),
+
+                // Order delivery + signatories (printed names, dates, times)
+                'deliveryMethod'        => $str('deliveryMethod'), // 'in_person' | 'other' | 'email'
+                'issuedByName'          => $str('issuedByName'),
+                'issuedByDate'          => $str('issuedByDate'),
+                'issuedByTime'          => $str('issuedByTime'),
+                'receivedByName'        => $str('receivedByName'),
+                'receivedByDate'        => $str('receivedByDate'),
+                'receivedByTime'        => $str('receivedByTime'),
+
+                // Order book entry
+                'orderBookNumber'       => $str('orderBookNumber'),
+                'commandNumber'         => $str('commandNumber'),
+
+                // Action grid — actions[groupKey][rowIdx][field]. Stored raw;
+                // template-side iteration over $actionGroups defines the shape.
+                'actions'               => $this->normalizeCommandBActions((array) $request->getBodyParam('actions', [])),
+
+                // Environment
+                'nearestVoltageParts'   => $str('nearestVoltageParts'),
+                'atmosphericConditions' => $str('atmosphericConditions'),
             ],
             SubpermitType::Electrical => [
                 'mdlzIsQualifiedElectrician' => $request->getBodyParam('mdlzIsQualifiedElectrician') === '1',
@@ -668,6 +870,40 @@ class SubpermitsController extends BaseSiteController
         };
 
         return array_merge($common, $specific);
+    }
+
+    /**
+     * Normalize the Command-"B" actions grid: actions[groupKey][rowIdx][field].
+     * Only the field set defined by the template is retained — anything else
+     * (extra keys posted by hand) is dropped.
+     *
+     * @param array<mixed> $raw
+     * @return array<string, array<int, array<string, string>>>
+     */
+    private function normalizeCommandBActions(array $raw): array
+    {
+        $allowedFields = ['place', 'description', 'serialNumber', 'responsible', 'performedAt', 'signatureName'];
+        $out = [];
+        foreach ($raw as $groupKey => $rows) {
+            if (!is_array($rows)) {
+                continue;
+            }
+            $cleanGroup = [];
+            foreach ($rows as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $cleanRow = [];
+                foreach ($allowedFields as $f) {
+                    $cleanRow[$f] = trim((string) ($row[$f] ?? ''));
+                }
+                $cleanGroup[] = $cleanRow;
+            }
+            if ($cleanGroup !== []) {
+                $out[(string) $groupKey] = $cleanGroup;
+            }
+        }
+        return $out;
     }
 
     /**

@@ -11,7 +11,7 @@
 
 {% macro field_error(errors, key) %}
     {% if errors[key] is defined %}
-        <p class="bozp-form__error" id="err-{{ key }}">{{ errors[key] }}</p>
+        <p class="bozp-form-row__error" id="err-{{ key }}">{{ errors[key] }}</p>
     {% endif %}
 {% endmacro %}
 
@@ -56,19 +56,19 @@
             <input type="hidden" name="subpermitType" value="{{ subpermitType.value }}">
 
             {# --- Common fields --- #}
-            <fieldset class="bozp-form__section">
-                <legend>{{ 'Základné informácie'|t('bozp') }}</legend>
+            <fieldset class="bozp-form-section">
+                <legend class="bozp-form-section__title">{{ 'Základné informácie'|t('bozp') }}</legend>
 
-                <div class="bozp-form__field{% if errors.date is defined %} bozp-form__field--error{% endif %}">
-                    <label for="date">{{ 'Dátum'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <div class="bozp-form-row{% if errors.date is defined %} bozp-form-row--error{% endif %}">
+                    <label for="date">{{ 'Dátum'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="date" id="date" name="date"
                            value="{{ values.date ?? '' }}"
                            {% if errors.date is defined %}aria-invalid="true"{% endif %}>
                     {{ _self.field_error(errors, 'date') }}
                 </div>
 
-                <div class="bozp-form__field{% if errors.placeOfWork is defined %} bozp-form__field--error{% endif %}">
-                    <label for="placeOfWork">{{ 'Miesto výkonu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <div class="bozp-form-row{% if errors.placeOfWork is defined %} bozp-form-row--error{% endif %}">
+                    <label for="placeOfWork">{{ 'Miesto výkonu'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="text" id="placeOfWork" name="placeOfWork"
                            value="{{ values.placeOfWork ?? '' }}"
                            maxlength="500"
@@ -76,8 +76,8 @@
                     {{ _self.field_error(errors, 'placeOfWork') }}
                 </div>
 
-                <div class="bozp-form__field{% if errors.responsiblePerson is defined %} bozp-form__field--error{% endif %}">
-                    <label for="responsiblePerson">{{ 'Zodpovedná osoba MDLZ'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <div class="bozp-form-row{% if errors.responsiblePerson is defined %} bozp-form-row--error{% endif %}">
+                    <label for="responsiblePerson">{{ 'Zodpovedná osoba MDLZ'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="text" id="responsiblePerson" name="responsiblePerson"
                            value="{{ values.responsiblePerson ?? '' }}"
                            maxlength="255"
@@ -85,18 +85,18 @@
                     {{ _self.field_error(errors, 'responsiblePerson') }}
                 </div>
 
-                <div class="bozp-form__field">
+                <div class="bozp-form-row">
                     <label for="participants">{{ 'Zúčastnení dodávatelia / osoby'|t('bozp') }}</label>
                     <textarea id="participants" name="participants" rows="2">{{ values.participants ?? '' }}</textarea>
                 </div>
 
-                <div class="bozp-form__field">
+                <div class="bozp-form-row">
                     <label for="workDescription">{{ 'Popis vykonávanej práce'|t('bozp') }}</label>
                     <textarea id="workDescription" name="workDescription" rows="3">{{ values.workDescription ?? '' }}</textarea>
                 </div>
 
-                <div class="bozp-form__field bozp-form__field_column">
-                    <p class="bozp-form__label">{{ 'Hlavné kroky'|t('bozp') }}</p>
+                <div class="bozp-form-row bozp-form-row_column">
+                    <p class="bozp-form-row__label">{{ 'Hlavné kroky'|t('bozp') }}</p>
                     {% for i in 1..5 %}
                         <div class="bozp-form__step-row">
                             <span class="bozp-form__step-num">{{ i }}.</span>
@@ -164,20 +164,20 @@
                 <div class="bozp-dialog__stage" data-stage="form" hidden>
                     <h3 style="margin-top:0;">{{ 'Podpis vydavateľa'|t('bozp') }}</h3>
 
-                    <div class="bozp-form__field">
-                        <label>{{ 'Meno podpisujúceho'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <div class="bozp-form-row">
+                        <label>{{ 'Meno podpisujúceho'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                         <input type="text" id="bozp-dlg-signer-name"
                                value="{{ currentUser.fullName ?: currentUser.friendlyName ?: currentUser.username }}" required>
                     </div>
 
-                    <div class="bozp-form__field">
-                        <label>{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <div class="bozp-form-row">
+                        <label>{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                         <input type="date" id="bozp-dlg-sig-date"
                                value="{{ 'now'|date('Y-m-d') }}" required>
                     </div>
 
-                    <div class="bozp-form__field">
-                        <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <div class="bozp-form-row">
+                        <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                         <div class="bozp-sigpad" style="border:1px solid #ccc;background:#fff;width:100%;">
                             <canvas id="bozp-dlg-canvas" data-bozp-sigpad width="520" height="180"
                                     style="display:block;width:100%;height:180px;touch-action:none;"></canvas>

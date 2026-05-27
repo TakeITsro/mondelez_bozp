@@ -1,0 +1,69 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Subpermit expiring soon — 1h warning.
+   Variables: permit, subpermit, subpermitTypeLabel, permitUrl, recipient #}
+
+{% block subject %}{{ 'Subpermit „{type}" pre permit {n} čoskoro expiruje'|t('bozp', {type: subpermitTypeLabel, n: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Upozornenie na expiráciu — subpermit'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Subpermit expiruje do 1 hodiny'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
+        {{
+            'Subpermit „<strong>{type}</strong>" k permitu <strong>{n}</strong> pre spoločnosť <strong>{company}</strong> expiruje <strong>{at}</strong>. Po expirácii nebude možné v práci pokračovať bez vystavenia nového subpermitu.'|t('bozp', {
+                type: subpermitTypeLabel,
+                n: permit.permitNumber,
+                company: permit.contractorCompany ?: '—',
+                at: subpermit.expiresAt ? subpermit.expiresAt|date('d.m.Y H:i') : '—',
+            })|raw
+        }}
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:16px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="4">
+                    <tr>
+                        <td style="font-size:13px;color:#000000;width:140px;padding-bottom:6px;">{{ 'Permit'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;padding-bottom:6px;">{{ permit.permitNumber }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Subpermit'|t('bozp') }}</td>
+                        <td style="font-size:13px;padding-bottom:6px;">{{ subpermitTypeLabel }}</td>
+                    </tr>
+                    {% if subpermit.expiresAt %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Platnosť do'|t('bozp') }}</td>
+                            <td style="font-size:13px;font-weight:700;padding-bottom:6px;color:#000000;">
+                                {{ subpermit.expiresAt|date('d.m.Y H:i') }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+        <tr>
+            <td style="background:#4F2170;border-radius:4px;">
+                <a href="{{ permitUrl }}"
+                   style="display:inline-block;padding:12px 28px;color:#FEFFFD;font-size:15px;font-weight:700;text-decoration:none;">
+                    {{ 'Otvoriť'|t('bozp') }} →
+                </a>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:24px 0 0;font-size:12px;color:#000000;border-top:1px solid #000000;padding-top:16px;">
+        {{ 'Toto je automatické upozornenie 1 hodinu pred koncom platnosti subpermitu.'|t('bozp') }}
+    </p>
+{% endblock %}

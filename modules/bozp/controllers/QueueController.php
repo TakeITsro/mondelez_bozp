@@ -10,6 +10,7 @@ use craft\web\Controller;
 use craft\web\View;
 use modules\bozp\enums\HazardCategory;
 use modules\bozp\enums\PermitStatus;
+use modules\bozp\enums\SignatureRole;
 use modules\bozp\enums\SubpermitStatus;
 use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
@@ -49,12 +50,21 @@ class QueueController extends Controller
             ->where(['status' => PermitStatus::Submitted->value])
             ->count();
 
+        // Permits awaiting HSE final closure signature
+        $awaitingClosurePermits = PermitRecord::find()
+            ->where(['status' => PermitStatus::AwaitingHseClosure->value])
+            ->orderBy(['issuerClosureSignedAt' => SORT_ASC])
+            ->limit(50)
+            ->all();
+
         $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
         return $this->renderTemplate('bozp/cp/queue', [
             'pendingCount' => $pendingCount,
             'pendingPermits' => $pendingPermits,
             'incompletePermitIds' => $this->computeIncompletePermitIds($pendingPermits),
+            'awaitingClosurePermits' => $awaitingClosurePermits,
+            'awaitingClosureCount' => count($awaitingClosurePermits),
         ]);
     }
 
@@ -299,6 +309,15 @@ class QueueController extends Controller
             return $this->redirect("bozp/permit/{$permitId}");
         }
 
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+        if (!$module->subpermitSignatureService->isPreworkComplete((int) $subpermit->id)) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Pred schválením musia byť podpísané obidva predpracovné podpisy (vydavateľ + dodávateľ).')
+            );
+            return $this->redirect("bozp/permit/{$permitId}");
+        }
+
         $now = date('Y-m-d H:i:s');
         $expiresAt = date('Y-m-d H:i:s', strtotime('+8 hours'));
 
@@ -314,9 +333,17 @@ class QueueController extends Controller
         }
 
         // Generate subpermit PDF
-        /** @var Module $module */
-        $module = Craft::$app->getModule('bozp');
         $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+
+        // Notify contractor + issuer.
+        try {
+            $module->permitMailer->notifyContractorOfSubpermitApproval($permit, $subpermit);
+        } catch (Throwable $mailErr) {
+            Craft::error(
+                'Subpermit approval notification failed: ' . $mailErr->getMessage(),
+                __METHOD__,
+            );
+        }
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol schválený. Platnosť 8 hodín.'));
         return $this->redirect("bozp/permit/{$permitId}");
@@ -494,6 +521,84 @@ class QueueController extends Controller
         $module->permitPdfService->generateForPermit($permit);
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Permit {n} bol zamietnutý.', ['n' => $permit->permitNumber]));
+        return $this->redirect('bozp');
+    }
+
+    /**
+     * HSE final closure signature — fully closes the permit, regenerates the
+     * PDF with all signatures, and emails the final PDF to issuer + contractor.
+     *
+     * POST bozp/permit/<id>/hse-close
+     * Body: signerName, signatureDate (Y-m-d), signatureData (data URI)
+     */
+    public function actionHseClose(): ?Response
+    {
+        $this->requirePostRequest();
+        $this->requireLogin();
+        $this->requirePermission('bozp:approve');
+
+        $request = Craft::$app->getRequest();
+        $id = (int) $request->getRequiredBodyParam('id');
+        $permit = $this->findPermit($id);
+
+        if ($permit->status !== PermitStatus::AwaitingHseClosure->value) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Permit nie je v stave čakania na HSE.'));
+            return $this->redirect("bozp/permit/{$permit->id}");
+        }
+
+        $signerName = trim((string) $request->getBodyParam('signerName', ''));
+        $signatureDate = trim((string) $request->getBodyParam('signatureDate', ''));
+        $signatureData = (string) $request->getBodyParam('signatureData', '');
+
+        $errors = [];
+        if ($signerName === '') {
+            $errors[] = (string) Craft::t('bozp', 'Meno je povinné.');
+        }
+        if ($signatureDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $signatureDate)) {
+            $errors[] = (string) Craft::t('bozp', 'Dátum je povinný.');
+        }
+        if (!str_starts_with($signatureData, 'data:image/')) {
+            $errors[] = (string) Craft::t('bozp', 'Chýba podpis.');
+        }
+        if ($errors !== []) {
+            Craft::$app->getSession()->setError(implode(' ', $errors));
+            return $this->redirect("bozp/permit/{$permit->id}");
+        }
+
+        $userId = Craft::$app->getUser()->getId();
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        try {
+            $module->signatureService->capture(
+                $permit,
+                SignatureRole::HseClosure,
+                $signerName,
+                $userId,
+                $signatureDate,
+                $signatureData,
+            );
+            $module->permitWorkflow->closeByHse($permit, $userId);
+
+            // Re-fetch so the PDF reflects the final closed state.
+            $closed = PermitRecord::findOne(['id' => $permit->id]) ?? $permit;
+            $module->permitPdfService->generateForPermit($closed);
+            $module->permitMailer->notifyParticipantsOfClosure($closed, $signerName);
+
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Permit {n} bol uzavretý.', ['n' => $permit->permitNumber])
+            );
+        } catch (Throwable $e) {
+            Craft::error('BOZP HSE close failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Permit sa nepodarilo uzavrieť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+            return $this->redirect("bozp/permit/{$permit->id}");
+        }
+
         return $this->redirect('bozp');
     }
 

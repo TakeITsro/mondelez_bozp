@@ -15,7 +15,7 @@
 
         <div class="bozp-map">
             {# ── Replace this <svg> with your facility map. Keep the viewBox 0 0 1000 600
-               and the .bozp-map__svg class. Zone overlays below position over the SVG. #}
+               and the .bozp-map__svg class. Zone overlays sit on top. #}
             <svg class="bozp-map__svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
                 <rect x="0" y="0" width="1000" height="600" fill="#FEFFFD" stroke="#4F2170" stroke-width="2"/>
                 <text x="500" y="305" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" fill="#4F2170" opacity="0.45">
@@ -23,29 +23,24 @@
                 </text>
             </svg>
 
-            {# ── Zone overlays. Tweak top/left/width/height per zone to cover the right area on your map.
-               Inline styles are scaffolding so you can iterate quickly; move to CSS once positions are set. #}
-            {% set zonePositions = {
-                1: { top: '8%',  left: '6%',   width: '26%', height: '38%' },
-                2: { top: '8%',  left: '36%',  width: '28%', height: '38%' },
-                3: { top: '8%',  left: '68%',  width: '26%', height: '38%' },
-                4: { top: '52%', left: '6%',   width: '42%', height: '40%' },
-                5: { top: '52%', left: '52%',  width: '42%', height: '40%' }
-            } %}
-
-            {% for zone in zones %}
-                {% set count = counts[zone.id] ?? 0 %}
-                {% set pos = zonePositions[loop.index] ?? { top: '0%', left: '0%', width: '20%', height: '20%' } %}
-                <a class="bozp-map__zone {% if count > 0 %}bozp-map__zone--has-active{% endif %}"
-                   href="{{ url('bozp/map/zone/' ~ zone.id) }}"
-                   style="top:{{ pos.top }};left:{{ pos.left }};width:{{ pos.width }};height:{{ pos.height }};"
-                   data-zone-id="{{ zone.id }}">
-                    <span class="bozp-map__zone-name">{{ zone.name }}</span>
-                    <span class="bozp-map__zone-count" aria-label="{{ 'Aktívne permity'|t('bozp') }}">
-                        {{ count }}
-                    </span>
-                </a>
-            {% endfor %}
+            {# ── Zone overlays. Each zone has its own slug-based class
+               (e.g. .bozp-map__zone--courtyard) so you can pin it to the
+               correct spot over the SVG via the CSS block at the bottom. #}
+            <div class="bozp-map__zones">
+                {% for zone in zones %}
+                    {% set count = counts[zone.id] ?? 0 %}
+                    {% set slug = zone.code ?: ('zone-' ~ zone.id) %}
+                    <a class="bozp-map__zone bozp-map__zone--{{ slug }} {% if count > 0 %}bozp-map__zone--has-active{% endif %}"
+                       href="{{ url('bozp/map/zone/' ~ zone.id) }}"
+                       data-zone-id="{{ zone.id }}"
+                       data-zone-slug="{{ slug }}">
+                        <span class="bozp-map__zone-name">{{ zone.name }}</span>
+                        <span class="bozp-map__zone-count" aria-label="{{ 'Aktívne permity'|t('bozp') }}">
+                            {{ count }}
+                        </span>
+                    </a>
+                {% endfor %}
+            </div>
         </div>
 
         <ul class="bozp-map__legend">
@@ -77,14 +72,29 @@
         }
         .bozp-map__svg { display: block; width: 100%; height: 100%; }
 
-        .bozp-map__zone {
+        /* ── Default layout: zones are auto-arranged in a grid over the map.
+           To pin a zone over a specific spot of the SVG, override its
+           individual .bozp-map__zone--<slug> rule in the per-zone block at
+           the bottom (set position: absolute + top/left/width/height). */
+        .bozp-map__zones {
             position: absolute;
+            inset: 1%;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 1%;
+            pointer-events: none; /* container is transparent; zones re-enable */
+        }
+
+        .bozp-map__zone {
+            position: relative;
+            pointer-events: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: .35em;
-            padding: .75em;
+            padding: .5em;
             background: rgba(79, 33, 112, 0.12);
             border: 2px solid var(--main-color);
             border-radius: 6px;
@@ -93,10 +103,12 @@
             text-decoration: none;
             cursor: pointer;
             transition: background-color .15s ease, transform .15s ease;
+            overflow: hidden;
         }
         .bozp-map__zone:hover {
             background: rgba(79, 33, 112, 0.22);
-            transform: scale(1.01);
+            transform: scale(1.02);
+            z-index: 2;
         }
         .bozp-map__zone--has-active {
             background: rgba(79, 33, 112, 0.28);
@@ -106,7 +118,7 @@
             background: rgba(79, 33, 112, 0.42);
         }
         .bozp-map__zone-name {
-            font-size: 1.25em;
+            font-size: .9em;
             font-weight: 600;
             text-transform: uppercase;
             line-height: 1.1;
@@ -115,13 +127,13 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 2.2em;
-            height: 2.2em;
-            padding: 0 .5em;
+            min-width: 1.8em;
+            height: 1.8em;
+            padding: 0 .4em;
             background: var(--main-color);
             color: var(--main-color-light);
             border-radius: 999px;
-            font-size: 1.5em;
+            font-size: 1.1em;
             font-weight: 700;
             line-height: 1;
         }
@@ -148,5 +160,42 @@
             background: rgba(79, 33, 112, 0.42);
             border-color: var(--main-color-dark);
         }
+
+        /* ──────────────────────────────────────────────────────────────────
+           PER-ZONE POSITIONING
+
+           When you're ready to pin a zone over a specific area of the SVG,
+           set position: absolute on it (which removes it from the grid) and
+           give it explicit top/left/width/height in percentages of .bozp-map.
+           Example:
+
+               .bozp-map__zone--courtyard {
+                   position: absolute;
+                   top: 4%; left: 4%; width: 18%; height: 22%;
+               }
+
+           All 19 zones below start commented out — uncomment and tweak each. */
+
+        /*
+        .bozp-map__zone--courtyard              { position: absolute; top:  4%; left:  4%; width: 18%; height: 22%; }
+        .bozp-map__zone--main-corridor          { position: absolute; top:  4%; left: 24%; width: 18%; height: 22%; }
+        .bozp-map__zone--carton-warehouse       { position: absolute; top:  4%; left: 44%; width: 18%; height: 22%; }
+        .bozp-map__zone--dambach                { position: absolute; top:  4%; left: 64%; width: 18%; height: 22%; }
+        .bozp-map__zone--ares                   { position: absolute; top:  4%; left: 84%; width: 12%; height: 22%; }
+        .bozp-map__zone--offices                { position: absolute; top: 28%; left:  4%; width: 18%; height: 22%; }
+        .bozp-map__zone--raw-material-warehouse { position: absolute; top: 28%; left: 24%; width: 18%; height: 22%; }
+        .bozp-map__zone--feedstock              { position: absolute; top: 28%; left: 44%; width: 18%; height: 22%; }
+        .bozp-map__zone--cr1-lamination         { position: absolute; top: 28%; left: 64%; width: 18%; height: 22%; }
+        .bozp-map__zone--cr1-injection          { position: absolute; top: 28%; left: 84%; width: 12%; height: 22%; }
+        .bozp-map__zone--cr1-packaging          { position: absolute; top: 52%; left:  4%; width: 18%; height: 22%; }
+        .bozp-map__zone--br-grotte              { position: absolute; top: 52%; left: 24%; width: 18%; height: 22%; }
+        .bozp-map__zone--br-lamination          { position: absolute; top: 52%; left: 44%; width: 18%; height: 22%; }
+        .bozp-map__zone--br-packaging           { position: absolute; top: 52%; left: 64%; width: 18%; height: 22%; }
+        .bozp-map__zone--crumb                  { position: absolute; top: 52%; left: 84%; width: 12%; height: 22%; }
+        .bozp-map__zone--cr2-packaging          { position: absolute; top: 76%; left:  4%; width: 18%; height: 22%; }
+        .bozp-map__zone--cr2-injection          { position: absolute; top: 76%; left: 24%; width: 18%; height: 22%; }
+        .bozp-map__zone--cr2-lamination         { position: absolute; top: 76%; left: 44%; width: 18%; height: 22%; }
+        .bozp-map__zone--water-treatment-plant  { position: absolute; top: 76%; left: 64%; width: 32%; height: 22%; }
+        */
     </style>
 {% endblock %}

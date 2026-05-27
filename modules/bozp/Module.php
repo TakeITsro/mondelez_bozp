@@ -116,6 +116,7 @@ class Module extends BaseModule
                 $event->rules['bozp/permit/<id:\d+>'] = 'bozp/queue/view';
                 $event->rules['bozp/permit/<permitId:\d+>/edit'] = 'bozp/queue/edit-permit';
                 $event->rules['POST bozp/permit/<id:\d+>/resend'] = 'bozp/queue/resend';
+                $event->rules['POST bozp/permit/<id:\d+>/hse-close'] = 'bozp/queue/hse-close';
                 $event->rules['POST bozp/permit/<id:\d+>/delete'] = 'bozp/queue/delete';
                 $event->rules['POST bozp/permit/<permitId:\d+>/subpermits/<id:\d+>/approve'] = 'bozp/queue/approve-subpermit';
                 $event->rules['POST bozp/permit/<permitId:\d+>/subpermits/<id:\d+>/reject'] = 'bozp/queue/reject-subpermit';
@@ -158,6 +159,7 @@ class Module extends BaseModule
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/close'] = 'bozp/contractor/close';
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/cancel'] = 'bozp/contractor/cancel';
                 $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/sign'] = 'bozp/contractor/sign-subpermit';
+                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/sign-prework'] = 'bozp/contractor/sign-subpermit-prework';
 
                 // Control visits (Mondelez employee, logged-in with Craft account)
                 $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/control'] = 'bozp/contractor/control-view';
@@ -180,6 +182,8 @@ class Module extends BaseModule
                 $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/save'] = 'bozp/subpermits/save';
                 $event->rules['bozp/permits/<permitId:\d+>/subpermits/<id:\d+>'] = 'bozp/subpermits/view';
                 $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/cancel'] = 'bozp/subpermits/cancel';
+                $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/sign-prework'] = 'bozp/subpermits/sign-prework';
+                $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/sign-closure'] = 'bozp/subpermits/sign-closure';
 
                 // PDF download (issuer side)
                 $event->rules['bozp/permits/<id:\d+>/pdf'] = 'bozp/permits/pdf';

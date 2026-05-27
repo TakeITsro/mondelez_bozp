@@ -10,8 +10,19 @@ body {
     color: #000000;
     line-height: 1.4;
 }
-h1 { font-size: 13pt; color: #4F2170; margin-bottom: 4pt; }
-h2 { font-size: 10pt; color: #4F2170; margin: 8pt 0 4pt; border-bottom: 1pt solid #4F2170; padding-bottom: 2pt; }
+h1 {
+    font-size: 13pt;
+    color: #4F2170;
+    margin-bottom: 4pt;
+}
+h2 {
+    width: 100%;
+    font-size: 10pt;
+    color: #F8EFFF;
+    background-color: #4F2170;
+    padding: 8pt 4pt;
+    border: 1pt solid #4F2170;
+}
 h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 
 .doc-header {
@@ -31,25 +42,124 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 }
 
 .section { margin-bottom: 8pt; }
-.dl-table { width: 100%; border-collapse: collapse; margin-bottom: 4pt; }
-.dl-table td { padding: 2pt 4pt; vertical-align: top; border-bottom: 0.5pt solid #000000; }
-.dl-table .label { width: 38%; font-weight: bold; background: #FEFFFD; }
-.dl-table .value { width: 62%; }
 
-.yn-yes { font-weight: bold; }
-.yn-no  { }
-.yn-null { color: #555; }
+.shorts-table {
+    width: 100%;
+    margin: 4pt 0 8pt 0;
+}
+.shorts-table td {
+    font-size: 7.5pt;
+    color: #000000;
+    margin-top: 3pt;
+}
 
-.sig-grid { width: 100%; border-collapse: collapse; }
-.sig-grid td { width: 50%; vertical-align: top; padding: 5pt; border: 0.5pt solid #000000; }
-.sig-label { font-size: 8pt; font-weight: bold; color: #4F2170; margin-bottom: 4pt; }
-.sig-image { max-width: 180pt; max-height: 55pt; }
-.sig-meta  { font-size: 7.5pt; color: #000000; margin-top: 3pt; }
-.sig-line  { border-bottom: 0.5pt solid #000000; margin-top: 22pt; margin-bottom: 2pt; }
+.general-table {
+    width: 100%;
+    border-spacing: 0;
+    margin: 0 0 8pt 0;
+}
+.general-table td {
+    height: 100%;
+}
+.general-table td .cell-box {
+    min-height: 47pt;
+    display: flex;
+    align-items: stretch;
+}
+.general-table td .cell-box .label {
+    width: 50%;
+    background-color: rgba(79, 33, 112, 0.5);
+    border: 1px solid #000000;
+    font-size: 10pt;
+    font-weight: bold;
+    color: #000000;
+    padding: 8pt 4pt;
+}
+.general-table td .cell-box .value {
+    width: 50%;
+    border: 1px solid #000000;
+    font-size: 10pt;
+    color: #000000;
+    padding: 8pt 4pt;
+}
+.general-table td .cell-box .value.column {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.general-table td .cell-box.wide .label {
+    width: 30%;
+}
+.general-table td .cell-box.wide .value {
+    width: 70%;
+}
 
-.signer-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
-.signer-table th { background: #4F2170; color: #FEFFFD; padding: 3pt 4pt; text-align: left; }
-.signer-table td { padding: 3pt 4pt; border-bottom: 0.5pt solid #000000; vertical-align: top; }
+.heights-table {
+    width: 100%;
+    border-spacing: 0;
+    margin: 0 0 8pt 0;
+}
+.heights-table td {
+    height: 100%;
+}
+.heights-table td .cell-box {
+    min-height: 47pt;
+    display: flex;
+    align-items: stretch;
+}
+.heights-table td .cell-box .label {
+    width: 50%;
+    background-color: rgba(79, 33, 112, 0.5);
+    border: 1px solid #000000;
+    font-size: 10pt;
+    font-weight: bold;
+    color: #000000;
+    padding: 8pt 4pt;
+}
+.heights-table td .cell-box .value {
+    width: 50%;
+    border: 1px solid #000000;
+    font-size: 10pt;
+    color: #000000;
+    padding: 8pt 4pt;
+}
+.heights-table td .cell-box .value.column {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.heights-table td .cell-box.wide .label {
+    width: 30%;
+}
+.heights-table td .cell-box.wide .value {
+    width: 70%;
+}
+
+.signature-table {
+    width: 100%;
+}
+.signature-table td .signature-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.signature-table td .signature-box .label {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #000000;
+    padding: 8pt 4pt;
+}
+.signature-table td .signature-box .image {
+    width: 100%;
+}
+.signature-table td .signature-box .meta {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
 
 .doc-footer {
     margin-top: 10pt;
@@ -108,6 +218,11 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
                 {% if subpermit.expiresAt and subpermit.status == 'approved' %}
                     <div>Platné do: {{ subpermit.expiresAt|date('d.m.Y H:i') }}</div>
                 {% endif %}
+                {% if contractorQrDataUri %}
+                    <div style="margin-top:6pt;">
+                        <img src="{{ contractorQrDataUri }}" alt="QR" style="width:80pt;height:80pt;">
+                    </div>
+                {% endif %}
             </td>
         </tr>
     </table>
@@ -115,34 +230,90 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 
 {# ── Common fields ───────────────────────────────────────────────────────── #}
 <div class="section">
-    <h2>Základné informácie</h2>
-    <table class="dl-table">
+    <h2>{{ "Pojmy a skratky"|t }}</h2>
+    <table class="shorts-table">
         <tr>
-            <td class="label">Dátum práce</td>
-            <td class="value">{{ values.date ? values.date|date('d.m.Y') : '—' }}</td>
+            <td>{{ "GPTW – Všeobecné povolenie na prácu"|t }}</td>
         </tr>
         <tr>
-            <td class="label">Miesto výkonu</td>
-            <td class="value">{{ values.placeOfWork ?: '—' }}</td>
+            <td>{{ "HRA – Vysokorizikové práce"|t }}</td>
         </tr>
         <tr>
-            <td class="label">Zodpovedná osoba</td>
-            <td class="value">{{ values.responsiblePerson ?: '—' }}</td>
+            <td>{{ "HSE – Health, Safety & Environment"|t }}</td>
         </tr>
         <tr>
-            <td class="label">Účastníci prác</td>
-            <td class="value">{{ values.participants ?: '—' }}</td>
+            <td>{{ "OOPP – Osobné ochranné pracovné prostriedky"|t }}</td>
         </tr>
         <tr>
-            <td class="label">Popis práce</td>
-            <td class="value">{{ values.workDescription ? values.workDescription|nl2br : '—' }}</td>
+            <td>{{ "WAH – Práce vo výškach"|t }}</td>
         </tr>
-        {% if permit.contractorCompany %}
+
+    </table>
+
+    <h2>{{ "Základné informácie"|t }}</h2>
+    <table class="general-table">
         <tr>
-            <td class="label">Dodávateľ</td>
-            <td class="value">{{ permit.contractorCompany }}</td>
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Dátum"|t }}</strong></span>
+                    <span class="value">{{ values.date ? values.date|date('d.m.Y') : '—' }}</span>
+                </div>
+            </td>
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Miesto výkonu práce<br>(budova, oblasť):"|t|raw }}</strong></span>
+                    <span class="value">{{ values.placeOfWork ?: '—' }}</span>
+                </div>
+            </td>
         </tr>
-        {% endif %}
+        <tr>
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Zodpovedná osoba MDLZ"|t }}</strong></span>
+                    <span class="value">{{ values.responsiblePerson ?: '—' }}</span>
+                </div>
+            </td>
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Zúčastnení<br>dodávatelia/osoby"|t|raw }}</strong></span>
+                    <span class="value">{{ values.participants ?: '—' }}</span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            {% if permit.contractorCompany %}
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Dodávateľ"|t }}</strong></span>
+                    <span class="value">{{ permit.contractorCompany }}</span>
+                </div>
+            </td>
+            {% endif %}
+
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Práca, ktorá sa bude vykonávať"|t }}</strong></span>
+                    <span class="value">{{ values.workDescription ? values.workDescription|nl2br : '—' }}</span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="table-cell" colspan="2">
+                <div class="cell-box wide">
+                    <span class="label"><strong>{{ "Kroky práce"|t }}</strong><br>{{ "Pridajte popis a dostatok podrobností – najlepšie detaily krok za krokom"|t|raw }}</span>
+                    <span class="value column">
+                        {% set hasSteps = false %}
+                        {% for i in 1..5 %}{% if attribute(values, 'workStep' ~ i) ?? '' %}{% set hasSteps = true %}{% endif %}{% endfor %}
+                        {% if hasSteps %}
+                            {% for i in 1..5 %}
+                                {% set step = attribute(values, 'workStep' ~ i) ?? '' %}
+                                {% if step %}<span>{{ step }}</span>{% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </span>
+                </div>
+            </td>
+        </tr>
     </table>
 </div>
 
@@ -196,18 +367,117 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 {# --- Heights --- #}
 {% elseif subpermitType.value == 'heights' %}
 <div class="section">
-    <h2>Práce vo výškach — špecifické informácie</h2>
-    <table class="dl-table">
-        <tr><td class="label">Pád vylúčiť kolektívnou ochranou</td><td class="value">{{ _self.yn(values.avoidFallPossible) }}</td></tr>
-        <tr><td class="label">Pracovník vyškolený</td><td class="value">{{ _self.yn(values.workerTrained) }}</td></tr>
-        <tr><td class="label">Konštrukcia vhodná</td><td class="value">{{ _self.yn(values.constructionSuitable) }}</td></tr>
-        <tr><td class="label">Zábrany potrebné</td><td class="value">{{ _self.yn(values.fenceRequired) }}</td></tr>
-        <tr><td class="label">Kotvový bod použitý</td><td class="value">{{ _self.yn(values.anchorPointUsed) }}</td></tr>
-        {% if values.anchorPointDescription %}<tr><td class="label">Popis kotviaceho bodu</td><td class="value">{{ values.anchorPointDescription }}</td></tr>{% endif %}
-        <tr><td class="label">Inšpekcia ochranných prostriedkov</td><td class="value">{{ _self.yn(values.fallProtectionValidInspection) }}</td></tr>
-        {% if values.fallProtection is defined and values.fallProtection|length > 0 %}
-        <tr><td class="label">Ochrana pred pádom</td><td class="value">{% for item in values.fallProtection %}<span class="checklist-item">✓ {{ item }}</span>{% endfor %}</td></tr>
-        {% endif %}
+    <h2>{{ "Práce vo výškach — špecifické informácie"|t }}</h2>
+
+    {# Fall-risk identification table #}
+    {% set fallRiskLabels = {
+        'elevated_walkways':  'Vyvýšené prechodové/pracovné plochy 1,2 m alebo viac nad úrovňou podlahy.',
+        'roof_work':          'Práca na strechách, na ktoré pracovníci vstupujú, kde môžu spadnúť cez strešné okno, otvor, práca na okraji hrany pádu.',
+        'wall_openings':      'Stenové otvory (napríklad: okná alebo dvere, cez ktoré by pracovníci mohli spadnúť).',
+        'pits_excavations':   'Výkopy a jamy, ktoré nie sú ľahko viditeľné a pracovníci by mohli do nich spadnúť.',
+        'mobile_platforms':   'Mobilné pracovné plošiny.',
+        'removed_handrails':  'Vyvýšené priestory, kde boli odstránené zábradlia.',
+        'unprotected_edges':  'Strany/okraje prechodových/pracovných plôch (podlahy, medziposchodia, balkóny, chodníky) 1,2 m alebo viac nad úrovňou podlahy bez zábradlia.',
+        'unprotected_ramps':  'Rampy, prechody a cesty, ktoré nie sú chránené zábradlím.',
+        'floor_openings':     'Studne, podlahové otvory, jamy alebo šachty bez zábradlia/plotov/bariér/krytov.',
+    } %}
+    <table class="fall-risks-pdf" style="width:100%;border-collapse:collapse;margin:0 0 8pt 0;">
+        <thead>
+            <tr>
+                <th style="border:1pt solid #000;background:rgba(79,33,112,0.5);font-size:9pt;padding:4pt;text-align:left;">{{ "Nebezpečenstvo pádu"|t }}</th>
+                <th style="border:1pt solid #000;background:rgba(79,33,112,0.5);font-size:9pt;padding:4pt;text-align:center;width:18%;">{{ "Aplikované"|t }}</th>
+                <th style="border:1pt solid #000;background:rgba(79,33,112,0.5);font-size:9pt;padding:4pt;text-align:center;width:22%;">{{ "Kontrola na pracovisku"|t }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, label in fallRiskLabels %}
+                {% set r = (values.fallRisks ?? {})[key] ?? {} %}
+                <tr>
+                    <td style="border:1pt solid #000;font-size:8.5pt;padding:4pt;">{{ label|t }}</td>
+                    <td style="border:1pt solid #000;font-size:8.5pt;padding:4pt;text-align:center;">{{ _self.yn(r.applied ?? '') }}</td>
+                    <td style="border:1pt solid #000;font-size:8.5pt;padding:4pt;text-align:center;">{{ _self.yn(r.controlled ?? '') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="heights-table">
+        <tr>
+            <td class="table-cell" {% if values.fallProtection is not defined and values.fallProtection|length == 0 %}colspan="2"{% endif %}>
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Je možné zabrániť vystaveniu sa riziku pádu"|t }}</strong></span>
+                    <span class="value">{{ _self.yn(values.avoidFallPossible) }}</span>
+                </div>
+            </td>
+            {% if values.fallProtection is defined and values.fallProtection|length > 0 %}
+                <td class="table-cell">
+                    <div class="cell-box">
+                        <span class="label"><strong>{{ "Použitý systém ochrany proti pádu"|t }}</strong><br>{{ "(použitie predĺžených nástrojov, vykonávanie práce na úrovni podlahy)"|t }}</span>
+                        <span class="value">{% for item in values.fallProtection %}<span class="checklist-item">{{ item|t }}</span>{% endfor %}</span>
+                    </div>
+                </td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="table-cell" colspan="2">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Vykonávateľ práce je školený – autorizovaný – spôsobilý na prácu vo výškach"|t }}</strong></span>
+                    <span class="value">{{ _self.yn(values.workerTrained) }}</span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="table-cell" colspan="2">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Stavebné/procesné podmienky sú vhodné pre prácu"|t }}</strong>{{ "(primeraná nosnosť)"|t }}</span>
+                    <span class="value">{{ _self.yn(values.constructionSuitable) }}</span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="table-cell" {% if values.anchorPointDescription is empty %}colspan="2"{% endif %}>
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Použitý kotviaci bod:"|t }}</strong></span>
+                    <span class="value">{{ _self.yn(values.anchorPointUsed) }}</span>
+                </div>
+            </td>
+
+            {% if values.anchorPointDescription %}
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Ak áno, uveďte o aký konštrukčný kotviaci bod ide:"|t }}</strong></span>
+                    <span class="value">{{ values.anchorPointDescription }}</span>
+                </div>
+            </td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Je potrebné ohradiť priestor vzhľadom na intenzitu pohybu osôb a techniky v priestore výkonu práce?"|t }}</strong></span>
+                    <span class="value">{{ _self.yn(values.fenceRequired) }}</span>
+                </div>
+            </td>
+
+            <td class="table-cell">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Použité vybavenie"|t }}</strong></span>
+                    <span class="value column">
+                        {% if values.equipmentUsed is defined and values.equipmentUsed|length > 0 %}
+                            {% for item in values.equipmentUsed %}<span>{{ item|t }}</span>{% endfor %}
+                        {% endif %}
+                    </span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="table-cell" colspan="2">
+                <div class="cell-box">
+                    <span class="label"><strong>{{ "Použité ochranné prostriedky proti pádu majú platnú kontrolu?"|t }}</strong></span>
+                    <span class="value">{{ _self.yn(values.fallProtectionValidInspection) }}</span>
+                </div>
+            </td>
+        </tr>
     </table>
 </div>
 
@@ -290,16 +560,93 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 
 {# --- Command B --- #}
 {% elseif subpermitType.value == 'command_b' %}
+{% set locationLabels   = {'on': 'na elektrickom zariadení', 'near': 'v blízkosti elektrického zariadenia'} %}
+{% set voltageLabels    = {'with': 's elektrickým napätím', 'without': 'bez elektrického napätia'} %}
+{% set deliveryLabels   = {'in_person': 'osobne', 'other': 'iná osoba', 'email': 'e-mailom'} %}
+{% set commandBGroups = {
+    'turn_off':              'Vypnúť',
+    'disconnected':          'Odpojené',
+    'further_measures':      'Ďalšie opatrenia',
+    'check_de_energized':    'Ako overiť, že inštalácia je bez napätia',
+    'grounding_shorting':    'Uzemnenie a skratovanie',
+    'workplace_marking':     'Spôsob označenia pracoviska',
+    'workplace_definition':  'Vymedzenie pracoviska',
+    'additional_safety':     'Doplnkové bezpečnostné opatrenia',
+} %}
+
 <div class="section">
-    <h2>Príkaz B — špecifické informácie</h2>
+    <h2>Príkaz „B" — identifikácia</h2>
     <table class="dl-table">
-        <tr><td class="label">Číslo príkazu</td><td class="value">{{ values.orderNumber ?: '—' }}</td></tr>
-        <tr><td class="label">Meno vedúceho</td><td class="value">{{ values.supervisorName ?: '—' }}</td></tr>
-        <tr><td class="label">Vydal príkaz</td><td class="value">{{ values.issuedByName ?: '—' }}</td></tr>
-        <tr><td class="label">Prevzal príkaz</td><td class="value">{{ values.receivedByName ?: '—' }}</td></tr>
-        <tr><td class="label">Práca pod napätím</td><td class="value">{{ _self.yn(values.workWithVoltage) }}</td></tr>
-        <tr><td class="label">Vypnuté a zabezpečené</td><td class="value">{{ _self.yn(values.turnedOffSecured) }}</td></tr>
-        {% if values.additionalSafetyPrecautions %}<tr><td class="label">Dod. bezpečnostné opatrenia</td><td class="value">{{ values.additionalSafetyPrecautions|nl2br }}</td></tr>{% endif %}
+        <tr><td class="label">Príkaz „B" (číslo)</td><td class="value">{{ values.orderNumber ?: '—' }}</td></tr>
+        <tr><td class="label">Pre vedúceho prác</td><td class="value">{{ values.supervisorName ?: '—' }}{% if values.supervisorGroupSize %} — skupina {{ values.supervisorGroupSize }} pracovníkov{% endif %}</td></tr>
+        <tr><td class="label">Pre dozor</td><td class="value">{{ values.supervisionName ?: '—' }}{% if values.supervisionGroupSize %} — skupina {{ values.supervisionGroupSize }} pracovníkov{% endif %}</td></tr>
+        <tr><td class="label">Dňa</td><td class="value">{{ values.day ? values.day|date('d.m.Y') : '—' }}{% if values.fromTime %} od {{ values.fromTime }}{% endif %}{% if values.untilTime %} do {{ values.untilTime }}{% endif %}</td></tr>
+        <tr><td class="label">Práca sa vykonáva</td><td class="value">{{ locationLabels[values.locationType] ?? '—' }}, {{ voltageLabels[values.voltageMode] ?? '—' }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Zabezpečenie pracoviska</h2>
+    <table class="dl-table">
+        <tr><td class="label">Vypnuté a zabezpečené</td><td class="value">{{ values.workplaceTurnOff ? values.workplaceTurnOff|nl2br : '—' }}</td></tr>
+        <tr><td class="label">Pracovisko bude zabezpečené</td><td class="value">{{ values.workplaceSecure ? values.workplaceSecure|nl2br : '—' }}</td></tr>
+        <tr><td class="label">Pod napätím zostáva</td><td class="value">{{ values.remainUnderVoltage ? values.remainUnderVoltage|nl2br : '—' }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Doručenie Príkazu „B"</h2>
+    <table class="dl-table">
+        <tr><td class="label">Spôsob doručenia</td><td class="value">{{ deliveryLabels[values.deliveryMethod] ?? '—' }}</td></tr>
+        <tr><td class="label">Vydal / nahlásil</td><td class="value">{{ values.issuedByName ?: '—' }}{% if values.issuedByDate %} — {{ values.issuedByDate|date('d.m.Y') }}{% endif %}{% if values.issuedByTime %} {{ values.issuedByTime }}{% endif %}</td></tr>
+        <tr><td class="label">Prijal</td><td class="value">{{ values.receivedByName ?: '—' }}{% if values.receivedByDate %} — {{ values.receivedByDate|date('d.m.Y') }}{% endif %}{% if values.receivedByTime %} {{ values.receivedByTime }}{% endif %}</td></tr>
+        <tr><td class="label">Kniha príkazov „B" č.</td><td class="value">{{ values.orderBookNumber ?: '—' }}</td></tr>
+        <tr><td class="label">Číslo príkazu</td><td class="value">{{ values.commandNumber ?: '—' }}</td></tr>
+    </table>
+</div>
+
+{% set commandBActions = values.actions ?? {} %}
+{% if commandBActions|length > 0 %}
+<div class="section">
+    <h2>Opatrenia na zabezpečenie pracoviska</h2>
+    {% for groupKey, groupLabel in commandBGroups %}
+        {% set rows = commandBActions[groupKey] ?? [] %}
+        {% if rows|length > 0 %}
+            <h3 style="margin:6pt 0 3pt;">{{ groupLabel }}</h3>
+            <table class="hazard-table">
+                <thead>
+                    <tr>
+                        <th style="width:12%">Miesto</th>
+                        <th>Úkon</th>
+                        <th style="width:8%">Por. č.</th>
+                        <th style="width:18%">Zodpovedný</th>
+                        <th style="width:14%">Dátum / čas</th>
+                        <th style="width:16%">Podpis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td>{{ row.place ?: '—' }}</td>
+                            <td>{{ row.description ?: '—' }}</td>
+                            <td>{{ row.serialNumber ?: '—' }}</td>
+                            <td>{{ row.responsible ?: '—' }}</td>
+                            <td>{{ row.performedAt ? row.performedAt|replace({'T': ' '}) : '—' }}</td>
+                            <td>{{ row.signatureName ?: '—' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="section">
+    <h2>Okolie pracoviska</h2>
+    <table class="dl-table">
+        <tr><td class="label">Najbližšie časti pod napätím</td><td class="value">{{ values.nearestVoltageParts ? values.nearestVoltageParts|nl2br : '—' }}</td></tr>
+        <tr><td class="label">Atmosférické podmienky</td><td class="value">{{ values.atmosphericConditions ?: '—' }}</td></tr>
     </table>
 </div>
 {% endif %}
@@ -356,49 +703,134 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 </div>
 {% endif %}
 
-{# ── Issuer signature ────────────────────────────────────────────────────── #}
+{# ── Pre-work signatures (signed AFTER approval, BEFORE work starts) ───── #}
 <div class="section">
-    <h2>Podpis vydavateľa</h2>
-    <table class="sig-grid">
+    <h2>{{ "Pred začatím prác"|t }}</h2>
+    <table class="signature-table">
         <tr>
             <td>
-                <div class="sig-label">Vydavateľ subpermitu (Issuer)</div>
-                {% set issuerSig = signatures['issuer'] ?? null %}
-                {% if issuerSig %}
-                    {% if sigImages['issuer'] is defined and sigImages['issuer'] %}
-                        <img src="{{ sigImages['issuer'] }}" class="sig-image">
+                <div class="signature-box">
+                    <div class="label"><strong>{{ "Pred prácou"|t }}</strong> ({{ "vydavateľ povolenia"|t }})</div>
+                    {% set issuerPreSig = signatures['issuer_prework'] ?? null %}
+                    {% if issuerPreSig %}
+                        <div class="meta">
+                            <strong>{{ "Meno a priezvisko"|t }}: {{ issuerPreSig.signerName }}</strong>
+                            {% if issuerPreSig.signatureDate %}<span>{{ "Dátum"|t }}: {{ issuerPreSig.signatureDate|date('d.m.Y') }}</span>{% endif %}
+                        </div>
+                        {% if sigImages['issuer_prework'] is defined and sigImages['issuer_prework'] %}
+                            <img src="{{ sigImages['issuer_prework'] }}" class="image">
+                        {% else %}
+                            <div class="line"></div>
+                        {% endif %}
                     {% else %}
-                        <div class="sig-line"></div>
+                        <div class="line"></div>
+                        <div class="meta">{{ "Nepodpísané"|t }}</div>
                     {% endif %}
-                    <div class="sig-meta">
-                        <strong>{{ issuerSig.signerName }}</strong>
-                        {% if issuerSig.signatureDate %} · {{ issuerSig.signatureDate|date('d.m.Y') }}{% endif %}
-                    </div>
-                {% else %}
-                    <div class="sig-line"></div>
-                    <div class="sig-meta">{{ issuer ? (issuer.fullName ?: issuer.username) : '—' }}</div>
-                {% endif %}
+                </div>
+            </td>
+
+            <td>
+                <div class="signature-box">
+                    <div class="label"><strong>{{ "Pred prácou"|t }}</strong> ({{ "prijímateľ povolenia"|t }})</div>
+                    {% set contractorPreSig = signatures['contractor_prework'] ?? null %}
+                    {% if contractorPreSig %}
+                        <div class="meta">
+                            <strong>{{ "Meno a priezvisko"|t }}: {{ contractorPreSig.signerName }}</strong>
+                            {% if contractorPreSig.signerEmployer %}<span>{{ "Firma"|t }}: {{ contractorPreSig.signerEmployer }}</span>{% endif %}
+                            {% if contractorPreSig.signatureDate %}<span>{{ "Dátum"|t }}: {{ contractorPreSig.signatureDate|date('d.m.Y') }}</span>{% endif %}
+                        </div>
+                        {% if sigImages['contractor_prework'] is defined and sigImages['contractor_prework'] %}
+                            <img src="{{ sigImages['contractor_prework'] }}" class="image">
+                        {% else %}
+                            <div class="line"></div>
+                        {% endif %}
+                    {% else %}
+                        <div class="line"></div>
+                        <div class="meta">{{ "Nepodpísané"|t }}</div>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+{# ── Issuer signature ────────────────────────────────────────────────────── #}
+<div class="section">
+    <h2>{{ "Ukončenie plánovania prác a povolení"|t }}</h2>
+
+    {# Closure status + trial-operation, captured at contractor completion sign #}
+    {% if (values.closureStatus is defined and values.closureStatus|length > 0) or values.requiresTestRun is defined %}
+        {% set closureLabels = {
+            'work_completed':                  'Práce boli dokončené'|t,
+            'equipment_operational':           'Zariadenie je prevádzkyschopné'|t,
+            'equipment_not_operational':       'Zariadenie nie je prevádzkyschopné'|t,
+            'personnel_and_materials_removed': 'Všetky osoby opustili oblasť a materiály a zariadenia boli z oblasti odstránené'|t,
+            'work_suspended':                  'Práce boli pozastavené'|t,
+        } %}
+        <table style="width:100%;border-collapse:collapse;margin:0 0 8pt 0;">
+            {% if values.closureStatus is defined and values.closureStatus|length > 0 %}
+                <tr>
+                    <td style="border:1pt solid #000;background:rgba(79,33,112,0.5);font-size:9pt;font-weight:bold;padding:4pt;width:35%;vertical-align:top;">{{ "Stav po dokončení"|t }}</td>
+                    <td style="border:1pt solid #000;font-size:9pt;padding:4pt;">
+                        {% for k in values.closureStatus %}
+                            <span class="checklist-item">✓ {{ closureLabels[k] ?? k }}</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endif %}
+            {% if values.requiresTestRun is defined and values.requiresTestRun in ['yes','no'] %}
+                <tr>
+                    <td style="border:1pt solid #000;background:rgba(79,33,112,0.5);font-size:9pt;font-weight:bold;padding:4pt;vertical-align:top;">{{ "Vyžaduje sa skúšobná prevádzka"|t }}</td>
+                    <td style="border:1pt solid #000;font-size:9pt;padding:4pt;">{{ values.requiresTestRun == 'yes' ? 'Áno'|t : 'Nie'|t }}</td>
+                </tr>
+            {% endif %}
+        </table>
+    {% endif %}
+
+    <table class="signature-table">
+        <tr>
+            <td>
+                <div class="signature-box">
+                    <div class="label"><strong>{{ "Zrušenie/dokončenie"|t }}</strong>({{ "vydavateľ povolenia)"|t }})</div>
+                    {% set issuerSig = signatures['issuer'] ?? null %}
+                    {% if issuerSig %}
+                        <div class="meta">
+                            <strong>{{ "Meno a priezvisko"|t }}: {{ issuerSig.signerName }}</strong>
+                            {% if issuerSig.signatureDate %}<span>{{ "Dátum"|t }}: {{ issuerSig.signatureDate|date('d.m.Y') }}</span>{% endif %}
+                        </div>
+                        {% if sigImages['issuer'] is defined and sigImages['issuer'] %}
+                            <img src="{{ sigImages['issuer'] }}" class="image">
+                        {% else %}
+                            <div class="line"></div>
+                        {% endif %}
+                    {% else %}
+                        <div class="line"></div>
+                        <div class="meta">{{ issuer ? (issuer.fullName ?: issuer.username) : '—' }}</div>
+                    {% endif %}
+                </div>
             </td>
 
             {# Contractor signature if present #}
             <td>
-                <div class="sig-label">Podpis dodávateľa (Contractor)</div>
-                {% set contractorSig = signatures['contractor'] ?? null %}
-                {% if contractorSig %}
-                    {% if sigImages['contractor'] is defined and sigImages['contractor'] %}
-                        <img src="{{ sigImages['contractor'] }}" class="sig-image">
+                <div class="signature-box">
+                    <div class="label"><strong>{{ "Zrušenie/dokončenie"|t }}</strong>({{ "prijímateľ povolenia)"|t }})</div>
+                    {% set contractorSig = signatures['contractor'] ?? null %}
+                    {% if contractorSig %}
+                        <div class="meta">
+                            <strong>{{ "Meno a priezvisko"|t }}: {{ contractorSig.signerName }}</strong>
+                            {% if contractorSig.signerEmployer %}<span>{{ "Firma"|t }}: {{ contractorSig.signerEmployer }}</span>{% endif %}
+                            {% if contractorSig.signatureDate %}<span>{{ "Dátum"|t }}: {{ contractorSig.signatureDate|date('d.m.Y') }}</span>{% endif %}
+                        </div>
+                        {% if sigImages['contractor'] is defined and sigImages['contractor'] %}
+                            <img src="{{ sigImages['contractor'] }}" class="image">
+                        {% else %}
+                            <div class="line"></div>
+                        {% endif %}
                     {% else %}
-                        <div class="sig-line"></div>
+                        <div class="line"></div>
+                        <div class="meta">Dodávateľ</div>
                     {% endif %}
-                    <div class="sig-meta">
-                        <strong>{{ contractorSig.signerName }}</strong>
-                        {% if contractorSig.signerEmployer %} / {{ contractorSig.signerEmployer }}{% endif %}
-                        {% if contractorSig.signatureDate %} · {{ contractorSig.signatureDate|date('d.m.Y') }}{% endif %}
-                    </div>
-                {% else %}
-                    <div class="sig-line"></div>
-                    <div class="sig-meta">Dodávateľ</div>
-                {% endif %}
+                </div>
             </td>
         </tr>
     </table>

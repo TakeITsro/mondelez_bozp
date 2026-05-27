@@ -158,6 +158,11 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
                 {% if permit.validTo %}
                     <div>Platné do: {{ permit.validTo|date('d.m.Y H:i') }}</div>
                 {% endif %}
+                {% if contractorQrDataUri %}
+                    <div style="margin-top:6pt;">
+                        <img src="{{ contractorQrDataUri }}" alt="QR" style="width:80pt;height:80pt;">
+                    </div>
+                {% endif %}
             </td>
         </tr>
     </table>

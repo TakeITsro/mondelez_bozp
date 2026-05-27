@@ -1,105 +1,288 @@
-{# Appendix 5 — Command "B" / LOTO permit #}
+{# Appendix 5 — Príkaz "B" / Order "B" — electrical work permit.
+   Layout follows the printed two-page form. Signatures at the bottom of
+   page 1 are captured by the standard subpermit signature flow
+   (issuer_prework / contractor_prework / contractor / issuer_closure);
+   here we only collect the printed-name / date / time text fields. #}
 
-{% set lo = values.lotoDevices ?? [] %}
+{% set actions = values.actions ?? {} %}
+
+{% set actionGroups = {
+    'turn_off':              { label: 'Vypnúť'|t('bozp'),                                            rows: 3 },
+    'disconnected':          { label: 'Odpojené'|t('bozp'),                                          rows: 3 },
+    'further_measures':      { label: 'Ďalšie opatrenia'|t('bozp'),                                  rows: 3 },
+    'check_de_energized':    { label: 'Ako overiť, že inštalácia je bez napätia'|t('bozp'),          rows: 2 },
+    'grounding_shorting':    { label: 'Uzemnenie a skratovanie'|t('bozp'),                           rows: 2 },
+    'workplace_marking':     { label: 'Spôsob označenia pracoviska'|t('bozp'),                       rows: 2 },
+    'workplace_definition':  { label: 'Vymedzenie pracoviska'|t('bozp'),                             rows: 2 },
+    'additional_safety':     { label: 'Doplnkové bezpečnostné opatrenia'|t('bozp'),                  rows: 2 },
+} %}
 
 {% macro yn_row(name, value, label) %}
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ label }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ label }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 {% endmacro %}
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Identifikácia zariadenia'|t('bozp') }}</legend>
+{% macro radio_group(name, value, options) %}
+    <div class="bozp-form__yesno">
+        {% for v, label in options %}
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="{{ v }}" required {% if value == v %}checked{% endif %}>
+                <div class="custom_radio"></div>
+                <span>{{ label }}</span>
+            </label>
+        {% endfor %}
+    </div>
+{% endmacro %}
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
-            <label for="equipmentId">{{ 'Identifikácia zariadenia / stroja'|t('bozp') }}</label>
-            <input type="text" id="equipmentId" name="equipmentId"
-                   value="{{ values.equipmentId ?? '' }}" maxlength="255">
-        </div>
-        <div class="bozp-form__field">
-            <label for="equipmentLocation">{{ 'Umiestnenie zariadenia'|t('bozp') }}</label>
-            <input type="text" id="equipmentLocation" name="equipmentLocation"
-                   value="{{ values.equipmentLocation ?? '' }}" maxlength="255">
+<p class="bozp-form-section__hint">
+    <strong>{{ 'Pozor'|t('bozp') }}:</strong>
+    {{ 'Hodnotenie rizík (RA) musí byť spracované krok po kroku — nesmie to byť všeobecné RA.'|t('bozp') }}
+</p>
+
+{# ─── Identification ────────────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Identifikácia Príkazu „B"'|t('bozp') }}</legend>
+
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
+            <label for="orderNumber">{{ 'Príkaz „B" (číslo príkazu)'|t('bozp') }}</label>
+            <input type="text" id="orderNumber" name="orderNumber"
+                   value="{{ values.orderNumber ?? '' }}" maxlength="100">
         </div>
     </div>
 
-    <div class="bozp-form__field">
-        <label for="energySources">{{ 'Zdroje energie (elektrina, hydraulika, pneumatika, teplo, chemická, gravitácia)'|t('bozp') }}</label>
-        <textarea id="energySources" name="energySources" rows="3">{{ values.energySources ?? '' }}</textarea>
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
+            <label for="supervisorName">{{ 'Pre vedúceho prác'|t('bozp') }}</label>
+            <input type="text" id="supervisorName" name="supervisorName"
+                   value="{{ values.supervisorName ?? '' }}" maxlength="255">
+        </div>
+        <div class="bozp-form-row">
+            <label for="supervisorGroupSize">{{ 'S pracovnou skupinou (počet pracovníkov)'|t('bozp') }}</label>
+            <input type="number" id="supervisorGroupSize" name="supervisorGroupSize"
+                   value="{{ values.supervisorGroupSize ?? '' }}" min="0" max="999">
+        </div>
+    </div>
+
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
+            <label for="supervisionName">{{ 'Pre dozor'|t('bozp') }}</label>
+            <input type="text" id="supervisionName" name="supervisionName"
+                   value="{{ values.supervisionName ?? '' }}" maxlength="255">
+        </div>
+        <div class="bozp-form-row">
+            <label for="supervisionGroupSize">{{ 'S pracovnou skupinou (počet pracovníkov)'|t('bozp') }}</label>
+            <input type="number" id="supervisionGroupSize" name="supervisionGroupSize"
+                   value="{{ values.supervisionGroupSize ?? '' }}" min="0" max="999">
+        </div>
     </div>
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Postup LOTO'|t('bozp') }}</legend>
+{# ─── Time + scope ──────────────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Termín a rozsah prác'|t('bozp') }}</legend>
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Použité LOTO zariadenia'|t('bozp') }}</span>
-        <div class="bozp-form__checklist">
-            {% set loOptions = {
-                'padlock':       'Visací zámok (Lock Out)'|t('bozp'),
-                'tag':           'Štítok (Tag Out)'|t('bozp'),
-                'hasp':          'Skupinový zámok (Hasp)'|t('bozp'),
-                'valve_lockout': 'Uzáver ventilu'|t('bozp'),
-                'cb_lockout':    'Uzáver ističa'|t('bozp'),
-                'plug_lockout':  'Uzáver zástrčky'|t('bozp'),
-                'other':         'Iné'|t('bozp'),
-            } %}
-            {% for key, label in loOptions %}
-                <label class="bozp-form__check">
-                    <input type="checkbox" name="lotoDevices[]" value="{{ key }}"
-                           {% if key in lo %}checked{% endif %}>
-                    <span>{{ label }}</span>
-                </label>
-            {% endfor %}
+    <div class="bozp-form-grid bozp-form-grid--3col">
+        <div class="bozp-form-row">
+            <label for="day">{{ 'Dňa'|t('bozp') }}</label>
+            <input type="date" id="day" name="day" value="{{ values.day ?? '' }}">
         </div>
-        <input type="text" name="lotoDevicesOther"
-               value="{{ values.lotoDevicesOther ?? '' }}"
-               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
-               maxlength="255" style="margin-top:6px">
+        <div class="bozp-form-row">
+            <label for="fromTime">{{ 'Od (čas)'|t('bozp') }}</label>
+            <input type="time" id="fromTime" name="fromTime" value="{{ values.fromTime ?? '' }}">
+        </div>
+        <div class="bozp-form-row">
+            <label for="untilTime">{{ 'Do (čas)'|t('bozp') }}</label>
+            <input type="time" id="untilTime" name="untilTime" value="{{ values.untilTime ?? '' }}">
+        </div>
     </div>
 
-    {{ _self.yn_row('energyIsolated', values.energyIsolated ?? '', 'Všetky zdroje energie sú izolované / odstavené?'|t('bozp')) }}
-    {{ _self.yn_row('residualEnergyReleased', values.residualEnergyReleased ?? '', 'Reziduálna energia bola uvoľnená (dekomprimácia, vybíjanie kapacitorov, vypustenie)?'|t('bozp')) }}
-    {{ _self.yn_row('zeroEnergyVerified', values.zeroEnergyVerified ?? '', 'Stav nulovej energie bol overený (skúšobník, tlakomer)?'|t('bozp')) }}
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Práca sa vykonáva'|t('bozp') }}</span>
+        {{ _self.radio_group('locationType', values.locationType ?? '', {
+            'on':   'na elektrickom zariadení'|t('bozp'),
+            'near': 'v blízkosti elektrického zariadenia'|t('bozp'),
+        }) }}
+    </div>
 
-    <div class="bozp-form__field">
-        <label for="verificationMethod">{{ 'Spôsob overenia nulovej energie'|t('bozp') }}</label>
-        <input type="text" id="verificationMethod" name="verificationMethod"
-               value="{{ values.verificationMethod ?? '' }}" maxlength="255">
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Stav napätia'|t('bozp') }}</span>
+        {{ _self.radio_group('voltageMode', values.voltageMode ?? '', {
+            'without': 'bez elektrického napätia'|t('bozp'),
+            'with':    's elektrickým napätím'|t('bozp'),
+        }) }}
     </div>
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Zodpovedná osoba a kľúče'|t('bozp') }}</legend>
+{# ─── Workplace securing — page 1 textareas ─────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Zabezpečenie pracoviska'|t('bozp') }}</legend>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
-            <label for="lotoResponsiblePerson">{{ 'Osoba zodpovedná za LOTO'|t('bozp') }}</label>
-            <input type="text" id="lotoResponsiblePerson" name="lotoResponsiblePerson"
-                   value="{{ values.lotoResponsiblePerson ?? '' }}" maxlength="255">
-        </div>
-        <div class="bozp-form__field">
-            <label for="lockSerialNumber">{{ 'Sériové číslo zámku / štítku'|t('bozp') }}</label>
-            <input type="text" id="lockSerialNumber" name="lockSerialNumber"
-                   value="{{ values.lockSerialNumber ?? '' }}" maxlength="100">
-        </div>
+    <div class="bozp-form-row">
+        <label for="workplaceTurnOff">{{ 'Na zabezpečenie pracoviska je vypnuté a zabezpečené'|t('bozp') }}</label>
+        <textarea id="workplaceTurnOff" name="workplaceTurnOff" rows="3">{{ values.workplaceTurnOff ?? '' }}</textarea>
     </div>
 
-    {{ _self.yn_row('workerInformedLoto', values.workerInformedLoto ?? '', 'Pracovník bol oboznámený s postupom LOTO?'|t('bozp')) }}
+    <div class="bozp-form-row">
+        <label for="workplaceSecure">{{ 'Pracovisko bude zabezpečené'|t('bozp') }}</label>
+        <textarea id="workplaceSecure" name="workplaceSecure" rows="3">{{ values.workplaceSecure ?? '' }}</textarea>
+    </div>
 
-    <div class="bozp-form__field">
-        <label for="removalConditions">{{ 'Podmienky na odstránenie LOTO po skončení práce'|t('bozp') }}</label>
-        <textarea id="removalConditions" name="removalConditions" rows="3">{{ values.removalConditions ?? '' }}</textarea>
+    <div class="bozp-form-row">
+        <label for="remainUnderVoltage">{{ 'Pod napätím zostáva'|t('bozp') }}</label>
+        <textarea id="remainUnderVoltage" name="remainUnderVoltage" rows="3">{{ values.remainUnderVoltage ?? '' }}</textarea>
+    </div>
+</fieldset>
+
+{# ─── Order B delivery + name/date/time text fields ─────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Doručenie Príkazu „B"'|t('bozp') }}</legend>
+
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Príkaz „B" bol doručený'|t('bozp') }}</span>
+        {{ _self.radio_group('deliveryMethod', values.deliveryMethod ?? '', {
+            'in_person': 'osobne'|t('bozp'),
+            'other':     'iná osoba'|t('bozp'),
+            'email':     'e-mailom'|t('bozp'),
+        }) }}
+    </div>
+
+    <p class="bozp-form-section__hint">
+        {{ 'Mená a časy nižšie sú evidenčné. Samotné podpisy sa zachytávajú v štandardnom toku podpisov subpermitu.'|t('bozp') }}
+    </p>
+
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div>
+            <h4>{{ 'Vydal alebo nahlásil'|t('bozp') }}</h4>
+            <div class="bozp-form-row">
+                <label for="issuedByName">{{ 'Meno a priezvisko'|t('bozp') }}</label>
+                <input type="text" id="issuedByName" name="issuedByName"
+                       value="{{ values.issuedByName ?? '' }}" maxlength="255">
+            </div>
+            <div class="bozp-form-grid bozp-form-grid--2col">
+                <div class="bozp-form-row">
+                    <label for="issuedByDate">{{ 'Dátum'|t('bozp') }}</label>
+                    <input type="date" id="issuedByDate" name="issuedByDate"
+                           value="{{ values.issuedByDate ?? '' }}">
+                </div>
+                <div class="bozp-form-row">
+                    <label for="issuedByTime">{{ 'Čas'|t('bozp') }}</label>
+                    <input type="time" id="issuedByTime" name="issuedByTime"
+                           value="{{ values.issuedByTime ?? '' }}">
+                </div>
+            </div>
+        </div>
+        <div>
+            <h4>{{ 'Prijal'|t('bozp') }}</h4>
+            <div class="bozp-form-row">
+                <label for="receivedByName">{{ 'Meno a priezvisko'|t('bozp') }}</label>
+                <input type="text" id="receivedByName" name="receivedByName"
+                       value="{{ values.receivedByName ?? '' }}" maxlength="255">
+            </div>
+            <div class="bozp-form-grid bozp-form-grid--2col">
+                <div class="bozp-form-row">
+                    <label for="receivedByDate">{{ 'Dátum'|t('bozp') }}</label>
+                    <input type="date" id="receivedByDate" name="receivedByDate"
+                           value="{{ values.receivedByDate ?? '' }}">
+                </div>
+                <div class="bozp-form-row">
+                    <label for="receivedByTime">{{ 'Čas'|t('bozp') }}</label>
+                    <input type="time" id="receivedByTime" name="receivedByTime"
+                           value="{{ values.receivedByTime ?? '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+
+{# ─── Order book entry — page 2 header ──────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Evidencia v knihe príkazov „B"'|t('bozp') }}</legend>
+
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
+            <label for="orderBookNumber">{{ 'Zapísaný v knihe príkazov „B" č.'|t('bozp') }}</label>
+            <input type="text" id="orderBookNumber" name="orderBookNumber"
+                   value="{{ values.orderBookNumber ?? '' }}" maxlength="100">
+        </div>
+        <div class="bozp-form-row">
+            <label for="commandNumber">{{ 'Číslo príkazu'|t('bozp') }}</label>
+            <input type="text" id="commandNumber" name="commandNumber"
+                   value="{{ values.commandNumber ?? '' }}" maxlength="100">
+        </div>
+    </div>
+</fieldset>
+
+{# ─── Actions table — page 2 main grid ──────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Opatrenia na zabezpečenie pracoviska'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Vyplní alebo určí osoba vydávajúca príkaz „B". Stĺpec „Vykonané / nahlásené" doplní vykonávateľ.'|t('bozp') }}
+    </p>
+
+    {% for groupKey, group in actionGroups %}
+        <h4>{{ group.label }}</h4>
+        <table class="bozp-fall-risks">
+            <thead>
+                <tr>
+                    <th scope="col" style="width:12%">{{ 'Miesto'|t('bozp') }}</th>
+                    <th scope="col">{{ 'Úkon'|t('bozp') }}</th>
+                    <th scope="col" style="width:8%">{{ 'Poradové č.'|t('bozp') }}</th>
+                    <th scope="col" style="width:18%">{{ 'Zodpovedný'|t('bozp') }}</th>
+                    <th scope="col" style="width:14%">{{ 'Dátum / čas'|t('bozp') }}</th>
+                    <th scope="col" style="width:16%">{{ 'Podpis'|t('bozp') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in 0..(group.rows - 1) %}
+                    {% set row = actions[groupKey][i] ?? {} %}
+                    {% set prefix = 'actions[' ~ groupKey ~ '][' ~ i ~ ']' %}
+                    <tr class="bozp-fall-risks__row">
+                        <td><input type="text" name="{{ prefix }}[place]"
+                                   value="{{ row.place ?? '' }}" maxlength="100"></td>
+                        <td><input type="text" name="{{ prefix }}[description]"
+                                   value="{{ row.description ?? '' }}" maxlength="500"></td>
+                        <td><input type="text" name="{{ prefix }}[serialNumber]"
+                                   value="{{ row.serialNumber ?? '' }}" maxlength="50"></td>
+                        <td><input type="text" name="{{ prefix }}[responsible]"
+                                   value="{{ row.responsible ?? '' }}" maxlength="255"></td>
+                        <td><input type="datetime-local" name="{{ prefix }}[performedAt]"
+                                   value="{{ row.performedAt ?? '' }}"></td>
+                        <td><input type="text" name="{{ prefix }}[signatureName]"
+                                   value="{{ row.signatureName ?? '' }}" maxlength="255"
+                                   placeholder="{{ 'Meno čitateľne'|t('bozp') }}"></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+</fieldset>
+
+{# ─── Environment / nearby live parts ───────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Okolie pracoviska'|t('bozp') }}</legend>
+
+    <div class="bozp-form-row">
+        <label for="nearestVoltageParts">{{ 'Najbližšie časti elektrickej inštalácie (alebo iných elektrických inštalácií) pod napätím'|t('bozp') }}</label>
+        <textarea id="nearestVoltageParts" name="nearestVoltageParts" rows="3">{{ values.nearestVoltageParts ?? '' }}</textarea>
+    </div>
+
+    <div class="bozp-form-row">
+        <label for="atmosphericConditions">{{ 'Atmosférické podmienky'|t('bozp') }}</label>
+        <input type="text" id="atmosphericConditions" name="atmosphericConditions"
+               value="{{ values.atmosphericConditions ?? '' }}" maxlength="500">
     </div>
 </fieldset>

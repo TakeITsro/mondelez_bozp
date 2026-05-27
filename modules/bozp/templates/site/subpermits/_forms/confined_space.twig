@@ -1,54 +1,54 @@
 {# Appendix 3 — Permission to enter a confined space #}
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Platnosť a havarijný plán'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Platnosť a havarijný plán'|t('bozp') }}</legend>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
             <label for="expiryDate">{{ 'Dátum expirácie'|t('bozp') }}</label>
             <input type="date" id="expiryDate" name="expiryDate"
                    value="{{ values.expiryDate ?? '' }}">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="expiryTime">{{ 'Čas expirácie'|t('bozp') }}</label>
             <input type="time" id="expiryTime" name="expiryTime"
                    value="{{ values.expiryTime ?? '' }}">
         </div>
     </div>
 
-    <div class="bozp-form__field">
+    <div class="bozp-form-row">
         <label for="emergencyPlan">{{ 'Opis havarijného / záchranného plánu'|t('bozp') }}</label>
         <textarea id="emergencyPlan" name="emergencyPlan" rows="4">{{ values.emergencyPlan ?? '' }}</textarea>
     </div>
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Účastníci absolvovali školenie?'|t('bozp') }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Účastníci absolvovali školenie?'|t('bozp') }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="trainingComplete" value="yes" {% if (values.trainingComplete ?? '') == 'yes' %}checked{% endif %}>
+                <input type="radio" name="trainingComplete" value="yes" required {% if (values.trainingComplete ?? '') == 'yes' %}checked{% endif %}>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="trainingComplete" value="no" {% if (values.trainingComplete ?? '') == 'no' %}checked{% endif %}>
+                <input type="radio" name="trainingComplete" value="no" required {% if (values.trainingComplete ?? '') == 'no' %}checked{% endif %}>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Izolácia a ventilácia'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Izolácia a ventilácia'|t('bozp') }}</legend>
 
     {% macro yn_row(name, value, label) %}
-        <div class="bozp-form__field">
-            <span class="bozp-form__label">{{ label }}</span>
+        <div class="bozp-form-row">
+            <span class="bozp-form-row__label">{{ label }}</span>
             <div class="bozp-form__yesno">
                 <label class="bozp-form__yesno-opt">
-                    <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                    <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
                     <span>{{ 'Áno'|t('bozp') }}</span>
                 </label>
                 <label class="bozp-form__yesno-opt">
-                    <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                    <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
                     <span>{{ 'Nie'|t('bozp') }}</span>
                 </label>
             </div>
@@ -59,13 +59,13 @@
     {{ _self.yn_row('pumpsBlinded', values.pumpsBlinded ?? '', 'Čerpadlá / potrubia sú zaslepené, odpojené alebo zablokované?'|t('bozp')) }}
     {{ _self.yn_row('ventilationRequired', values.ventilationRequired ?? '', 'Je potrebná úprava ventilácie?'|t('bozp')) }}
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
             <label for="ventilationStartTime">{{ 'Nútené vetranie — začiatok'|t('bozp') }}</label>
             <input type="time" id="ventilationStartTime" name="ventilationStartTime"
                    value="{{ values.ventilationStartTime ?? '' }}">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="ventilationStopTime">{{ 'Nútené vetranie — koniec'|t('bozp') }}</label>
             <input type="time" id="ventilationStopTime" name="ventilationStopTime"
                    value="{{ values.ventilationStopTime ?? '' }}">
@@ -73,43 +73,43 @@
     </div>
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Kontrola atmosféry'|t('bozp') }}</legend>
-    <p class="bozp-form__hint">{{ 'Vstup povolený: O₂ 19,5 – 23,5 %, LEL < 10 %, CO a H₂S = 0 PPM.'|t('bozp') }}</p>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Kontrola atmosféry'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">{{ 'Vstup povolený: O₂ 19,5 – 23,5 %, LEL < 10 %, CO a H₂S = 0 PPM.'|t('bozp') }}</p>
 
-    <div class="bozp-form__row bozp-form__row--4col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--4col">
+        <div class="bozp-form-row">
             <label for="o2Percent">{{ 'O₂ (%)'|t('bozp') }}</label>
             <input type="text" id="o2Percent" name="o2Percent"
                    value="{{ values.o2Percent ?? '' }}" maxlength="10" style="width:100px">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="lelPercent">{{ '%LEL'|t('bozp') }}</label>
             <input type="text" id="lelPercent" name="lelPercent"
                    value="{{ values.lelPercent ?? '' }}" maxlength="10" style="width:100px">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="coPpm">{{ 'CO (PPM)'|t('bozp') }}</label>
             <input type="text" id="coPpm" name="coPpm"
                    value="{{ values.coPpm ?? '' }}" maxlength="10" style="width:100px">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="h2sPpm">{{ 'H₂S (PPM)'|t('bozp') }}</label>
             <input type="text" id="h2sPpm" name="h2sPpm"
                    value="{{ values.h2sPpm ?? '' }}" maxlength="10" style="width:100px">
         </div>
     </div>
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Komunikácia vstupujúceho s dozorom je potvrdená?'|t('bozp') }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Komunikácia vstupujúceho s dozorom je potvrdená?'|t('bozp') }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="communicationConfirmed" value="yes"
+                <input type="radio" name="communicationConfirmed" value="yes" required
                        {% if (values.communicationConfirmed ?? '') == 'yes' %}checked{% endif %}>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="communicationConfirmed" value="no"
+                <input type="radio" name="communicationConfirmed" value="no" required
                        {% if (values.communicationConfirmed ?? '') == 'no' %}checked{% endif %}>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>

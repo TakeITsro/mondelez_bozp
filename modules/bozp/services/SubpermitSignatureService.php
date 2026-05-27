@@ -24,6 +24,20 @@ class SubpermitSignatureService extends Component
 {
     public const ROLE_ISSUER     = 'issuer';
     public const ROLE_CONTRACTOR = 'contractor';
+    public const ROLE_ISSUER_PREWORK     = 'issuer_prework';
+    public const ROLE_CONTRACTOR_PREWORK = 'contractor_prework';
+    public const ROLE_ISSUER_CLOSURE     = 'issuer_closure';
+
+    /**
+     * True iff the subpermit has both pre-work signatures.
+     * HSE approval is gated on both preworks; work cannot begin
+     * until HSE has also approved.
+     */
+    public function isPreworkComplete(int $subpermitId): bool
+    {
+        $sigs = $this->findAllForSubpermit($subpermitId);
+        return isset($sigs[self::ROLE_ISSUER_PREWORK], $sigs[self::ROLE_CONTRACTOR_PREWORK]);
+    }
 
     /**
      * Decode the data URI, save the PNG as an Asset, write the

@@ -226,13 +226,14 @@ class PermitsController extends BaseSiteController
                 $values['signatureData'],
             );
             $module->permitWorkflow->closeByIssuer($permit, $userId, $requiresTrial);
-            // Re-fetch so the PDF reflects the closed status & latest signatures.
-            $closed = PermitRecord::findOne(['id' => $permit->id]) ?? $permit;
-            $module->permitPdfService->generateForPermit($closed);
-            $module->permitMailer->notifyParticipantsOfClosure($closed, $values['signerName']);
+            // Re-fetch so the PDF reflects the latest signatures.
+            $awaiting = PermitRecord::findOne(['id' => $permit->id]) ?? $permit;
+            $module->permitPdfService->generateForPermit($awaiting);
+            // Notify HSE that final countersignature is required in CP.
+            $module->permitMailer->notifyHseOfClosurePending($awaiting, $values['signerName']);
 
             Craft::$app->getSession()->setNotice(
-                Craft::t('bozp', 'Permit bol uzavretý.')
+                Craft::t('bozp', 'Podpis bol uložený. Permit čaká na podpis HSE.')
             );
         } catch (Throwable $e) {
             Craft::error('BOZP issuer close failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
@@ -567,6 +568,13 @@ class PermitsController extends BaseSiteController
 
         $errors = $this->validate($values, $intent);
 
+        // Risk-assessment attachment (PDF / DOCX / XLSX). Required at submit time.
+        $riskAssessmentFile = UploadedFile::getInstanceByName('riskAssessment');
+        $riskAssessmentError = $this->validateRiskAssessmentFile($riskAssessmentFile, $intent);
+        if ($riskAssessmentError !== null) {
+            $errors['riskAssessment'] = $riskAssessmentError;
+        }
+
         if ($errors !== []) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Skontrolujte chyby vo formulári.'));
             $zones = ZoneRecord::find()
@@ -633,6 +641,11 @@ class PermitsController extends BaseSiteController
             }
             $this->syncHazards((int) $permit->id, $values['hazards']);
 
+            // Save risk-assessment attachment (if uploaded).
+            if ($riskAssessmentFile !== null && !$riskAssessmentFile->getHasError()) {
+                $this->saveRiskAssessmentAttachment($permit, $riskAssessmentFile, $userId);
+            }
+
             $module->auditLogger->log(
                 permitId: (int) $permit->id,
                 userId: $userId,
@@ -671,6 +684,85 @@ class PermitsController extends BaseSiteController
         Craft::$app->getSession()->setNotice($msg);
 
         return $this->redirect('bozp');
+    }
+
+    private const RA_ALLOWED_EXT  = ['pdf', 'docx', 'xlsx'];
+    private const RA_ALLOWED_MIME = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ];
+    private const RA_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+
+    /**
+     * Validate the uploaded risk-assessment file. Required at submit intent,
+     * optional (but still type/size-checked) on draft save.
+     *
+     * Returns an error message string, or null when the file passes.
+     */
+    private function validateRiskAssessmentFile(?UploadedFile $file, string $intent): ?string
+    {
+        if ($file === null || $file->getHasError()) {
+            if ($intent === 'submit') {
+                return (string) Craft::t('bozp', 'Príloha s hodnotením rizík je povinná pri odoslaní.');
+            }
+            return null;
+        }
+
+        if ($file->size > self::RA_MAX_BYTES) {
+            return (string) Craft::t('bozp', 'Súbor je príliš veľký. Maximálna veľkosť je 10 MB.');
+        }
+
+        $ext = strtolower((string) pathinfo($file->name, PATHINFO_EXTENSION));
+        $mime = (string) FileHelper::getMimeType($file->tempName);
+
+        if (!in_array($ext, self::RA_ALLOWED_EXT, true) || !in_array($mime, self::RA_ALLOWED_MIME, true)) {
+            return (string) Craft::t('bozp', 'Nepodporovaný typ súboru. Povolené: PDF, DOCX, XLSX.');
+        }
+        return null;
+    }
+
+    /**
+     * Persist the uploaded risk-assessment file as an Asset and link it to
+     * the permit via a PermitAttachmentRecord row of type='risk_assessment'.
+     * Throws on any failure — caller's transaction will roll back.
+     */
+    private function saveRiskAssessmentAttachment(PermitRecord $permit, UploadedFile $file, ?int $userId): void
+    {
+        $volume = Craft::$app->getVolumes()->getVolumeByHandle('bozpAttachments');
+        if (!$volume) {
+            throw new \RuntimeException("Missing asset volume 'bozpAttachments'");
+        }
+        $rootFolder = Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id);
+        if (!$rootFolder) {
+            throw new \RuntimeException("No root folder for volume 'bozpAttachments'");
+        }
+
+        $tempPath = $file->saveAsTempFile();
+        if ($tempPath === false) {
+            throw new \RuntimeException('Could not copy uploaded risk-assessment file to temp location.');
+        }
+
+        $asset = new Asset();
+        $asset->tempFilePath = $tempPath;
+        $asset->filename = Assets::prepareAssetName($file->name);
+        $asset->newFolderId = $rootFolder->id;
+        $asset->volumeId = $volume->id;
+        $asset->avoidFilenameConflicts = true;
+        $asset->setScenario(Asset::SCENARIO_CREATE);
+
+        if (!Craft::$app->getElements()->saveElement($asset)) {
+            throw new \RuntimeException('Risk-assessment asset save failed: ' . print_r($asset->getErrors(), true));
+        }
+
+        $att = new PermitAttachmentRecord();
+        $att->permitId = (int) $permit->id;
+        $att->attachmentType = 'risk_assessment';
+        $att->assetId = (int) $asset->id;
+        $att->uploadedById = $userId;
+        if (!$att->save()) {
+            throw new \RuntimeException('Risk-assessment attachment row save failed: ' . print_r($att->getErrors(), true));
+        }
     }
 
     /**

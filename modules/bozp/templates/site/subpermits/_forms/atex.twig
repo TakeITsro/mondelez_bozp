@@ -3,26 +3,26 @@
 {% set ae = values.atexEquipment ?? [] %}
 
 {% macro yn_row(name, value, label) %}
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ label }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ label }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 {% endmacro %}
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Klasifikácia zóny ATEX'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Klasifikácia zóny ATEX'|t('bozp') }}</legend>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
             <label for="atexZone">{{ 'Zóna ATEX'|t('bozp') }}</label>
             <select id="atexZone" name="atexZone">
                 <option value="">— {{ 'Vyberte'|t('bozp') }} —</option>
@@ -39,7 +39,7 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="explosiveSubstance">{{ 'Výbušná látka / médium'|t('bozp') }}</label>
             <input type="text" id="explosiveSubstance" name="explosiveSubstance"
                    value="{{ values.explosiveSubstance ?? '' }}" maxlength="255">
@@ -48,18 +48,18 @@
 
     {{ _self.yn_row('hazardousAtmospherePresent', values.hazardousAtmospherePresent ?? '', 'Nebezpečná atmosféra bola detegovaná pred vstupom?'|t('bozp')) }}
 
-    <div class="bozp-form__field">
+    <div class="bozp-form-row">
         <label for="gasDetectorReading">{{ 'Hodnota detektora plynov / prachu pred prácou'|t('bozp') }}</label>
         <input type="text" id="gasDetectorReading" name="gasDetectorReading"
                value="{{ values.gasDetectorReading ?? '' }}" maxlength="100">
     </div>
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Zariadenia a náradie'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Zariadenia a náradie'|t('bozp') }}</legend>
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Použité ATEX zariadenia / náradie'|t('bozp') }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Použité ATEX zariadenia / náradie'|t('bozp') }}</span>
         <div class="bozp-form__checklist">
             {% set aeOptions = {
                 'ex_tools':        'Ex náradie (antistatické, neiskrivé)'|t('bozp'),
@@ -83,14 +83,14 @@
     {{ _self.yn_row('staticEarthingApplied', values.staticEarthingApplied ?? '', 'Antistatické uzemnenie bolo aplikované?'|t('bozp')) }}
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Povolenie a monitorovanie'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Povolenie a monitorovanie'|t('bozp') }}</legend>
 
     {{ _self.yn_row('hotWorkProhibited', values.hotWorkProhibited ?? '', 'Práca so zdrojom zapálenia (horúce práce) je v tejto zóne zakázaná?'|t('bozp')) }}
     {{ _self.yn_row('continuousMonitoring', values.continuousMonitoring ?? '', 'Priebežné monitorovanie atmosféry je zabezpečené počas celej práce?'|t('bozp')) }}
     {{ _self.yn_row('emergencyShutdownKnown', values.emergencyShutdownKnown ?? '', 'Pracovník pozná postup núdzového odstavenia?'|t('bozp')) }}
 
-    <div class="bozp-form__field">
+    <div class="bozp-form-row">
         <label for="atexAdditionalMeasures">{{ 'Ďalšie bezpečnostné opatrenia'|t('bozp') }}</label>
         <textarea id="atexAdditionalMeasures" name="atexAdditionalMeasures" rows="3">{{ values.atexAdditionalMeasures ?? '' }}</textarea>
     </div>

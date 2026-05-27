@@ -1,0 +1,109 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Subpermit pre-work invite for the contractor.
+   Sent right after the issuer creates + signs a subpermit. Contractor must
+   sign their pre-work BEFORE HSE approves the permit.
+   Variables: permit, subpermit, subpermitTypeLabel, permitUrl, password, qrDataUri #}
+
+{% block subject %}{{ 'Permit {n} — vyžaduje sa podpis pred schválením'|t('bozp', {n: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Povolenie na prácu — subpermit'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Vyžaduje sa Váš podpis pred schválením'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
+        {{
+            'K permitu <strong>{n}</strong> pre spoločnosť <strong>{company}</strong> bol vytvorený subpermit „<strong>{type}</strong>" a podpísaný vydavateľom. Pred tým, ako oddelenie HSE permit schváli, je potrebné, aby ste sa prihlásili na portál a podpísali ho aj Vy.'|t('bozp', {
+                n: permit.permitNumber,
+                company: permit.contractorCompany ?: '—',
+                type: subpermitTypeLabel
+            })|raw
+        }}
+    </p>
+
+    {# Permit details block #}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:16px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="4">
+                    <tr>
+                        <td style="font-size:13px;color:#000000;width:140px;padding-bottom:6px;">{{ 'Číslo permitu'|t('bozp') }}</td>
+                        <td style="font-size:13px;font-weight:700;padding-bottom:6px;">{{ permit.permitNumber }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Subpermit'|t('bozp') }}</td>
+                        <td style="font-size:13px;padding-bottom:6px;">{{ subpermitTypeLabel }}</td>
+                    </tr>
+                    {% if permit.workLocation %}
+                        <tr>
+                            <td style="font-size:13px;color:#000000;padding-bottom:6px;">{{ 'Miesto práce'|t('bozp') }}</td>
+                            <td style="font-size:13px;padding-bottom:6px;">{{ permit.workLocation }}</td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    {# Access credentials — only shown when freshly issued #}
+    {% if password %}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="background:#FEFFFD;border:1px solid #4F2170;border-radius:4px;margin:0 0 24px;">
+            <tr>
+                <td style="padding:16px 20px;">
+                    <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#000;">
+                        {{ 'Prístupové údaje k portálu'|t('bozp') }}
+                    </p>
+                    <p style="margin:0 0 8px;font-size:13px;">
+                        <strong>{{ 'Odkaz'|t('bozp') }}:</strong><br>
+                        <a href="{{ permitUrl }}" style="color:#4F2170;word-break:break-all;">{{ permitUrl }}</a>
+                    </p>
+                    <p style="margin:0;font-size:13px;">
+                        <strong>{{ 'Heslo'|t('bozp') }}:</strong>
+                        <span style="font-family:monospace;font-size:16px;font-weight:700;
+                                     display:inline-block;margin-left:8px;padding:2px 8px;
+                                     background:#4F2170;color:#FEFFFD;border-radius:3px;letter-spacing:2px;">
+                            {{ password }}
+                        </span>
+                    </p>
+                </td>
+            </tr>
+        </table>
+    {% else %}
+        <p style="margin:0 0 16px;font-size:13px;">
+            {{ 'Použite prosím prístupové údaje z predošlého e-mailu k tomuto permitu.'|t('bozp') }}
+        </p>
+    {% endif %}
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+        <tr>
+            <td style="background:#4F2170;border-radius:4px;">
+                <a href="{{ permitUrl }}"
+                   style="display:inline-block;padding:12px 28px;color:#FEFFFD;font-size:15px;font-weight:700;text-decoration:none;">
+                    {{ 'Otvoriť portál a podpísať'|t('bozp') }} →
+                </a>
+            </td>
+        </tr>
+    </table>
+
+    {% if qrDataUri %}
+        <p style="margin:0 0 8px;font-size:13px;color:#000000;">
+            {{ 'Prípadne naskenujte QR kód mobilným zariadením:'|t('bozp') }}
+        </p>
+        <p style="margin:0;">
+            <img src="{{ qrDataUri }}" alt="QR" width="200" height="200"
+                 style="border:4px solid #4F2170;border-radius:4px;">
+        </p>
+    {% endif %}
+
+    <p style="margin:24px 0 0;font-size:12px;color:#000000;border-top:1px solid #000000;padding-top:16px;">
+        {{ 'Bez Vášho predpracovného podpisu nebude môcť HSE permit schváliť.'|t('bozp') }}
+    </p>
+{% endblock %}

@@ -104,6 +104,182 @@ class PermitMailer extends Component
     }
 
     /**
+     * Permit is 24 hours from expiry (validTo). Warn issuer + contractor.
+     */
+    public function notifyPermitExpiringSoon(PermitRecord $permit): void
+    {
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+        $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+
+        if ($issuer && $issuer->email) {
+            $this->send(
+                to: $issuer->email,
+                language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+                subjectKey: 'Permit {n} čoskoro expiruje',
+                subjectParams: ['n' => $permit->permitNumber],
+                template: 'permit-expiring-soon',
+                vars: [
+                    'permit'    => $permit,
+                    'permitUrl' => $issuerUrl,
+                    'recipient' => 'issuer',
+                ],
+            );
+        }
+
+        if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
+            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $this->send(
+                to: $permit->contractorEmail,
+                language: Craft::$app->getSites()->getPrimarySite()->language,
+                subjectKey: 'Permit {n} čoskoro expiruje',
+                subjectParams: ['n' => $permit->permitNumber],
+                template: 'permit-expiring-soon',
+                vars: [
+                    'permit'    => $permit,
+                    'permitUrl' => $contractorUrl,
+                    'recipient' => 'contractor',
+                ],
+            );
+        }
+    }
+
+    /**
+     * Subpermit is 1 hour from expiry. Warn issuer + contractor.
+     */
+    public function notifySubpermitExpiringSoon(SubpermitRecord $subpermit, PermitRecord $permit): void
+    {
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+        $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id . '/subpermits/' . $subpermit->id);
+        $subpermitTypeLabel = ($spt = SubpermitType::tryFrom($subpermit->type)) ? $spt->label() : $subpermit->type;
+
+        if ($issuer && $issuer->email) {
+            $this->send(
+                to: $issuer->email,
+                language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+                subjectKey: 'Subpermit „{type}" pre permit {n} čoskoro expiruje',
+                subjectParams: ['type' => $subpermitTypeLabel, 'n' => $permit->permitNumber],
+                template: 'subpermit-expiring-soon',
+                vars: [
+                    'permit'             => $permit,
+                    'subpermit'          => $subpermit,
+                    'subpermitTypeLabel' => $subpermitTypeLabel,
+                    'permitUrl'          => $issuerUrl,
+                    'recipient'          => 'issuer',
+                ],
+            );
+        }
+
+        if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
+            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $this->send(
+                to: $permit->contractorEmail,
+                language: Craft::$app->getSites()->getPrimarySite()->language,
+                subjectKey: 'Subpermit „{type}" pre permit {n} čoskoro expiruje',
+                subjectParams: ['type' => $subpermitTypeLabel, 'n' => $permit->permitNumber],
+                template: 'subpermit-expiring-soon',
+                vars: [
+                    'permit'             => $permit,
+                    'subpermit'          => $subpermit,
+                    'subpermitTypeLabel' => $subpermitTypeLabel,
+                    'permitUrl'          => $contractorUrl,
+                    'recipient'          => 'contractor',
+                ],
+            );
+        }
+    }
+
+    /**
+     * HSE approved a subpermit. Notify the contractor (with portal link)
+     * and the issuer. No password block — access creds were provisioned
+     * earlier when the issuer created the subpermit.
+     */
+    public function notifyContractorOfSubpermitApproval(
+        PermitRecord $permit,
+        SubpermitRecord $subpermit,
+    ): void {
+        $subpermitTypeLabel = ($spt = SubpermitType::tryFrom($subpermit->type)) ? $spt->label() : $subpermit->type;
+
+        // Issuer
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+        if ($issuer && $issuer->email) {
+            $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id . '/subpermits/' . $subpermit->id);
+            $this->send(
+                to: $issuer->email,
+                language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+                subjectKey: 'Subpermit „{type}" pre permit {n} bol schválený',
+                subjectParams: ['type' => $subpermitTypeLabel, 'n' => $permit->permitNumber],
+                template: 'subpermit-approved',
+                vars: [
+                    'permit'             => $permit,
+                    'subpermit'          => $subpermit,
+                    'subpermitTypeLabel' => $subpermitTypeLabel,
+                    'permitUrl'          => $issuerUrl,
+                    'recipient'          => 'issuer',
+                ],
+            );
+        }
+
+        // Contractor
+        if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
+            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $this->send(
+                to: $permit->contractorEmail,
+                language: Craft::$app->getSites()->getPrimarySite()->language,
+                subjectKey: 'Subpermit „{type}" pre permit {n} bol schválený',
+                subjectParams: ['type' => $subpermitTypeLabel, 'n' => $permit->permitNumber],
+                template: 'subpermit-approved',
+                vars: [
+                    'permit'             => $permit,
+                    'subpermit'          => $subpermit,
+                    'subpermitTypeLabel' => $subpermitTypeLabel,
+                    'permitUrl'          => $contractorUrl,
+                    'recipient'          => 'contractor',
+                ],
+            );
+        }
+    }
+
+    /**
+     * Subpermit was just created and signed by the issuer (pre-work).
+     * Invite the contractor to log in and sign their own pre-work — this
+     * has to happen BEFORE HSE approval under the new workflow.
+     *
+     * If $contractorPassword is null, the credentials already existed and
+     * the contractor was previously emailed them; the invite is still sent
+     * but without the password block (link only).
+     */
+    public function notifyContractorOfSubpermitInvite(
+        PermitRecord $permit,
+        SubpermitRecord $subpermit,
+        ?string $contractorPassword,
+    ): void {
+        if (empty($permit->contractorEmail) || empty($permit->accessToken)) {
+            return;
+        }
+
+        $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+        $qrDataUri = $this->buildQrDataUri($contractorUrl);
+
+        $subpermitTypeLabel = ($spt = SubpermitType::tryFrom($subpermit->type)) ? $spt->label() : $subpermit->type;
+
+        $this->send(
+            to: $permit->contractorEmail,
+            language: Craft::$app->getSites()->getPrimarySite()->language,
+            subjectKey: 'Permit {n} — vyžaduje sa podpis pred schválením',
+            subjectParams: ['n' => $permit->permitNumber],
+            template: 'subpermit-contractor-invite',
+            vars: [
+                'permit'             => $permit,
+                'subpermit'          => $subpermit,
+                'subpermitTypeLabel' => $subpermitTypeLabel,
+                'permitUrl'          => $contractorUrl,
+                'password'           => $contractorPassword,
+                'qrDataUri'          => $qrDataUri,
+            ],
+        );
+    }
+
+    /**
      * Permit rejected — notify issuer and contractor with the reason.
      */
     public function notifyParticipantsOfRejection(PermitRecord $permit, string $reason): void
@@ -204,7 +380,36 @@ class PermitMailer extends Component
     }
 
     /**
-     * Permit closed by the issuer — send the final signed PDF to both
+     * Issuer signed the closure — notify HSE that the permit is waiting for
+     * the final HSE countersignature in CP.
+     */
+    public function notifyHseOfClosurePending(PermitRecord $permit, string $issuerSignerName): void
+    {
+        $hseEmail = $this->resolveHseEmail();
+        if (!$hseEmail) {
+            Craft::warning("BOZP mailer: no HSE recipient for closure of permit #{$permit->id}", __METHOD__);
+            return;
+        }
+
+        $hseUser = $this->findHseUser();
+        $language = $hseUser?->getPreferredLanguage() ?? Craft::$app->language;
+
+        $this->send(
+            to: $hseEmail,
+            language: $language,
+            subjectKey: 'Permit {n} čaká na podpis HSE',
+            subjectParams: ['n' => $permit->permitNumber],
+            template: 'pending-hse-closure',
+            vars: [
+                'permit'     => $permit,
+                'permitUrl'  => UrlHelper::cpUrl('bozp/permit/' . $permit->id),
+                'signerName' => $issuerSignerName,
+            ],
+        );
+    }
+
+    /**
+     * Permit closed by HSE — send the final signed PDF to both
      * the issuer (employee) and the contractor as an email attachment.
      *
      * Requires the closed PDF to have been (re)generated before this is called.

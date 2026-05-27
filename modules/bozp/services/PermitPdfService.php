@@ -8,7 +8,10 @@ use Craft;
 use craft\elements\Asset;
 use craft\elements\User;
 use craft\helpers\Assets as AssetsHelper;
+use craft\helpers\UrlHelper;
 use craft\web\View;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 use modules\bozp\enums\HazardCategory;
 use modules\bozp\enums\SignatureRole;
 use modules\bozp\enums\SubpermitType;
@@ -216,20 +219,30 @@ class PermitPdfService extends Component
         $oldMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_SITE);
 
+        // Contractor portal QR (no password — used by employees with accounts).
+        $contractorUrl = !empty($permit->accessToken)
+            ? UrlHelper::siteUrl('bozp/c/' . $permit->accessToken)
+            : null;
+        $contractorQrDataUri = $contractorUrl !== null
+            ? $this->buildQrDataUri($contractorUrl)
+            : null;
+
         $html = $view->renderTemplate('bozp/pdf/permit', [
-            'permit'           => $permit,
-            'zones'            => $zones,
-            'hazards'          => $hazards,
-            'hazardCategories' => HazardCategory::pdfOrder(),
-            'signatures'       => $signatures,
-            'sigImages'        => $sigImages,
-            'issuer'           => $issuer,
-            'approver'         => $approver,
-            'subpermits'       => $subpermits,
-            'subpermitTypes'   => SubpermitType::cases(),
-            'controls'         => $controls,
-            'controlSigImages' => $controlSigImages,
-            'generatedAt'      => date('d.m.Y H:i'),
+            'permit'              => $permit,
+            'zones'               => $zones,
+            'hazards'             => $hazards,
+            'hazardCategories'    => HazardCategory::pdfOrder(),
+            'signatures'          => $signatures,
+            'sigImages'           => $sigImages,
+            'issuer'              => $issuer,
+            'approver'            => $approver,
+            'subpermits'          => $subpermits,
+            'subpermitTypes'      => SubpermitType::cases(),
+            'controls'            => $controls,
+            'controlSigImages'    => $controlSigImages,
+            'contractorUrl'       => $contractorUrl,
+            'contractorQrDataUri' => $contractorQrDataUri,
+            'generatedAt'         => date('d.m.Y H:i'),
         ]);
 
         $view->setTemplateMode($oldMode);
@@ -281,17 +294,27 @@ class PermitPdfService extends Component
         $oldMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_SITE);
 
+        // Contractor portal QR — same accessToken as the parent permit.
+        $contractorUrl = !empty($permit->accessToken)
+            ? UrlHelper::siteUrl('bozp/c/' . $permit->accessToken)
+            : null;
+        $contractorQrDataUri = $contractorUrl !== null
+            ? $this->buildQrDataUri($contractorUrl)
+            : null;
+
         $html = $view->renderTemplate('bozp/pdf/subpermit', [
-            'permit'          => $permit,
-            'subpermit'       => $subpermit,
-            'subpermitType'   => $subpermitType,
-            'values'          => $data,
-            'signatures'      => $signatures,
-            'sigImages'       => $sigImages,
-            'signingRequests' => $signingRequests,
-            'signingImages'   => $signingImages,
-            'issuer'          => $issuer,
-            'generatedAt'     => date('d.m.Y H:i'),
+            'permit'              => $permit,
+            'subpermit'           => $subpermit,
+            'subpermitType'       => $subpermitType,
+            'values'              => $data,
+            'signatures'          => $signatures,
+            'sigImages'           => $sigImages,
+            'signingRequests'     => $signingRequests,
+            'signingImages'       => $signingImages,
+            'issuer'              => $issuer,
+            'contractorUrl'       => $contractorUrl,
+            'contractorQrDataUri' => $contractorQrDataUri,
+            'generatedAt'         => date('d.m.Y H:i'),
         ]);
 
         $view->setTemplateMode($oldMode);
@@ -389,6 +412,25 @@ class PermitPdfService extends Component
         }
 
         return (int) $asset->id;
+    }
+
+    /**
+     * Render a URL as a base64 PNG data URI for embedding in the PDF.
+     */
+    private function buildQrDataUri(string $url): ?string
+    {
+        try {
+            $result = Builder::create()
+                ->writer(new PngWriter())
+                ->data($url)
+                ->size(220)
+                ->margin(8)
+                ->build();
+            return 'data:image/png;base64,' . base64_encode($result->getString());
+        } catch (\Throwable $e) {
+            Craft::error('BOZP PDF: QR generation failed: ' . $e->getMessage(), __METHOD__);
+            return null;
+        }
     }
 
     /**

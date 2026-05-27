@@ -35,7 +35,7 @@
 
 {% macro field_error(errors, key) %}
     {% if errors[key] is defined %}
-        <p class="bozp-form__error" id="err-{{ key }}">{{ errors[key] }}</p>
+        <p class="bozp-form-row__error" id="err-{{ key }}">{{ errors[key] }}</p>
     {% endif %}
 {% endmacro %}
 
@@ -65,15 +65,15 @@
             </p>
         </header>
 
-        <form method="post" action="" class="bozp-form" novalidate>
+        <form method="post" action="" class="bozp-form" enctype="multipart/form-data" novalidate>
             {{ csrfInput() }}
             <input type="hidden" name="action" value="bozp/permits/save">
 
-            <fieldset class="bozp-form__section">
-                <legend>{{ 'Dodávateľ'|t('bozp') }}</legend>
+            <fieldset class="bozp-form-section">
+                <legend class="bozp-form-section__title">{{ 'Dodávateľ'|t('bozp') }}</legend>
 
-                <div class="bozp-form__field{% if errors.contractorCompany is defined %} bozp-form__field--error{% endif %}">
-                    <label for="contractorCompany">{{ 'Názov dodávateľskej firmy'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <div class="bozp-form-row{% if errors.contractorCompany is defined %} bozp-form-row--error{% endif %}">
+                    <label for="contractorCompany">{{ 'Názov dodávateľskej firmy'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="text"
                            id="contractorCompany"
                            name="contractorCompany"
@@ -84,7 +84,7 @@
                     {{ _self.field_error(errors, 'contractorCompany') }}
                 </div>
 
-                <div class="bozp-form__field">
+                <div class="bozp-form-row">
                     <label for="contractorPersonName">{{ 'Kontaktná osoba'|t('bozp') }}</label>
                     <input type="text"
                            id="contractorPersonName"
@@ -93,7 +93,7 @@
                            maxlength="255">
                 </div>
 
-                <div class="bozp-form__field{% if errors.contractorEmail is defined %} bozp-form__field--error{% endif %}">
+                <div class="bozp-form-row{% if errors.contractorEmail is defined %} bozp-form-row--error{% endif %}">
                     <label for="contractorEmail">{{ 'E-mail'|t('bozp') }}</label>
                     <input type="email"
                            id="contractorEmail"
@@ -106,11 +106,11 @@
             </fieldset>
 
             {% if zones|length > 0 %}
-                <fieldset class="bozp-form__section">
-                    <legend>{{ 'Zóna'|t('bozp') }}</legend>
-                    <p class="bozp-form__hint">{{ 'Vyberte zónu, v ktorej sa práca vykonáva.'|t('bozp') }}</p>
+                <fieldset class="bozp-form-section">
+                    <legend class="bozp-form-section__title">{{ 'Zóna'|t('bozp') }}</legend>
+                    <p class="bozp-form-section__hint">{{ 'Vyberte zónu, v ktorej sa práca vykonáva.'|t('bozp') }}</p>
 
-                    <div class="bozp-form__field">
+                    <div class="bozp-form-row">
                         <label for="zoneId">{{ 'Zóna'|t('bozp') }}</label>
                         <select name="zoneId" id="zoneId">
                             <option value="">{{ '— Vyberte zónu —'|t('bozp') }}</option>
@@ -125,11 +125,11 @@
                 </fieldset>
             {% endif %}
 
-            <fieldset class="bozp-form__section">
-                <legend>{{ 'Práca'|t('bozp') }}</legend>
+            <fieldset class="bozp-form-section">
+                <legend class="bozp-form-section__title">{{ 'Práca'|t('bozp') }}</legend>
 
-                <div class="bozp-form__field{% if errors.workLocation is defined %} bozp-form__field--error{% endif %}">
-                    <label for="workLocation">{{ 'Miesto výkonu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <div class="bozp-form-row{% if errors.workLocation is defined %} bozp-form-row--error{% endif %}">
+                    <label for="workLocation">{{ 'Miesto výkonu'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="text"
                            id="workLocation"
                            name="workLocation"
@@ -140,8 +140,8 @@
                     {{ _self.field_error(errors, 'workLocation') }}
                 </div>
 
-                <div class="bozp-form__field{% if errors.workOverview is defined %} bozp-form__field--error{% endif %}">
-                    <label for="workOverview">{{ 'Popis prác'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                <div class="bozp-form-row{% if errors.workOverview is defined %} bozp-form-row--error{% endif %}">
+                    <label for="workOverview">{{ 'Popis prác'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <textarea id="workOverview"
                               name="workOverview"
                               rows="5"
@@ -150,25 +150,43 @@
                     {{ _self.field_error(errors, 'workOverview') }}
                 </div>
 
-                <div class="bozp-form__field{% if errors.validFrom is defined %} bozp-form__field--error{% endif %}">
+                <div class="bozp-form-row{% if errors.validFrom is defined %} bozp-form-row--error{% endif %}">
                     <label for="validFrom">{{ 'Platnosť od'|t('bozp') }}</label>
                     <input type="date"
                            id="validFrom"
                            name="validFrom"
                            value="{{ values.validFrom ?? '' }}"
                            {% if errors.validFrom is defined %}aria-invalid="true" aria-describedby="err-validFrom"{% endif %}>
-                    <p class="bozp-form__hint">
+                    <p class="bozp-form-section__hint">
                         {{ 'Platnosť permitu je 7 dní od dátumu schválenia HSE.'|t('bozp') }}
                     </p>
                     {{ _self.field_error(errors, 'validFrom') }}
                 </div>
             </fieldset>
 
+            {# ----- Risk assessment attachment ----- #}
+            <fieldset class="bozp-form-section">
+                <legend class="bozp-form-section__title">{{ 'Hodnotenie rizík'|t('bozp') }}</legend>
+                <p class="bozp-form-section__hint">
+                    {{ 'Pripojte dokument s hodnotením rizík (PDF, DOCX alebo XLSX, max. 10 MB). Pri odoslaní na schválenie je príloha povinná.'|t('bozp') }}
+                </p>
+
+                <div class="bozp-form-row{% if errors.riskAssessment is defined %} bozp-form-row--error{% endif %}">
+                    <label for="riskAssessment">{{ 'Súbor hodnotenia rizík'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+                    <input type="file"
+                           id="riskAssessment"
+                           name="riskAssessment"
+                           accept=".pdf,.docx,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                           {% if errors.riskAssessment is defined %}aria-invalid="true" aria-describedby="err-riskAssessment"{% endif %}>
+                    {{ _self.field_error(errors, 'riskAssessment') }}
+                </div>
+            </fieldset>
+
             {# ----- Hazard matrix ----- #}
             {% if hazardCategories|length > 0 %}
-                <fieldset class="bozp-form__section bozp-form__section--hazards">
-                    <legend>{{ 'Riziká a OOPP'|t('bozp') }}</legend>
-                    <p class="bozp-form__hint">
+                <fieldset class="bozp-form-section bozp-form-section--hazards">
+                    <legend class="bozp-form-section__title">{{ 'Riziká a OOPP'|t('bozp') }}</legend>
+                    <p class="bozp-form-section__hint">
                         {{ 'Pri každom riziku vyznačte, či je pracovník exponovaný, uveďte ochranné opatrenie a spôsob kontroly počas činnosti.'|t('bozp') }}
                     </p>
 
@@ -235,28 +253,28 @@
             {% endif %}
 
             {# ----- Preparation checks ----- #}
-            <fieldset class="bozp-form__section bozp-form__section--prep">
-                <legend>{{ 'Príprava pracoviska'|t('bozp') }}</legend>
-                <p class="bozp-form__hint">
+            <fieldset class="bozp-form-section bozp-form-section--prep">
+                <legend class="bozp-form-section__title">{{ 'Príprava pracoviska'|t('bozp') }}</legend>
+                <p class="bozp-form-section__hint">
                     {{ 'Potvrďte stav pracoviska a vybavenia pred začiatkom prác.'|t('bozp') }}
                 </p>
 
-                <div class="bozp-form__field">
-                    <span class="bozp-form__label">{{ 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp') }}</span>
+                <div class="bozp-form-row">
+                    <span class="bozp-form-row__label">{{ 'Sú pracovné podmienky vhodné na vykonávanie prác?'|t('bozp') }}</span>
                     {{ _self.yes_no('preparation[conditionsSuitable]', preparation.conditionsSuitable ?? '') }}
                 </div>
 
-                <div class="bozp-form__field">
-                    <span class="bozp-form__label">{{ 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp') }}</span>
+                <div class="bozp-form-row">
+                    <span class="bozp-form-row__label">{{ 'Je náradie a vybavenie v dobrom technickom stave?'|t('bozp') }}</span>
                     {{ _self.yes_no('preparation[toolsInGoodCondition]', preparation.toolsInGoodCondition ?? '') }}
                 </div>
 
-                <div class="bozp-form__field">
-                    <span class="bozp-form__label">{{ 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp') }}</span>
+                <div class="bozp-form-row">
+                    <span class="bozp-form-row__label">{{ 'Existujú podmienky, pri ktorých je nutné práce zastaviť?'|t('bozp') }}</span>
                     {{ _self.yes_no('preparation[hasStopConditions]', preparation.hasStopConditions ?? '') }}
                 </div>
 
-                <div class="bozp-form__field">
+                <div class="bozp-form-row">
                     <label for="stopConditionsDescription">
                         {{ 'Popis podmienok pre zastavenie prác'|t('bozp') }}
                     </label>
@@ -265,12 +283,12 @@
                               rows="3">{{ preparation.stopConditionsDescription ?? '' }}</textarea>
                 </div>
 
-                <div class="bozp-form__field">
-                    <span class="bozp-form__label">{{ 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp') }}</span>
+                <div class="bozp-form-row">
+                    <span class="bozp-form-row__label">{{ 'Je zavedený LOTO (uzamknutie / označenie)?'|t('bozp') }}</span>
                     {{ _self.yes_no('preparation[lotoImplemented]', preparation.lotoImplemented ?? '') }}
                 </div>
 
-                <div class="bozp-form__field">
+                <div class="bozp-form-row">
                     <label for="emergencyPlan">
                         {{ 'Núdzový plán / postup v prípade mimoriadnej udalosti'|t('bozp') }}
                     </label>
@@ -281,9 +299,9 @@
             </fieldset>
 
             {# ----- High-risk subpermits ----- #}
-            <fieldset class="bozp-form__section bozp-form__section--highrisk">
-                <legend>{{ 'Subpermity zvýšeného rizika'|t('bozp') }}</legend>
-                <p class="bozp-form__hint">
+            <fieldset class="bozp-form-section bozp-form-section--highrisk">
+                <legend class="bozp-form-section__title">{{ 'Subpermity zvýšeného rizika'|t('bozp') }}</legend>
+                <p class="bozp-form-section__hint">
                     {{ 'Označte typy subpermitov, ktoré budú potrebné pre tento permit. Subpermity sa vytvárajú a schvaľujú samostatne po vytvorení permitu.'|t('bozp') }}
                 </p>
 

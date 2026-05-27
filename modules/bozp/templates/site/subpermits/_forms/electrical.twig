@@ -3,47 +3,47 @@
 {% set ppe = values.electricalPpe ?? [] %}
 
 {% macro yn_row(name, value, label) %}
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ label }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ label }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 {% endmacro %}
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Elektrická inštalácia'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Elektrická inštalácia'|t('bozp') }}</legend>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
             <label for="voltageLevel">{{ 'Napätie (V)'|t('bozp') }}</label>
             <input type="text" id="voltageLevel" name="voltageLevel"
                    value="{{ values.voltageLevel ?? '' }}" maxlength="50" style="width:120px">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="circuitId">{{ 'Označenie obvodu / rozvádzača'|t('bozp') }}</label>
             <input type="text" id="circuitId" name="circuitId"
                    value="{{ values.circuitId ?? '' }}" maxlength="100">
         </div>
     </div>
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Typ práce'|t('bozp') }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Typ práce'|t('bozp') }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="liveWork" value="live"
+                <input type="radio" name="liveWork" value="live" required
                        {% if (values.liveWork ?? '') == 'live' %}checked{% endif %}>
                 <span>{{ 'Práca pod napätím'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="liveWork" value="dead"
+                <input type="radio" name="liveWork" value="dead" required
                        {% if (values.liveWork ?? '') == 'dead' %}checked{% endif %}>
                 <span>{{ 'Práca bez napätia'|t('bozp') }}</span>
             </label>
@@ -55,24 +55,24 @@
     {{ _self.yn_row('earthingApplied', values.earthingApplied ?? '', 'Uzemnenie bolo aplikované na pracovisko?'|t('bozp')) }}
 </fieldset>
 
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Oprávnenie a OOPP'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Oprávnenie a OOPP'|t('bozp') }}</legend>
 
-    <div class="bozp-form__row bozp-form__row--2col">
-        <div class="bozp-form__field">
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
             <label for="electricianName">{{ 'Meno elektrikára'|t('bozp') }}</label>
             <input type="text" id="electricianName" name="electricianName"
                    value="{{ values.electricianName ?? '' }}" maxlength="255">
         </div>
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="electricianCertificate">{{ 'Číslo osvedčenia (vyhláška 508/2009)'|t('bozp') }}</label>
             <input type="text" id="electricianCertificate" name="electricianCertificate"
                    value="{{ values.electricianCertificate ?? '' }}" maxlength="100">
         </div>
     </div>
 
-    <div class="bozp-form__field">
-        <span class="bozp-form__label">{{ 'Použité OOPP'|t('bozp') }}</span>
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Použité OOPP'|t('bozp') }}</span>
         <div class="bozp-form__checklist">
             {% set ppeOptions = {
                 'insulated_gloves':  'Izolačné rukavice'|t('bozp'),
@@ -94,7 +94,7 @@
 
     {{ _self.yn_row('safetyObserverPresent', values.safetyObserverPresent ?? '', 'Je prítomný dozorný pracovník počas celej doby práce?'|t('bozp')) }}
 
-    <div class="bozp-form__field">
+    <div class="bozp-form-row">
         <label for="electricalAdditionalMeasures">{{ 'Ďalšie bezpečnostné opatrenia'|t('bozp') }}</label>
         <textarea id="electricalAdditionalMeasures" name="electricalAdditionalMeasures" rows="3">{{ values.electricalAdditionalMeasures ?? '' }}</textarea>
     </div>
@@ -106,8 +106,8 @@
    unique link where they can review the subpermit details and sign electronically.
    The subpermit enters the HSE approval queue only once all required signers have signed.
 #}
-<fieldset class="bozp-form__section">
-    <legend>{{ 'Signatári subpermitu'|t('bozp') }}</legend>
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Signatári subpermitu'|t('bozp') }}</legend>
 
     <p style="margin:0 0 16px;font-size:13px;color:#444;">
         {{ 'Každej osobe bude po uložení odoslaný e-mail s odkazom na elektronický podpis. Povinné polia sú označené *.'|t('bozp') }}
@@ -130,9 +130,9 @@
 
     {% for role in requiredRoles %}
         {% set fieldName = 'signEmail_' ~ role.key %}
-        <div class="bozp-form__field{% if errors[fieldName] is defined %} bozp-form__field--error{% endif %}">
+        <div class="bozp-form-row{% if errors[fieldName] is defined %} bozp-form-row--error{% endif %}">
             <label for="{{ fieldName }}">
-                {{ role.label }} <span class="bozp-form__req">*</span>
+                {{ role.label }} <span class="bozp-form-row__req">*</span>
             </label>
             <input type="email" id="{{ fieldName }}" name="{{ fieldName }}"
                    value="{{ attribute(values, fieldName) ?? '' }}"
@@ -140,7 +140,7 @@
                    placeholder="meno@firma.sk"
                    {% if errors[fieldName] is defined %}aria-invalid="true"{% endif %}>
             {% if errors[fieldName] is defined %}
-                <p class="bozp-form__error">{{ errors[fieldName] }}</p>
+                <p class="bozp-form-row__error">{{ errors[fieldName] }}</p>
             {% endif %}
         </div>
     {% endfor %}
@@ -151,7 +151,7 @@
 
     {% for role in conditionalRoles %}
         {% set fieldName = 'signEmail_' ~ role.key %}
-        <div class="bozp-form__field">
+        <div class="bozp-form-row">
             <label for="{{ fieldName }}">{{ role.label }}</label>
             <input type="email" id="{{ fieldName }}" name="{{ fieldName }}"
                    value="{{ attribute(values, fieldName) ?? '' }}"
