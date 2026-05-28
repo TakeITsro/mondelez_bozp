@@ -1,0 +1,66 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = 'Nahlásiť chybu'|t('bozp') %}
+{% set selectedSubnavItem = 'bug-report' %}
+
+{% set crumbs = [
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
+    { label: title, url: '' }
+] %}
+
+{% set severityOptions = [
+    { value: 'critical', label: 'Kritická'|t('bozp') },
+    { value: 'high',     label: 'Vysoká'|t('bozp') },
+    { value: 'medium',   label: 'Stredná'|t('bozp') },
+    { value: 'low',      label: 'Nízka'|t('bozp') },
+] %}
+
+{% block content %}
+<div class="content-pane">
+    <h2 style="margin-top:0;">{{ 'Nahlásiť chybu'|t('bozp') }}</h2>
+    <p class="light">
+        {{ 'Po odoslaní sa automaticky vytvorí úloha v ClickUp s vašimi kontextovými údajmi (čas, URL, prehliadač).'|t('bozp') }}
+    </p>
+
+    <form method="post" accept-charset="UTF-8" style="max-width:680px;">
+        {{ csrfInput() }}
+        <input type="hidden" name="action" value="bozp/bug-report/submit">
+
+        {{ forms.textField({
+            label: 'Názov chyby'|t('bozp'),
+            id: 'title',
+            name: 'title',
+            value: values.title ?? '',
+            required: true,
+            maxlength: 200,
+            errors: errors.title is defined ? [errors.title] : [],
+        }) }}
+
+        {{ forms.selectField({
+            label: 'Závažnosť'|t('bozp'),
+            id: 'severity',
+            name: 'severity',
+            value: values.severity ?? 'medium',
+            options: severityOptions,
+            errors: errors.severity is defined ? [errors.severity] : [],
+        }) }}
+
+        {{ forms.textareaField({
+            label: 'Popis'|t('bozp'),
+            instructions: 'Čo robíte, čo ste očakávali, čo sa stalo. Pripojte kroky na zopakovanie chyby.'|t('bozp'),
+            id: 'description',
+            name: 'description',
+            value: values.description ?? '',
+            required: true,
+            rows: 8,
+            errors: errors.description is defined ? [errors.description] : [],
+        }) }}
+
+        <div class="buttons" style="margin-top:20px;">
+            <button type="submit" class="btn submit">{{ 'Odoslať'|t('bozp') }}</button>
+            <a href="{{ cpUrl('bozp') }}" class="btn">{{ 'Zrušiť'|t('bozp') }}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

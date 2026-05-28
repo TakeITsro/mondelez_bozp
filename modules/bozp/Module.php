@@ -14,6 +14,7 @@ use craft\web\twig\variables\Cp;
 use craft\web\UrlManager;
 use craft\web\View;
 use modules\bozp\services\AuditLogger;
+use modules\bozp\services\ClickUpClient;
 use modules\bozp\services\PermitMailer;
 use modules\bozp\services\PermitNumberGenerator;
 use modules\bozp\services\PermitPdfService;
@@ -38,6 +39,7 @@ use yii\base\Module as BaseModule;
  * @property-read SignatureService $signatureService
  * @property-read SubpermitSignatureService $subpermitSignatureService
  * @property-read SubpermitSigningService $subpermitSigningService
+ * @property-read ClickUpClient $clickUpClient
  */
 class Module extends BaseModule
 {
@@ -58,6 +60,7 @@ class Module extends BaseModule
             'signatureService' => SignatureService::class,
             'subpermitSignatureService' => SubpermitSignatureService::class,
             'subpermitSigningService'   => SubpermitSigningService::class,
+            'clickUpClient'             => ClickUpClient::class,
         ]);
 
         parent::init();
@@ -126,6 +129,10 @@ class Module extends BaseModule
                 // CP PDF download
                 $event->rules['bozp/permit/<id:\d+>/pdf'] = 'bozp/queue/permit-pdf';
                 $event->rules['bozp/permit/<permitId:\d+>/subpermit/<id:\d+>/pdf'] = 'bozp/queue/subpermit-pdf';
+
+                // Bug report → ClickUp
+                $event->rules['bozp/bug-report']      = 'bozp/bug-report/index';
+                $event->rules['POST bozp/bug-report'] = 'bozp/bug-report/submit';
             }
         );
     }
@@ -212,27 +219,43 @@ class Module extends BaseModule
             Cp::EVENT_REGISTER_CP_NAV_ITEMS,
             static function (RegisterCpNavItemsEvent $event): void {
                 $user = Craft::$app->getUser();
-
-                if (!$user->getIdentity() || !$user->checkPermission('bozp:viewQueue')) {
+                if (!$user->getIdentity()) {
                     return;
                 }
 
-                $subnav = [
-                    'queue' => [
+                $canViewQueue = $user->checkPermission('bozp:viewQueue');
+                $canViewAll   = $user->checkPermission('bozp:viewAll');
+                $canReportBug = $user->checkPermission('bozp:reportBug');
+
+                if (!$canViewQueue && !$canReportBug) {
+                    return;
+                }
+
+                $subnav = [];
+                if ($canViewQueue) {
+                    $subnav['queue'] = [
                         'label' => Craft::t('bozp', 'Schvaľovacia fronta'),
                         'url' => 'bozp/queue',
-                    ],
-                ];
-
-                if ($user->checkPermission('bozp:viewAll')) {
+                    ];
+                }
+                if ($canViewAll) {
                     $subnav['all'] = [
                         'label' => Craft::t('bozp', 'Všetky permity'),
                         'url' => 'bozp/all',
                     ];
                 }
+                if ($canReportBug) {
+                    $subnav['bug-report'] = [
+                        'label' => Craft::t('bozp', 'Nahlásiť chybu'),
+                        'url' => 'bozp/bug-report',
+                    ];
+                }
+
+                // Default landing URL = first available subnav target.
+                $defaultUrl = $canViewQueue ? 'bozp' : 'bozp/bug-report';
 
                 $event->navItems[] = [
-                    'url' => 'bozp',
+                    'url' => $defaultUrl,
                     'label' => Craft::t('bozp', 'BOZP Permity'),
                     'icon' => '@modules/bozp/icon-mask.svg',
                     'subnav' => $subnav,
@@ -273,6 +296,9 @@ class Module extends BaseModule
                         ],
                         'bozp:viewMap' => [
                             'label' => Craft::t('bozp', 'Zobraziť mapu zón'),
+                        ],
+                        'bozp:reportBug' => [
+                            'label' => Craft::t('bozp', 'Nahlásiť chybu (vytvorí úlohu v ClickUp)'),
                         ],
                     ],
                 ];
