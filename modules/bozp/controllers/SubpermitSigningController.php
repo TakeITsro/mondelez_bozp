@@ -74,6 +74,7 @@ class SubpermitSigningController extends Controller
         $req           = Craft::$app->getRequest();
         $token         = trim((string) $req->getRequiredBodyParam('token'));
         $signerName    = trim((string) $req->getBodyParam('signerName', ''));
+        $jobTitle      = trim((string) $req->getBodyParam('jobTitle', ''));
         $signatureData = (string) $req->getBodyParam('signatureData', '');
 
         /** @var Module $module */
@@ -110,7 +111,7 @@ class SubpermitSigningController extends Controller
                 'data'         => $data,
                 'alreadySigned' => false,
                 'errors'       => $errors,
-                'values'       => ['signerName' => $signerName],
+                'values'       => ['signerName' => $signerName, 'jobTitle' => $jobTitle],
             ]);
         }
 
@@ -120,6 +121,7 @@ class SubpermitSigningController extends Controller
                 $signerName,
                 $signatureData,
                 (string) ($req->getUserIP() ?? ''),
+                $jobTitle !== '' ? $jobTitle : null,
             );
         } catch (Throwable $e) {
             Craft::error('BOZP subpermit sign failed: ' . $e->getMessage(), __METHOD__);
@@ -132,7 +134,7 @@ class SubpermitSigningController extends Controller
                 'data'         => $data,
                 'alreadySigned' => false,
                 'errors'       => ['general' => Craft::t('bozp', 'Uloženie podpisu zlyhalo. Skúste znova.')],
-                'values'       => ['signerName' => $signerName],
+                'values'       => ['signerName' => $signerName, 'jobTitle' => $jobTitle],
             ]);
         }
 

@@ -273,18 +273,18 @@ class PermitPdfService extends Component
             }
         }
 
-        // Multi-signer requests (Electrical)
+        // Multi-signer requests (any type that uses the token-mail infra:
+        // Electrical, Excavation, etc.). Loaded unconditionally — empty when
+        // a subpermit has none.
         $signingRequests = [];
         $signingImages = [];
-        if ($subpermitType === SubpermitType::Electrical) {
-            $requests = SubpermitSigningRequestRecord::find()
-                ->where(['subpermitId' => $subpermit->id])
-                ->all();
-            foreach ($requests as $req) {
-                $signingRequests[$req->role] = $req;
-                if (!empty($req->signatureAssetId)) {
-                    $signingImages[$req->role] = $this->assetToDataUri((int) $req->signatureAssetId);
-                }
+        $requests = SubpermitSigningRequestRecord::find()
+            ->where(['subpermitId' => $subpermit->id])
+            ->all();
+        foreach ($requests as $req) {
+            $signingRequests[$req->role] = $req;
+            if (!empty($req->signatureAssetId)) {
+                $signingImages[$req->role] = $this->assetToDataUri((int) $req->signatureAssetId);
             }
         }
 

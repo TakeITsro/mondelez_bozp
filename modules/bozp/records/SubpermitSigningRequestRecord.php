@@ -18,6 +18,7 @@ use craft\db\ActiveRecord;
  * @property string      $role             SubpermitSigningRole value
  * @property string      $signerEmail      address where the invitation was sent
  * @property string|null $signerName       filled by the signer when they sign
+ * @property string|null $jobTitle         filled by the signer when they sign
  * @property string      $token            unique 64-char hex string
  * @property int|null    $signatureAssetId FK → assets, set when signed
  * @property string|null $signedAt

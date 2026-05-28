@@ -49,7 +49,7 @@
         </header>
 
         <form method="post" action="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/save') }}"
-              class="bozp-form" novalidate>
+              class="bozp-form" enctype="multipart/form-data" novalidate>
             {{ csrfInput() }}
             <input type="hidden" name="action" value="bozp/subpermits/save">
             <input type="hidden" name="permitId" value="{{ permit.id }}">

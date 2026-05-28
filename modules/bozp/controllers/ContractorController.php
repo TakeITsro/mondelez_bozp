@@ -828,9 +828,12 @@ class ContractorController extends Controller
             return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
         }
 
-        // Hot work + confined space require at least one contractor attachment
-        // on the parent permit before closure can be signed.
-        if (in_array($subpermit->type, ['hot_work', 'confined_space'], true)) {
+        // Hot work, confined space, and ATEX require at least one contractor
+        // attachment on the parent permit before closure can be signed.
+        //   - hot_work / confined_space: photo/document evidence of work area.
+        //   - atex: hourly-measure verification record (the "Additional
+        //     measures" sheet, signed off every hour by the works manager).
+        if (in_array($subpermit->type, ['hot_work', 'confined_space', 'atex'], true)) {
             $attachmentCount = (int) PermitAttachmentRecord::find()
                 ->where(['permitId' => $permit->id, 'attachmentType' => 'contractor_upload'])
                 ->count();

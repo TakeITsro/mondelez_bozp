@@ -146,6 +146,16 @@
                 {% endif %}
             </div>
 
+            <div class="bozp-form__field">
+                <label for="jobTitle">
+                    {{ 'Funkcia / pracovné zaradenie'|t('bozp') }}
+                </label>
+                <input type="text" id="jobTitle" name="jobTitle"
+                       value="{{ values.jobTitle ?? '' }}"
+                       maxlength="255"
+                       autocomplete="organization-title">
+            </div>
+
             {# Signature pad #}
             <div class="bozp-form__field{% if errors.signatureData is defined %} bozp-form__field--error{% endif %}">
                 <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>

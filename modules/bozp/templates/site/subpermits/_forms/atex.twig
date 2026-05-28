@@ -1,6 +1,10 @@
-{# Appendix 9 — Permit for work in ATEX environment #}
+{# Príloha č. 9 — Povolenie na prácu v prostredí s nebezpečenstvom výbuchu (ATEX). #}
 
-{% set ae = values.atexEquipment ?? [] %}
+{% set exZone   = values.exZone ?? [] %}
+{% set methods  = values.securingMethods ?? [] %}
+{% set ppe      = values.usedPpe ?? [] %}
+{% set tools    = values.toolsUsed ?? [] %}
+{% set insul    = values.workspaceInsulation ?? [] %}
 
 {% macro yn_row(name, value, label) %}
     <div class="bozp-form-row">
@@ -8,90 +12,200 @@
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
                 <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
                 <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 {% endmacro %}
 
+{# ─── EX zóna ─────────────────────────────────────────────────────────── #}
 <fieldset class="bozp-form-section">
-    <legend class="bozp-form-section__title">{{ 'Klasifikácia zóny ATEX'|t('bozp') }}</legend>
-
-    <div class="bozp-form-grid bozp-form-grid--2col">
-        <div class="bozp-form-row">
-            <label for="atexZone">{{ 'Zóna ATEX'|t('bozp') }}</label>
-            <select id="atexZone" name="atexZone">
-                <option value="">— {{ 'Vyberte'|t('bozp') }} —</option>
-                {% set zones = {
-                    'zone_0':  'Zóna 0 — nepretržite výbušná atmosféra (plyn)'|t('bozp'),
-                    'zone_1':  'Zóna 1 — príležitostne výbušná atmosféra (plyn)'|t('bozp'),
-                    'zone_2':  'Zóna 2 — zriedkavo výbušná atmosféra (plyn)'|t('bozp'),
-                    'zone_20': 'Zóna 20 — nepretržite výbušný prach'|t('bozp'),
-                    'zone_21': 'Zóna 21 — príležitostne výbušný prach'|t('bozp'),
-                    'zone_22': 'Zóna 22 — zriedkavo výbušný prach'|t('bozp'),
-                } %}
-                {% for val, label in zones %}
-                    <option value="{{ val }}" {% if (values.atexZone ?? '') == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="bozp-form-row">
-            <label for="explosiveSubstance">{{ 'Výbušná látka / médium'|t('bozp') }}</label>
-            <input type="text" id="explosiveSubstance" name="explosiveSubstance"
-                   value="{{ values.explosiveSubstance ?? '' }}" maxlength="255">
-        </div>
-    </div>
-
-    {{ _self.yn_row('hazardousAtmospherePresent', values.hazardousAtmospherePresent ?? '', 'Nebezpečná atmosféra bola detegovaná pred vstupom?'|t('bozp')) }}
+    <legend class="bozp-form-section__title">{{ 'EX zóna v danom priestore / zariadení'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">{{ '(*vyhovujúce zaškrknite)'|t('bozp') }}</p>
 
     <div class="bozp-form-row">
-        <label for="gasDetectorReading">{{ 'Hodnota detektora plynov / prachu pred prácou'|t('bozp') }}</label>
-        <input type="text" id="gasDetectorReading" name="gasDetectorReading"
-               value="{{ values.gasDetectorReading ?? '' }}" maxlength="100">
+        <span class="bozp-form-row__label">{{ 'EX zóna'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set zoneOptions = {
+                'zone_22': 'Zóna 22',
+                'zone_21': 'Zóna 21',
+                'zone_2':  'Zóna 2',
+                'zone_1':  'Zóna 1',
+                'zone_0':  'Zóna 0',
+            } %}
+            {% for key, label in zoneOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="exZone[]" value="{{ key }}"
+                           {% if key in exZone %}checked{% endif %}>
+                    <div class="custom_checkbox"></div>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
     </div>
 </fieldset>
 
+{# ─── Príprava na činnosť ──────────────────────────────────────────── #}
 <fieldset class="bozp-form-section">
-    <legend class="bozp-form-section__title">{{ 'Zariadenia a náradie'|t('bozp') }}</legend>
+    <legend class="bozp-form-section__title">{{ 'Príprava na činnosť — všetky pracovné činnosti'|t('bozp') }}</legend>
 
     <div class="bozp-form-row">
-        <span class="bozp-form-row__label">{{ 'Použité ATEX zariadenia / náradie'|t('bozp') }}</span>
+        <span class="bozp-form-row__label">{{ 'Stav zabezpečenia pracoviska / priestoru / zariadenia proti výbuchu'|t('bozp') }}</span>
+        <div class="bozp-form__yesno">
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="securingStatus" value="secured" required
+                       {% if (values.securingStatus ?? '') == 'secured' %}checked{% endif %}>
+                <div class="custom_radio"></div>
+                <span>{{ 'Pracovisko bolo zabezpečené'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="securingStatus" value="not_possible" required
+                       {% if (values.securingStatus ?? '') == 'not_possible' %}checked{% endif %}>
+                <div class="custom_radio"></div>
+                <span>{{ 'Pracovisko nie je možné zabezpečiť'|t('bozp') }}</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Spôsob zabezpečenia (ak je zabezpečené)'|t('bozp') }}</span>
         <div class="bozp-form__checklist">
-            {% set aeOptions = {
-                'ex_tools':        'Ex náradie (antistatické, neiskrivé)'|t('bozp'),
-                'ex_flashlight':   'Ex baterka'|t('bozp'),
-                'ex_radio':        'Ex vysielačka'|t('bozp'),
-                'ex_phone':        'Ex mobilný telefón'|t('bozp'),
-                'gas_detector':    'Prenosný detektor plynu'|t('bozp'),
-                'ex_equipment':    'Ex elektrické zariadenie (certifikované)'|t('bozp'),
+            {% set methodOptions = {
+                'emptying':        'Vyprázdnenie zariadenia / priestoru'|t('bozp'),
+                'wetting_water':   'Zvlhčenie výbušnej látky vodou'|t('bozp'),
+                'inertization_gas':'Inertizácia plynom'|t('bozp'),
+                'other':           'Iné'|t('bozp'),
             } %}
-            {% for key, label in aeOptions %}
+            {% for key, label in methodOptions %}
                 <label class="bozp-form__check">
-                    <input type="checkbox" name="atexEquipment[]" value="{{ key }}"
-                           {% if key in ae %}checked{% endif %}>
+                    <input type="checkbox" name="securingMethods[]" value="{{ key }}"
+                           {% if key in methods %}checked{% endif %}>
+                    <div class="custom_checkbox"></div>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        <input type="text" name="securingMethodsOther"
+               value="{{ values.securingMethodsOther ?? '' }}"
+               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+               maxlength="255">
+    </div>
+
+    <p class="bozp-form-section__hint">
+        {{ 'Ak pracovisko nie je možné zabezpečiť, je nutné prijať dodatočné opatrenia podľa HSE-7-1 a konzultovať činnosť s HSE koordinátorom alebo požiarnym technikom. Povolenie nie je možné vydať, kým nie sú potvrdené všetky dodatočné opatrenia. Vedúci prác je povinný kontrolovať vykonávanie dodatočných opatrení každú hodinu.'|t('bozp') }}
+    </p>
+
+    {{ _self.yn_row(
+        'measureNonSparkingHandTools',
+        values.measureNonSparkingHandTools ?? '',
+        'Použitie neiskrivého ručného náradia schváleného pre ATEX prostredie'|t('bozp')
+    ) }}
+    {{ _self.yn_row(
+        'measurePortablePowerToolsAtex',
+        values.measurePortablePowerToolsAtex ?? '',
+        'Použitie prenosného elektrického náradia s ATEX certifikáciou pre danú zónu'|t('bozp')
+    ) }}
+    {{ _self.yn_row(
+        'measureAntistaticClothing',
+        values.measureAntistaticClothing ?? '',
+        'Použitie antistatického odevu (vrátane hygienickej čiapky, masky, odevu a obuvi v antistatickom prevedení)'|t('bozp')
+    ) }}
+</fieldset>
+
+{# ─── Plán a OOPP ─────────────────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Plán a osobné ochranné pracovné prostriedky'|t('bozp') }}</legend>
+
+    {{ _self.yn_row(
+        'hazardousEnergyPlanEstablished',
+        values.hazardousEnergyPlanEstablished ?? '',
+        'Vypracovaný, prediskutovaný, zavedený a overený plán na obmedzenie nebezpečnej energie'|t('bozp')
+    ) }}
+
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Použité OOPP'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set ppeOptions = {
+                'hard_hat':            'Prilba'|t('bozp'),
+                'safety_glasses':      'Ochranné okuliare'|t('bozp'),
+                'safety_gloves':       'Ochranné rukavice'|t('bozp'),
+                'respirator':          'Respirátor'|t('bozp'),
+                'hearing_protection':  'Ochrana sluchu'|t('bozp'),
+                'safety_shoes':        'Ochranná obuv'|t('bozp'),
+                'safety_harness':      'Bezpečnostný postroj'|t('bozp'),
+                'antistatic_clothing': 'Antistatický odev'|t('bozp'),
+                'other':               'Iné'|t('bozp'),
+            } %}
+            {% for key, label in ppeOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="usedPpe[]" value="{{ key }}"
+                           {% if key in ppe %}checked{% endif %}>
+                    <div class="custom_checkbox"></div>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        <input type="text" name="usedPpeOther"
+               value="{{ values.usedPpeOther ?? '' }}"
+               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+               maxlength="255">
+    </div>
+</fieldset>
+
+{# ─── Náradie a izolácia pracoviska ───────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Použité náradie a izolácia pracoviska'|t('bozp') }}</legend>
+
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Použité náradie'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set toolOptions = {
+                'hand_tools':           'Ručné náradie'|t('bozp'),
+                'non_sparking_tools':   'Neiskrivé náradie'|t('bozp'),
+                'portable_power_tools': 'Prenosné elektrické náradie'|t('bozp'),
+                'welding_machine':      'Zvárací stroj'|t('bozp'),
+            } %}
+            {% for key, label in toolOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="toolsUsed[]" value="{{ key }}"
+                           {% if key in tools %}checked{% endif %}>
+                    <div class="custom_checkbox"></div>
                     <span>{{ label }}</span>
                 </label>
             {% endfor %}
         </div>
     </div>
 
-    {{ _self.yn_row('nonExEquipmentRemoved', values.nonExEquipmentRemoved ?? '', 'Všetky non-Ex zariadenia boli odstránené z nebezpečnej zóny?'|t('bozp')) }}
-    {{ _self.yn_row('staticEarthingApplied', values.staticEarthingApplied ?? '', 'Antistatické uzemnenie bolo aplikované?'|t('bozp')) }}
-</fieldset>
-
-<fieldset class="bozp-form-section">
-    <legend class="bozp-form-section__title">{{ 'Povolenie a monitorovanie'|t('bozp') }}</legend>
-
-    {{ _self.yn_row('hotWorkProhibited', values.hotWorkProhibited ?? '', 'Práca so zdrojom zapálenia (horúce práce) je v tejto zóne zakázaná?'|t('bozp')) }}
-    {{ _self.yn_row('continuousMonitoring', values.continuousMonitoring ?? '', 'Priebežné monitorovanie atmosféry je zabezpečené počas celej práce?'|t('bozp')) }}
-    {{ _self.yn_row('emergencyShutdownKnown', values.emergencyShutdownKnown ?? '', 'Pracovník pozná postup núdzového odstavenia?'|t('bozp')) }}
-
     <div class="bozp-form-row">
-        <label for="atexAdditionalMeasures">{{ 'Ďalšie bezpečnostné opatrenia'|t('bozp') }}</label>
-        <textarea id="atexAdditionalMeasures" name="atexAdditionalMeasures" rows="3">{{ values.atexAdditionalMeasures ?? '' }}</textarea>
+        <span class="bozp-form-row__label">{{ 'Izolácia pracoviska'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            {% set insulationOptions = {
+                'safety_net':       'Záchytná sieť'|t('bozp'),
+                'safety_tape':      'Výstražná páska'|t('bozp'),
+                'fixed_barriers':   'Pevné zábrany'|t('bozp'),
+                'reinforcement':    'Vystuženie'|t('bozp'),
+                'safety_markings':  'Bezpečnostné označenie'|t('bozp'),
+                'trench_covers':    'Kryty výkopov'|t('bozp'),
+                'other':            'Iné'|t('bozp'),
+            } %}
+            {% for key, label in insulationOptions %}
+                <label class="bozp-form__check">
+                    <input type="checkbox" name="workspaceInsulation[]" value="{{ key }}"
+                           {% if key in insul %}checked{% endif %}>
+                    <div class="custom_checkbox"></div>
+                    <span>{{ label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        <input type="text" name="workspaceInsulationOther"
+               value="{{ values.workspaceInsulationOther ?? '' }}"
+               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+               maxlength="255">
     </div>
 </fieldset>

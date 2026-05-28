@@ -1,6 +1,10 @@
-{# Appendix 6 — Permit for high-risk electrical work #}
+{# Príloha č. 6 — Povolenie na vysokorizikové elektrické práce.
+   Common Who/When/Where fields come from the parent subpermits/form.twig
+   wrapper (Základné informácie). This file adds electrical specifics +
+   the 7 token-mailed signer emails (3 required + 4 conditional, kept from
+   the original SubpermitSigningRole roster). #}
 
-{% set ppe = values.electricalPpe ?? [] %}
+{% set accessControls = values.accessControls ?? [] %}
 
 {% macro yn_row(name, value, label) %}
     <div class="bozp-form-row">
@@ -8,124 +12,360 @@
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
                 <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
                 <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 {% endmacro %}
 
-<fieldset class="bozp-form-section">
-    <legend class="bozp-form-section__title">{{ 'Elektrická inštalácia'|t('bozp') }}</legend>
+{% macro radio_group(name, value, options) %}
+    <div class="bozp-form__yesno">
+        {% for v, label in options %}
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="{{ v }}" required {% if value == v %}checked{% endif %}>
+                <div class="custom_radio"></div>
+                <span>{{ label }}</span>
+            </label>
+        {% endfor %}
+    </div>
+{% endmacro %}
 
-    <div class="bozp-form-grid bozp-form-grid--2col">
-        <div class="bozp-form-row">
-            <label for="voltageLevel">{{ 'Napätie (V)'|t('bozp') }}</label>
-            <input type="text" id="voltageLevel" name="voltageLevel"
-                   value="{{ values.voltageLevel ?? '' }}" maxlength="50" style="width:120px">
-        </div>
-        <div class="bozp-form-row">
-            <label for="circuitId">{{ 'Označenie obvodu / rozvádzača'|t('bozp') }}</label>
-            <input type="text" id="circuitId" name="circuitId"
-                   value="{{ values.circuitId ?? '' }}" maxlength="100">
+{# ─── Section 1 — Povolenie na prácu ────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ '1. Povolenie na prácu'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Vypĺňa žiadateľ — kvalifikovaná MDLZ osoba ktorá vykonáva prácu definovanú v tomto povolení. Ak je práca vykonávaná treťou stranou, žiadateľ naďalej zostáva kvalifikovaná MDLZ osoba a vydáva toto povolenie v kooperácii s treťou stranou pod jeho dohľadom. Každý relevantný riadok označte „Áno".'|t('bozp') }}
+    </p>
+
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Potvrdenia kvalifikácie'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            <label class="bozp-form__check">
+                <input type="checkbox" name="chkApplicantQualified" value="1"
+                       {% if values.chkApplicantQualified ?? '' %}checked{% endif %}>
+                <div class="custom_checkbox"></div>
+                <span>{{ 'Áno, MDLZ žiadateľ je kvalifikovaný elektrikár (§21/22/23)'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__check">
+                <input type="checkbox" name="chkApplicantTrained" value="1"
+                       {% if values.chkApplicantTrained ?? '' %}checked{% endif %}>
+                <div class="custom_checkbox"></div>
+                <span>{{ 'Áno, MDLZ žiadateľ je školený na vydanie povolenia (povinné)'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__check">
+                <input type="checkbox" name="chkApplicantWillPerform" value="1"
+                       {% if values.chkApplicantWillPerform ?? '' %}checked{% endif %}>
+                <div class="custom_checkbox"></div>
+                <span>{{ 'Áno, MDLZ žiadateľ bude vykonávať prácu'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__check">
+                <input type="checkbox" name="chkRequestForThirdParty" value="1"
+                       {% if values.chkRequestForThirdParty ?? '' %}checked{% endif %}>
+                <div class="custom_checkbox"></div>
+                <span>{{ 'Áno, požiadavka vydaná MDLZ žiadateľom pre tretiu stranu'|t('bozp') }}</span>
+            </label>
         </div>
     </div>
 
     <div class="bozp-form-row">
-        <span class="bozp-form-row__label">{{ 'Typ práce'|t('bozp') }}</span>
-        <div class="bozp-form__yesno">
-            <label class="bozp-form__yesno-opt">
-                <input type="radio" name="liveWork" value="live" required
-                       {% if (values.liveWork ?? '') == 'live' %}checked{% endif %}>
-                <span>{{ 'Práca pod napätím'|t('bozp') }}</span>
-            </label>
-            <label class="bozp-form__yesno-opt">
-                <input type="radio" name="liveWork" value="dead" required
-                       {% if (values.liveWork ?? '') == 'dead' %}checked{% endif %}>
-                <span>{{ 'Práca bez napätia'|t('bozp') }}</span>
+        <span class="bozp-form-row__label">{{ 'Kto bude vykonávať prácu'|t('bozp') }}</span>
+        {{ _self.radio_group('whoPerforms', values.whoPerforms ?? '', {
+            'internal_single':   'Interne MDLZ osobou'|t('bozp'),
+            'internal_multiple': 'Interne MDLZ viacerími osobami'|t('bozp'),
+            'third_party':       'Treťou stranou'|t('bozp'),
+        }) }}
+    </div>
+
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Napätie rozvádzača'|t('bozp') }}</span>
+        {{ _self.radio_group('switchboardVoltage', values.switchboardVoltage ?? '', {
+            'under_50vac':       'Menej ako 50 VAC (pokračujte s QRP)'|t('bozp'),
+            'between_50_750vac': 'Medzi 50 VAC a 750 VAC (pokračujte s povolením)'|t('bozp'),
+            'over_750vac':       'Viac ako 750 VAC — Špec. povolenie nutné!'|t('bozp'),
+        }) }}
+    </div>
+
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Konštrukcia rozvádzača'|t('bozp') }}</span>
+        {{ _self.radio_group('switchboardDesign', values.switchboardDesign ?? '', {
+            'ip2x_comp':     'IP2X COMP.'|t('bozp'),
+            'ip2x_non_comp': 'IP2X NON COMP.'|t('bozp'),
+        }) }}
+    </div>
+
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ 'Bezpečný systém práce (SSoW)'|t('bozp') }}</span>
+        <div class="bozp-form__checklist">
+            <label class="bozp-form__check">
+                <input type="checkbox" name="ssowAttached" value="1"
+                       {% if values.ssowAttached ?? '' %}checked{% endif %}>
+                <div class="custom_checkbox"></div>
+                <span>{{ 'SSoW je priložený ako príloha k povoleniu (inak vyplňte bod 5 nižšie)'|t('bozp') }}</span>
             </label>
         </div>
     </div>
 
-    {{ _self.yn_row('circuitDeEnergized', values.circuitDeEnergized ?? '', 'Obvod bol odistený a uzamknutý (LOTO)?'|t('bozp')) }}
-    {{ _self.yn_row('voltageVerified', values.voltageVerified ?? '', 'Absencia napätia bola overená voltmetrom?'|t('bozp')) }}
-    {{ _self.yn_row('earthingApplied', values.earthingApplied ?? '', 'Uzemnenie bolo aplikované na pracovisko?'|t('bozp')) }}
+    <div class="bozp-form-row">
+        <label for="workOrder">{{ 'Pracovná požiadavka / SAP zákazka'|t('bozp') }}</label>
+        <input type="text" id="workOrder" name="workOrder"
+               value="{{ values.workOrder ?? '' }}" maxlength="100">
+    </div>
+
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
+            <label for="plannedStartDateTime">{{ 'Plánovaný štart (dátum / čas)'|t('bozp') }}</label>
+            <input type="datetime-local" id="plannedStartDateTime" name="plannedStartDateTime"
+                   value="{{ values.plannedStartDateTime ?? '' }}">
+        </div>
+        <div class="bozp-form-row">
+            <label for="plannedEndDateTime">{{ 'Plánovaný koniec (dátum / čas)'|t('bozp') }}</label>
+            <input type="datetime-local" id="plannedEndDateTime" name="plannedEndDateTime"
+                   value="{{ values.plannedEndDateTime ?? '' }}">
+        </div>
+    </div>
+
+    <p class="bozp-form-section__hint">
+        {{ 'Dátum a čas expirácie sa nastavia automaticky pri schválení HSE (+ 8 hodín od schválenia).'|t('bozp') }}
+    </p>
+
+    <div class="bozp-form-row">
+        <label for="reasonForLiveWork">{{ 'Dôvod práce na živom zariadení (prečo nemôže byť práca vykonaná na vypnutom zariadení)'|t('bozp') }}</label>
+        <textarea id="reasonForLiveWork" name="reasonForLiveWork" rows="3">{{ values.reasonForLiveWork ?? '' }}</textarea>
+    </div>
 </fieldset>
 
+{# ─── Section 2 — Analýza rizík ─────────────────────────────────────── #}
 <fieldset class="bozp-form-section">
-    <legend class="bozp-form-section__title">{{ 'Oprávnenie a OOPP'|t('bozp') }}</legend>
+    <legend class="bozp-form-section__title">{{ '2. Analýza rizík'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Vypĺňa kvalifikovaná MDLZ osoba.'|t('bozp') }}
+    </p>
 
-    <div class="bozp-form-grid bozp-form-grid--2col">
+    <h4>{{ 'Analýza výboja / Prístupné hranice'|t('bozp') }}</h4>
+
+    <div class="bozp-form-grid bozp-form-grid--3col">
         <div class="bozp-form-row">
-            <label for="electricianName">{{ 'Meno elektrikára'|t('bozp') }}</label>
-            <input type="text" id="electricianName" name="electricianName"
-                   value="{{ values.electricianName ?? '' }}" maxlength="255">
+            <label for="arcFlashBoundaryM">{{ 'Arc Flash hranica rizika (m)'|t('bozp') }}</label>
+            <input type="number" id="arcFlashBoundaryM" name="arcFlashBoundaryM"
+                   value="{{ values.arcFlashBoundaryM ?? '' }}" min="0" max="999" step="1">
         </div>
         <div class="bozp-form-row">
-            <label for="electricianCertificate">{{ 'Číslo osvedčenia (vyhláška 508/2009)'|t('bozp') }}</label>
-            <input type="text" id="electricianCertificate" name="electricianCertificate"
-                   value="{{ values.electricianCertificate ?? '' }}" maxlength="100">
+            <label for="arcFlashBoundaryCm">{{ 'Arc Flash hranica rizika (cm)'|t('bozp') }}</label>
+            <input type="number" id="arcFlashBoundaryCm" name="arcFlashBoundaryCm"
+                   value="{{ values.arcFlashBoundaryCm ?? '' }}" min="0" max="99" step="1">
         </div>
     </div>
 
+    <div class="bozp-form-grid bozp-form-grid--3col">
+        <div class="bozp-form-row">
+            <label for="limitedAccessBoundaryM">{{ 'Hranica obmedzeného prístupu (m)'|t('bozp') }}</label>
+            <input type="number" id="limitedAccessBoundaryM" name="limitedAccessBoundaryM"
+                   value="{{ values.limitedAccessBoundaryM ?? '' }}" min="0" max="999" step="1">
+        </div>
+        <div class="bozp-form-row">
+            <label for="limitedAccessBoundaryCm">{{ 'Hranica obmedzeného prístupu (cm)'|t('bozp') }}</label>
+            <input type="number" id="limitedAccessBoundaryCm" name="limitedAccessBoundaryCm"
+                   value="{{ values.limitedAccessBoundaryCm ?? '' }}" min="0" max="99" step="1">
+        </div>
+    </div>
+
+    <div class="bozp-form-grid bozp-form-grid--3col">
+        <div class="bozp-form-row">
+            <label for="prohibitedAccessBoundaryM">{{ 'Hranica zakázaného prístupu (m)'|t('bozp') }}</label>
+            <input type="number" id="prohibitedAccessBoundaryM" name="prohibitedAccessBoundaryM"
+                   value="{{ values.prohibitedAccessBoundaryM ?? '' }}" min="0" max="999" step="1">
+        </div>
+        <div class="bozp-form-row">
+            <label for="prohibitedAccessBoundaryCm">{{ 'Hranica zakázaného prístupu (cm)'|t('bozp') }}</label>
+            <input type="number" id="prohibitedAccessBoundaryCm" name="prohibitedAccessBoundaryCm"
+                   value="{{ values.prohibitedAccessBoundaryCm ?? '' }}" min="0" max="99" step="1">
+        </div>
+    </div>
+
+    {{ _self.yn_row(
+        'arcFlashStickerAvailable',
+        values.arcFlashStickerAvailable ?? '',
+        'Je rozvádzač vybavený ARC FLASH nálepkou (práca bude vykonávaná v týchto hraniciach)?'|t('bozp')
+    ) }}
+
     <div class="bozp-form-row">
-        <span class="bozp-form-row__label">{{ 'Použité OOPP'|t('bozp') }}</span>
+        <span class="bozp-form-row__label">{{ 'Ak Arc flash nie je dostupný, obmedzené hranice'|t('bozp') }}</span>
+        {{ _self.radio_group('arcFlashUnavailableMode', values.arcFlashUnavailableMode ?? '', {
+            'always_3m_over_750vac':         '3 m (vždy > 750 VAC)'|t('bozp'),
+            'under_3m_restricted_proof_safe':'< 3 m, priestor obmedzený a proof safe (1 m min!)'|t('bozp'),
+        }) }}
+        <p class="bozp-form-section__hint">
+            {{ '*proof safe znamená že všetky vodiče sú uchytené a nie sú pohyblivé odhalené časti.'|t('bozp') }}
+        </p>
+    </div>
+
+    <h4>{{ 'Nasadené prvky proti vniku nekvalifikovaných osôb'|t('bozp') }}</h4>
+
+    <div class="bozp-form-row">
         <div class="bozp-form__checklist">
-            {% set ppeOptions = {
-                'insulated_gloves':  'Izolačné rukavice'|t('bozp'),
-                'insulated_tools':   'Izolačné náradie'|t('bozp'),
-                'face_shield':       'Ochranný štít tváre (oblúk)'|t('bozp'),
-                'arc_flash_suit':    'Oblek na ochranu pred oblúkom'|t('bozp'),
-                'safety_boots':      'Antistatická obuv'|t('bozp'),
-                'voltage_detector':  'Detektor napätia'|t('bozp'),
+            {% set acOptions = {
+                'signs':   'Značky'|t('bozp'),
+                'fencing': 'Oplotenie'|t('bozp'),
+                'staff':   'Obsluha'|t('bozp'),
+                'other':   'Iné'|t('bozp'),
             } %}
-            {% for key, label in ppeOptions %}
+            {% for key, label in acOptions %}
                 <label class="bozp-form__check">
-                    <input type="checkbox" name="electricalPpe[]" value="{{ key }}"
-                           {% if key in ppe %}checked{% endif %}>
+                    <input type="checkbox" name="accessControls[]" value="{{ key }}"
+                           {% if key in accessControls %}checked{% endif %}>
+                    <div class="custom_checkbox"></div>
                     <span>{{ label }}</span>
                 </label>
             {% endfor %}
         </div>
+        <input type="text" name="accessControlsOther"
+               value="{{ values.accessControlsOther ?? '' }}"
+               placeholder="{{ 'Iné — upresnite'|t('bozp') }}"
+               maxlength="255">
     </div>
 
-    {{ _self.yn_row('safetyObserverPresent', values.safetyObserverPresent ?? '', 'Je prítomný dozorný pracovník počas celej doby práce?'|t('bozp')) }}
+    <h4>{{ 'Bezpečnosť pracoviska'|t('bozp') }}</h4>
+    <p class="bozp-form-section__hint">
+        {{ 'Pre pokračovanie musia byť všetky odpovede „Áno".'|t('bozp') }}
+    </p>
 
-    <div class="bozp-form-row">
-        <label for="electricalAdditionalMeasures">{{ 'Ďalšie bezpečnostné opatrenia'|t('bozp') }}</label>
-        <textarea id="electricalAdditionalMeasures" name="electricalAdditionalMeasures" rows="3">{{ values.electricalAdditionalMeasures ?? '' }}</textarea>
+    {{ _self.yn_row(
+        'flammablesRemovedAndExtinguisher',
+        values.flammablesRemovedAndExtinguisher ?? '',
+        'Všetky horľavé riziká odstránené (nebezpečné materiály), hasiaci prístroj v dosahu'|t('bozp')
+    ) }}
+    {{ _self.yn_row(
+        'sufficientLighting',
+        values.sufficientLighting ?? '',
+        'Dostatočné osvetlenie'|t('bozp')
+    ) }}
+    {{ _self.yn_row(
+        'doorsSecured',
+        values.doorsSecured ?? '',
+        'Všetky pohyblivé dvere zabezpečené proti samovoľnému pohybu'|t('bozp')
+    ) }}
+    {{ _self.yn_row(
+        'emergencyExitClear',
+        values.emergencyExitClear ?? '',
+        'Núdzový východ je voľný'|t('bozp')
+    ) }}
+    {{ _self.yn_row(
+        'switchboardNoForeignObjects',
+        values.switchboardNoForeignObjects ?? '',
+        'Rozvádzač neobsahuje cudzí objekt'|t('bozp')
+    ) }}
+</fieldset>
+
+{# ─── Section 5 — SSoW (attachment OR inline description) ───────────── #}
+{% set ssowAttachedNow = values.ssowAttached ?? false %}
+<fieldset class="bozp-form-section" id="bozp-ssow-section">
+    <legend class="bozp-form-section__title">{{ '5. Bezpečný systém práce — SSoW'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Za správne vypracovanie SSoW je zodpovedná MDLZ osoba alebo tretia strana vykonávajúca prácu. Ak sa SSoW nedá bezpečne zadefinovať, práca sa nemôže začať.'|t('bozp') }}
+    </p>
+
+    {# File-attachment branch — visible when „SSoW priložený" checkbox is ticked. #}
+    <div class="bozp-form-row" id="bozp-ssow-file-row" {% if not ssowAttachedNow %}hidden{% endif %}>
+        <label for="ssowFile">{{ 'Súbor SSoW (PDF, DOCX, XLSX, max. 10 MB)'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+        <input type="file"
+               id="ssowFile"
+               name="ssowFile"
+               accept=".pdf,.docx,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        {% if values.ssowAttachmentFilename ?? '' %}
+            <p class="bozp-form-section__hint">
+                {{ 'Aktuálna príloha'|t('bozp') }}: <strong>{{ values.ssowAttachmentFilename }}</strong>
+            </p>
+        {% endif %}
+        {% if errors.ssowFile is defined %}
+            <p class="bozp-form-row__error">{{ errors.ssowFile }}</p>
+        {% endif %}
+    </div>
+
+    {# Inline-description branch — visible when checkbox unticked. #}
+    <div class="bozp-form-row" id="bozp-ssow-desc-row" {% if ssowAttachedNow %}hidden{% endif %}>
+        <label for="ssowDescription">{{ 'Popis práce ako sa bude bezpečne vykonávať'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+        <textarea id="ssowDescription" name="ssowDescription" rows="6"
+                  placeholder="{{ 'Definujte izoláciu živých častí, prevenciu pádu náradia do rozvádzača, chránený priestor, spôsob komunikácie pred vstupom, kto bude dohliadať na prácu, ochranu pred neočakávaným zatvorením dverí, odstránením ochrany a barikády. Adresujte mimoriadne riziká pre špecifickú prácu.'|t('bozp') }}">{{ values.ssowDescription ?? '' }}</textarea>
+        {% if errors.ssowDescription is defined %}
+            <p class="bozp-form-row__error">{{ errors.ssowDescription }}</p>
+        {% endif %}
     </div>
 </fieldset>
 
-{# ── Signing requests ──────────────────────────────────────────────────────── #}
-{#
-   After you save the subpermit, each person below receives an email with a
-   unique link where they can review the subpermit details and sign electronically.
-   The subpermit enters the HSE approval queue only once all required signers have signed.
-#}
+<script>
+(function () {
+    var cb       = document.querySelector('input[name="ssowAttached"]');
+    var fileRow  = document.getElementById('bozp-ssow-file-row');
+    var descRow  = document.getElementById('bozp-ssow-desc-row');
+    if (!cb || !fileRow || !descRow) return;
+
+    function sync() {
+        var attached = cb.checked;
+        fileRow.hidden = !attached;
+        descRow.hidden = attached;
+    }
+    cb.addEventListener('change', sync);
+    sync();
+})();
+</script>
+
+{# ─── Plán núdzovej situácie ────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Plán núdzovej situácie'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Plán musí byť pripravený inou osobou ako tou, ktorá vykonáva prácu (oblastný dozor alebo člen skupiny prvej pomoci). Túto osobu zaregistrujte ako podpisovateľa v sekcii Signatári (Kvalifikovaná osoba MDLZ — havarijný plán).'|t('bozp') }}
+    </p>
+
+    {{ _self.yn_row(
+        'aedInArea',
+        values.aedInArea ?? '',
+        'AED sa nachádza v oblasti (povinné)'|t('bozp')
+    ) }}
+    {{ _self.yn_row(
+        'cprTrained',
+        values.cprTrained ?? '',
+        'KPR školený'|t('bozp')
+    ) }}
+    {{ _self.yn_row(
+        'aedTrained',
+        values.aedTrained ?? '',
+        'AED školený'|t('bozp')
+    ) }}
+</fieldset>
+
+{# ─── Section 6 — Over 750VAC review (info-only) ────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ '6. Prehľad elektrických prác pod napätím > 750 VAC'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Vyplňte len ak sa pracuje na viac ako 750 VAC alebo ak je vydaných viac PTW v rovnakom čase v rovnakej oblasti / línii. Podpisy „Druhý technik (dohľad)", „Zástupca pre bezpečnosť" a „Vedúci údržby" sa zachytávajú cez systém signatárov nižšie — pri vyplnení ich e-mailov dostanú odkaz na elektronický podpis.'|t('bozp') }}
+    </p>
+</fieldset>
+
+{# ─── Signatári subpermitu (token-mailed) ───────────────────────────── #}
 <fieldset class="bozp-form-section">
     <legend class="bozp-form-section__title">{{ 'Signatári subpermitu'|t('bozp') }}</legend>
 
-    <p style="margin:0 0 16px;font-size:13px;color:#444;">
+    <p class="bozp-form-section__hint">
         {{ 'Každej osobe bude po uložení odoslaný e-mail s odkazom na elektronický podpis. Povinné polia sú označené *.'|t('bozp') }}
     </p>
 
-    {# Always required #}
     {% set requiredRoles = [
-        { key: 'mdlz_qualified_emergency', label: 'Kvalifikovaná osoba MDLZ — havarijný plán'|t('bozp'),   required: true  },
-        { key: 'area_supervisor',          label: 'Vedúci pracoviska'|t('bozp'),                            required: true  },
-        { key: 'mdlz_qualified_approval',  label: 'Kvalifikovaná osoba MDLZ — schválenie SSoW'|t('bozp'),  required: true  },
+        { key: 'mdlz_qualified_emergency', label: 'Kvalifikovaná osoba MDLZ — havarijný plán'|t('bozp') },
+        { key: 'area_supervisor',          label: 'Vedúci pracoviska'|t('bozp') },
+        { key: 'mdlz_qualified_approval',  label: 'Kvalifikovaná osoba MDLZ — schválenie SSoW'|t('bozp') },
     ] %}
 
-    {# Conditional #}
     {% set conditionalRoles = [
-        { key: 'third_party',          label: 'Dodávateľ (tretia strana)'|t('bozp'),         required: false },
-        { key: 'second_technician',    label: 'Druhý technik (>750 VAC)'|t('bozp'),          required: false },
-        { key: 'safety_rep',           label: 'Zástupca pre bezpečnosť (>750 VAC)'|t('bozp'),required: false },
-        { key: 'maintenance_manager',  label: 'Vedúci údržby (>750 VAC)'|t('bozp'),          required: false },
+        { key: 'third_party',         label: 'Dodávateľ (tretia strana)'|t('bozp') },
+        { key: 'second_technician',   label: 'Druhý technik (>750 VAC)'|t('bozp') },
+        { key: 'safety_rep',          label: 'Zástupca pre bezpečnosť (>750 VAC)'|t('bozp') },
+        { key: 'maintenance_manager', label: 'Vedúci údržby (>750 VAC)'|t('bozp') },
     ] %}
 
     {% for role in requiredRoles %}
@@ -145,9 +385,7 @@
         </div>
     {% endfor %}
 
-    <p style="margin:16px 0 8px;font-size:13px;font-weight:700;color:#4F2170;">
-        {{ 'Voliteľné / podmienené'|t('bozp') }}
-    </p>
+    <p class="bozp-form-section__hint">{{ 'Voliteľné / podmienené'|t('bozp') }}</p>
 
     {% for role in conditionalRoles %}
         {% set fieldName = 'signEmail_' ~ role.key %}
@@ -159,5 +397,4 @@
                    placeholder="meno@firma.sk">
         </div>
     {% endfor %}
-
 </fieldset>

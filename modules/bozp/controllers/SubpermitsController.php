@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace modules\bozp\controllers;
 
 use Craft;
+use craft\elements\Asset;
+use craft\helpers\Assets;
+use craft\helpers\FileHelper;
+use craft\web\UploadedFile;
 use craft\web\View;
 use modules\bozp\enums\PermitStatus;
 use modules\bozp\enums\SubpermitSigningRole;
@@ -153,9 +157,33 @@ class SubpermitsController extends BaseSiteController
 
         $userId = Craft::$app->getUser()->getId();
 
-        // For Electrical subpermits, validate that required signing emails are present
+        // Electrical-specific: SSoW is either an uploaded attachment OR an
+        // inline description. The form renders one or the other based on the
+        // `ssowAttached` checkbox. Validate the active branch + persist the
+        // uploaded asset id into $values so it lands in subpermit.data.
         if ($subpermitType === SubpermitType::Electrical) {
-            foreach (SubpermitSigningRole::cases() as $role) {
+            $ssowErr = $this->handleElectricalSsow($values);
+            if ($ssowErr !== []) {
+                foreach ($ssowErr as $k => $v) {
+                    $errors[$k] = $v;
+                }
+                Craft::$app->getSession()->setError(Craft::t('bozp', 'Skontrolujte chyby vo formulári.'));
+                $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+                return $this->renderTemplate('bozp/site/subpermits/form', [
+                    'permit' => $permit,
+                    'subpermitType' => $subpermitType,
+                    'errors' => $errors,
+                    'values' => $values,
+                ]);
+            }
+        }
+
+        // For any type that uses the multi-signer infrastructure, validate
+        // that REQUIRED signing emails are present. Optional roles can be
+        // left blank — they simply won't trigger a token invite.
+        $signingRoles = SubpermitSigningRole::forType($subpermitType);
+        if ($signingRoles !== []) {
+            foreach ($signingRoles as $role) {
                 if ($role->isRequired() && empty(trim($values['signEmail_' . $role->value] ?? ''))) {
                     $errors['signEmail_' . $role->value] = (string) Craft::t(
                         'bozp',
@@ -201,16 +229,20 @@ class SubpermitsController extends BaseSiteController
                 $signatureData,
             );
 
-            // For Electrical: create token-based signing requests for all other signers
-            if ($subpermitType === SubpermitType::Electrical) {
+            // Token-based signing requests for any type that defines roles
+            // (Electrical, Excavation, etc.). Only non-empty emails generate
+            // a request + invite mail.
+            if ($signingRoles !== []) {
                 $emails = [];
-                foreach (SubpermitSigningRole::cases() as $role) {
+                foreach ($signingRoles as $role) {
                     $email = trim($values['signEmail_' . $role->value] ?? '');
                     if ($email !== '') {
                         $emails[$role->value] = $email;
                     }
                 }
-                $module->subpermitSigningService->createRequestsForSubpermit($subpermit, $permit, $emails);
+                if ($emails !== []) {
+                    $module->subpermitSigningService->createRequestsForSubpermit($subpermit, $permit, $emails);
+                }
             }
 
             // Generate initial subpermit PDF (silently skips on failure)
@@ -242,7 +274,7 @@ class SubpermitsController extends BaseSiteController
             return $this->redirect("bozp/permits/{$permitId}/subpermits/new/{$typeValue}");
         }
 
-        $notice = $subpermitType === SubpermitType::Electrical
+        $notice = ($signingRoles !== [])
             ? Craft::t('bozp', 'Subpermit bol uložený. Pozvania na podpis boli odoslané e-mailom.')
             : Craft::t('bozp', 'Subpermit bol uložený a podpísaný.');
         Craft::$app->getSession()->setNotice($notice);
@@ -719,30 +751,85 @@ class SubpermitsController extends BaseSiteController
 
         $specific = match ($type) {
             SubpermitType::HotWork => [
-                'issuedBy'         => $str('issuedBy'),
-                'jobOrderNumber'   => $str('jobOrderNumber'),
-                'workStartTime'    => $str('workStartTime'),
-                'workExpiryTime'   => $str('workExpiryTime'),
-                'checklist'        => $arr('checklist'),
-                'firePatrolName'   => $str('firePatrolName'),
-                'monitoringHours'  => $str('monitoringHours'),
-                'additionalMeasures' => $str('additionalMeasures'),
+                // Header
+                'permitIssuedByName'              => $str('permitIssuedByName'),
+                'hwPerformerType'                 => $str('hwPerformerType'), // 'employee' | 'contractor'
+                'jobOrderNumber'                  => $str('jobOrderNumber'),
+
+                // Work timing (expiry is auto-set at approval: approvedAt + 8h)
+                'workStartTime'                   => $str('workStartTime'),
+                'workCompletionTime'              => $str('workCompletionTime'),
+
+                // Base checklist (tri-state ok|nok|na)
+                'sprinklersOperational'           => $str('sprinklersOperational'),
+                'workEquipmentInGoodCondition'    => $str('workEquipmentInGoodCondition'),
+
+                // 11m zone
+                'dustEquipmentShutDown'           => $str('dustEquipmentShutDown'),
+                'conveyorsIsolated'               => $str('conveyorsIsolated'),
+                'combustibleMaterialsRemoved'     => $str('combustibleMaterialsRemoved'),
+                'explosiveAtmosphereEliminated'   => $str('explosiveAtmosphereEliminated'),
+                'floorSweptClean'                 => $str('floorSweptClean'),
+                'combustibleFloorWetDown'         => $str('combustibleFloorWetDown'),
+                'openingsCovered'                 => $str('openingsCovered'),
+                'tarpaulinsSuspended'             => $str('tarpaulinsSuspended'),
+
+                // Walls / ceilings / enclosed
+                'constructionNonCombustible'      => $str('constructionNonCombustible'),
+                'combustiblesOnOtherSideMoved'    => $str('combustiblesOnOtherSideMoved'),
+                'enclosedEquipmentCleaned'        => $str('enclosedEquipmentCleaned'),
+                'containersPurged'                => $str('containersPurged'),
+
+                // Fire patrol monitoring
+                'bucketOfWater'                   => $str('bucketOfWater'),
+                'fireBrigadeHasExtinguishers'     => $str('fireBrigadeHasExtinguishers'),
+                'extinguisherCountAndType'        => $str('extinguisherCountAndType'),
+                'firePatrolTrained'               => $str('firePatrolTrained'),
+                'additionalSupervisionIncluded'   => $str('additionalSupervisionIncluded'),
+                'monitoringHoursAfter'            => $str('monitoringHoursAfter'),
+
+                // Other
+                'confinedSpacePermitsOrLoto'      => $str('confinedSpacePermitsOrLoto'),
+                'smokeOrHeatDetectionDeactivated' => $str('smokeOrHeatDetectionDeactivated'),
+                'otherPrecautions'                => $str('otherPrecautions'),
             ],
             SubpermitType::ConfinedSpace => [
-                'expiryDate'           => $str('expiryDate'),
-                'expiryTime'           => $str('expiryTime'),
-                'emergencyPlan'        => $str('emergencyPlan'),
-                'trainingComplete'     => $str('trainingComplete'),
-                'lotoApplied'          => $str('lotoApplied'),
-                'pumpsBlinded'         => $str('pumpsBlinded'),
-                'ventilationRequired'  => $str('ventilationRequired'),
-                'ventilationStartTime' => $str('ventilationStartTime'),
-                'ventilationStopTime'  => $str('ventilationStopTime'),
-                'o2Percent'            => $str('o2Percent'),
-                'lelPercent'           => $str('lelPercent'),
-                'coPpm'                => $str('coPpm'),
-                'h2sPpm'               => $str('h2sPpm'),
-                'communicationConfirmed' => $str('communicationConfirmed'),
+                // Header
+                'authorizedPersonName'              => $str('authorizedPersonName'),
+                'department'                        => $str('department'),
+                'emergencyRescuePlan'               => $str('emergencyRescuePlan'),
+
+                // Isolation
+                'pumpsLinesBlinded'                 => $str('pumpsLinesBlinded'),
+
+                // Ventilation
+                'ventilationModificationRequired'   => $str('ventilationModificationRequired'),
+                'ventilationNotRequiredReason'      => $str('ventilationNotRequiredReason'),
+                'forcedVentilationStart'            => $str('forcedVentilationStart'),
+                'forcedVentilationStop'             => $str('forcedVentilationStop'),
+
+                // Atmosphere control (initial reading; periodic tests = paper attachment)
+                'atmosphereTestTime'                => $str('atmosphereTestTime'),
+                'oxygenPercent'                     => $str('oxygenPercent'),
+                'lelPercent'                        => $str('lelPercent'),
+                'coOrH2sPpm'                        => $str('coOrH2sPpm'),
+                'otherChemical'                     => $str('otherChemical'),
+
+                // Communication
+                'communicationEntrantSupervisor'    => $str('communicationEntrantSupervisor'),
+                'communicationSupervisorEmergency'  => $str('communicationSupervisorEmergency'),
+                'emergencyTeamMembers'              => $str('emergencyTeamMembers'),
+
+                // Entry timing
+                'timeOfFirstEnter'                  => $str('timeOfFirstEnter'),
+                'timeOfLastExit'                    => $str('timeOfLastExit'),
+
+                // Token-mailed signer emails (all required at submit)
+                'signEmail_cs_entrant'              => $str('signEmail_cs_entrant'),
+                'signEmail_cs_supervisor_entrant'   => $str('signEmail_cs_supervisor_entrant'),
+                'signEmail_cs_supervisor_cse'       => $str('signEmail_cs_supervisor_cse'),
+                'signEmail_cs_mdlz_orderant'        => $str('signEmail_cs_mdlz_orderant'),
+                'signEmail_cs_hse_department'       => $str('signEmail_cs_hse_department'),
             ],
             SubpermitType::Heights => [
                 'avoidFallPossible'          => $str('avoidFallPossible'),
@@ -800,76 +887,264 @@ class SubpermitsController extends BaseSiteController
                 'atmosphericConditions' => $str('atmosphericConditions'),
             ],
             SubpermitType::Electrical => [
-                'mdlzIsQualifiedElectrician' => $request->getBodyParam('mdlzIsQualifiedElectrician') === '1',
-                'mdlzTrainedToIssue'         => $request->getBodyParam('mdlzTrainedToIssue') === '1',
-                'mdlzWillPerform'            => $request->getBodyParam('mdlzWillPerform') === '1',
-                'thirdPartyRequest'          => $request->getBodyParam('thirdPartyRequest') === '1',
-                'whoPerforms'                => $str('whoPerforms'),
-                'switchboardVoltage'         => $str('switchboardVoltage'),
-                'switchboardDesign'          => $str('switchboardDesign'),
-                'ssowIssued'                 => $str('ssowIssued'),
-                'workRequest'                => $str('workRequest'),
-                'plannedStartDateTime'       => $str('plannedStartDateTime'),
-                'plannedEndDateTime'         => $str('plannedEndDateTime'),
-                'reasonWorkUnderVoltage'     => $str('reasonWorkUnderVoltage'),
-                'workDescriptionElec'        => $str('workDescriptionElec'),
-                'mdlzApplicantName'          => $str('mdlzApplicantName'),
-                'mdlzApplicantRole'          => $str('mdlzApplicantRole'),
-                'thirdPartyName'             => $str('thirdPartyName'),
-                'thirdPartyRole'             => $str('thirdPartyRole'),
-                'checklist'                  => $arr('checklist'),
-                'ssowDescription'            => $str('ssowDescription'),
-                'aedInArea'                  => $str('aedInArea'),
-                'cprTrained'                 => $str('cprTrained'),
-                'aedTrained'                 => $str('aedTrained'),
-                'areaSupervisorName'         => $str('areaSupervisorName'),
-                'secondTechnicianName'       => $str('secondTechnicianName'),
-                // Signing request emails
-                'signEmail_third_party'              => $str('signEmail_third_party'),
+                // Section 1 — confirmations (each checkbox: value '1' if ticked)
+                'chkApplicantQualified'        => $request->getBodyParam('chkApplicantQualified') === '1',
+                'chkApplicantTrained'          => $request->getBodyParam('chkApplicantTrained') === '1',
+                'chkApplicantWillPerform'      => $request->getBodyParam('chkApplicantWillPerform') === '1',
+                'chkRequestForThirdParty'      => $request->getBodyParam('chkRequestForThirdParty') === '1',
+
+                // Section 1 — work classification
+                'whoPerforms'                  => $str('whoPerforms'),           // internal_single | internal_multiple | third_party
+                'switchboardVoltage'           => $str('switchboardVoltage'),    // under_50vac | between_50_750vac | over_750vac
+                'switchboardDesign'            => $str('switchboardDesign'),     // ip2x_comp | ip2x_non_comp
+                'ssowAttached'                 => $request->getBodyParam('ssowAttached') === '1',
+
+                // Section 1 — work details
+                'workOrder'                    => $str('workOrder'),
+                'plannedStartDateTime'         => $str('plannedStartDateTime'),
+                'plannedEndDateTime'           => $str('plannedEndDateTime'),
+                'reasonForLiveWork'            => $str('reasonForLiveWork'),
+
+                // Section 2 — Arc Flash boundaries (m + cm pairs)
+                'arcFlashBoundaryM'            => $str('arcFlashBoundaryM'),
+                'arcFlashBoundaryCm'           => $str('arcFlashBoundaryCm'),
+                'limitedAccessBoundaryM'       => $str('limitedAccessBoundaryM'),
+                'limitedAccessBoundaryCm'      => $str('limitedAccessBoundaryCm'),
+                'prohibitedAccessBoundaryM'    => $str('prohibitedAccessBoundaryM'),
+                'prohibitedAccessBoundaryCm'   => $str('prohibitedAccessBoundaryCm'),
+
+                // Section 2 — arc-flash sticker / fallback boundary mode
+                'arcFlashStickerAvailable'     => $str('arcFlashStickerAvailable'),
+                'arcFlashUnavailableMode'      => $str('arcFlashUnavailableMode'), // always_3m_over_750vac | under_3m_restricted_proof_safe
+
+                // Section 2 — access controls
+                'accessControls'               => $arr('accessControls'),
+                'accessControlsOther'          => $str('accessControlsOther'),
+
+                // Section 2 — site safety yes/no (all must be 'yes' to proceed)
+                'flammablesRemovedAndExtinguisher' => $str('flammablesRemovedAndExtinguisher'),
+                'sufficientLighting'               => $str('sufficientLighting'),
+                'doorsSecured'                     => $str('doorsSecured'),
+                'emergencyExitClear'               => $str('emergencyExitClear'),
+                'switchboardNoForeignObjects'      => $str('switchboardNoForeignObjects'),
+
+                // Section 5 — SSoW description (when not attached)
+                'ssowDescription'              => $str('ssowDescription'),
+
+                // Emergency situation plan flags
+                'aedInArea'                    => $str('aedInArea'),
+                'cprTrained'                   => $str('cprTrained'),
+                'aedTrained'                   => $str('aedTrained'),
+
+                // Signing request emails (3 required + 4 conditional)
                 'signEmail_mdlz_qualified_emergency' => $str('signEmail_mdlz_qualified_emergency'),
                 'signEmail_area_supervisor'          => $str('signEmail_area_supervisor'),
                 'signEmail_mdlz_qualified_approval'  => $str('signEmail_mdlz_qualified_approval'),
+                'signEmail_third_party'              => $str('signEmail_third_party'),
                 'signEmail_second_technician'        => $str('signEmail_second_technician'),
                 'signEmail_safety_rep'               => $str('signEmail_safety_rep'),
                 'signEmail_maintenance_manager'      => $str('signEmail_maintenance_manager'),
             ],
             SubpermitType::Excavation => [
-                'workerTrained'   => $str('workerTrained'),
-                'checklist'       => $arr('checklist'),
-                'meetingName'     => $str('meetingName'),
-                'meetingPosition' => $str('meetingPosition'),
-                'meetingDateTime' => $str('meetingDateTime'),
+                // Worker competency (header row)
+                'workerTrained'                   => $str('workerTrained'),
+
+                // FÁZA 1 — MDLZ issuer safety checklist (Yes/No grid)
+                'needsElectricalIsolation'        => $str('needsElectricalIsolation'),
+                'needsBarriersSignage'            => $str('needsBarriersSignage'),
+                'equipmentIsolated'               => $str('equipmentIsolated'),
+                'adequateLighting'                => $str('adequateLighting'),
+                'designatedArea'                  => $str('designatedArea'),
+                'noSmokingOrOpenFire'             => $str('noSmokingOrOpenFire'),
+                'warningSignsPlaced'              => $str('warningSignsPlaced'),
+                'shoringRequired'                 => $str('shoringRequired'),
+                'supervisionPresent'              => $str('supervisionPresent'),
+                'firstAidKit'                     => $str('firstAidKit'),
+                'explosivityCheck'                => $str('explosivityCheck'),
+                'fireExtinguisher'                => $str('fireExtinguisher'),
+                'toxicityCheck'                   => $str('toxicityCheck'),
+                'rescueLineWithOperator'          => $str('rescueLineWithOperator'),
+                'oxygenAbove195'                  => $str('oxygenAbove195'),
+                'safeAccessAndExit'               => $str('safeAccessAndExit'),
+                'selfContainedBreathingApparatus' => $str('selfContainedBreathingApparatus'),
+                'noUndergroundUtilities'          => $str('noUndergroundUtilities'),
+                'dailyInspectionsRecorded'        => $str('dailyInspectionsRecorded'),
+                'supportRequiredOver15m'          => $str('supportRequiredOver15m'),
+
+                // Planned activity
+                'plannedActivityMeetingDate'      => $str('plannedActivityMeetingDate'),
+                'barricadesWalkways'              => $str('barricadesWalkways'),
+
+                // PHASE 2 / PHASE 3 — optional token-mailed approval signers.
+                // Empty email = no invite. Signer fills name + jobTitle + date
+                // + signature on their token page.
+                'signEmail_excavation_hse_approval'       => $str('signEmail_excavation_hse_approval'),
+                'signEmail_excavation_authority_approval' => $str('signEmail_excavation_authority_approval'),
             ],
             SubpermitType::Lifting => [
-                'workplaceEnclosable'    => $str('workplaceEnclosable'),
-                'workerTrained'          => $str('workerTrained'),
-                'specialTools'           => $str('specialTools'),
-                'otherWorkAffecting'     => $str('otherWorkAffecting'),
-                'processConditionsSuitable' => $str('processConditionsSuitable'),
-                'checklist'              => $arr('checklist'),
-                'fallProtectionRequired' => $str('fallProtectionRequired'),
-                'liftingPlanEstablished' => $str('liftingPlanEstablished'),
-                'workDiscussed'          => $str('workDiscussed'),
+                // Príprava na činnosť — všetky pracovné činnosti
+                'canFenceOffWorkplace'             => $str('canFenceOffWorkplace'),
+                'workerTrained'                    => $str('workerTrained'),
+                'specialToolsUsed'                 => $str('specialToolsUsed'),
+                'processConditionsSuitable'        => $str('processConditionsSuitable'),
+                'otherWorkAffectingPermit'         => $str('otherWorkAffectingPermit'),
+
+                // Bezpečnostné požiadavky
+                'craneInSafestPosition'            => $str('craneInSafestPosition'),
+                'safeAccessEnsured'                => $str('safeAccessEnsured'),
+                'craneDangerZoneFenced'            => $str('craneDangerZoneFenced'),
+                'employeesAwareOfFencingAndBan'    => $str('employeesAwareOfFencingAndBan'),
+                'craneControlsHaveLoadBinderView'  => $str('craneControlsHaveLoadBinderView'),
+                'craneInGoodCondition'             => $str('craneInGoodCondition'),
+                'otherCollisionRisks'              => $str('otherCollisionRisks'),
+                'noOtherWorkNearby'                => $str('noOtherWorkNearby'),
+                'bindingEquipmentInspected'        => $str('bindingEquipmentInspected'),
+                'communicationAgreed'              => $str('communicationAgreed'),
+                'fallProtectionRequired'           => $str('fallProtectionRequired'),
+
+                // Záverečné potvrdenia
+                'liftingPlanEstablished'           => $str('liftingPlanEstablished'),
+                'workChecksDiscussedOnSite'        => $str('workChecksDiscussedOnSite'),
             ],
             SubpermitType::Atex => [
-                'exZone'              => $arr('exZone'),
-                'workplaceSecured'    => $str('workplaceSecured'),
-                'securedMethod'       => $arr('securedMethod'),
-                'additionalMeasures'  => $str('additionalMeasures'),
-                'nonSparkingTools'    => $str('nonSparkingTools'),
-                'atexPowerTools'      => $str('atexPowerTools'),
-                'antistaticClothing'  => $str('antistaticClothing'),
-                'hazardousEnergyPlan' => $str('hazardousEnergyPlan'),
-                'ppeUsed'             => $arr('ppeUsed'),
-                'toolsUsed'           => $arr('toolsUsed'),
-                'insulationMethod'    => $arr('insulationMethod'),
-                'insulationOther'     => $str('insulationOther'),
-                'workStartTime'       => $str('workStartTime'),
-                'workFinishTime'      => $str('workFinishTime'),
+                // EX zóna (multi-select)
+                'exZone'                          => $arr('exZone'),
+
+                // Príprava na činnosť — workplace securing
+                'securingStatus'                  => $str('securingStatus'), // 'secured' | 'not_possible'
+                'securingMethods'                 => $arr('securingMethods'),
+                'securingMethodsOther'            => $str('securingMethodsOther'),
+
+                // Additional measures (yes/no flags). Hourly verification
+                // happens offline; a control attachment is required at closure
+                // (see ContractorController::actionSignSubpermit).
+                'measureNonSparkingHandTools'     => $str('measureNonSparkingHandTools'),
+                'measurePortablePowerToolsAtex'   => $str('measurePortablePowerToolsAtex'),
+                'measureAntistaticClothing'       => $str('measureAntistaticClothing'),
+
+                // Plan + PPE
+                'hazardousEnergyPlanEstablished'  => $str('hazardousEnergyPlanEstablished'),
+                'usedPpe'                         => $arr('usedPpe'),
+                'usedPpeOther'                    => $str('usedPpeOther'),
+
+                // Tools + insulation
+                'toolsUsed'                       => $arr('toolsUsed'),
+                'workspaceInsulation'             => $arr('workspaceInsulation'),
+                'workspaceInsulationOther'        => $str('workspaceInsulationOther'),
             ],
         };
 
         return array_merge($common, $specific);
+    }
+
+    private const SSOW_ALLOWED_EXT  = ['pdf', 'docx', 'xlsx'];
+    private const SSOW_ALLOWED_MIME = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ];
+    private const SSOW_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+
+    /**
+     * Validate + persist the Electrical SSoW input:
+     *   - If ssowAttached === true → uploaded `ssowFile` must be valid;
+     *     save it as a Craft Asset and inject the asset id + filename into
+     *     $values so it lands in subpermit.data. Clear ssowDescription.
+     *   - If ssowAttached === false → ssowDescription must be non-empty.
+     *     Clear any stale asset references.
+     *
+     * Returns an array of errors (empty when validation passes). $values is
+     * mutated by reference.
+     *
+     * @param array<string, mixed> $values
+     * @return array<string, string>
+     */
+    private function handleElectricalSsow(array &$values): array
+    {
+        $errors = [];
+        $attached = !empty($values['ssowAttached']);
+
+        if ($attached) {
+            $file = UploadedFile::getInstanceByName('ssowFile');
+
+            // Allow keeping an already-uploaded file across re-renders (no new upload).
+            $hasExistingAsset = !empty($values['ssowAttachmentAssetId']);
+
+            if ($file === null || $file->getHasError()) {
+                if (!$hasExistingAsset) {
+                    $errors['ssowFile'] = (string) Craft::t('bozp', 'Nahrajte súbor SSoW alebo zrušte výber prílohy a vyplňte popis.');
+                    return $errors;
+                }
+            } else {
+                if ($file->size > self::SSOW_MAX_BYTES) {
+                    $errors['ssowFile'] = (string) Craft::t('bozp', 'Súbor je príliš veľký. Maximálna veľkosť je 10 MB.');
+                    return $errors;
+                }
+                $ext  = strtolower((string) pathinfo($file->name, PATHINFO_EXTENSION));
+                $mime = (string) FileHelper::getMimeType($file->tempName);
+                if (!in_array($ext, self::SSOW_ALLOWED_EXT, true) || !in_array($mime, self::SSOW_ALLOWED_MIME, true)) {
+                    $errors['ssowFile'] = (string) Craft::t('bozp', 'Nepodporovaný typ súboru. Povolené: PDF, DOCX, XLSX.');
+                    return $errors;
+                }
+
+                $assetId = $this->saveSsowAsset($file);
+                if ($assetId === null) {
+                    $errors['ssowFile'] = (string) Craft::t('bozp', 'Uloženie súboru zlyhalo. Skúste znova.');
+                    return $errors;
+                }
+                $values['ssowAttachmentAssetId'] = $assetId;
+                $values['ssowAttachmentFilename'] = $file->name;
+            }
+
+            // Attached branch wins — clear inline description.
+            $values['ssowDescription'] = '';
+        } else {
+            // Inline branch: description required, clear any old asset reference.
+            if (empty(trim((string) ($values['ssowDescription'] ?? '')))) {
+                $errors['ssowDescription'] = (string) Craft::t('bozp', 'Popis SSoW je povinný, ak nie je priložený samostatný súbor.');
+                return $errors;
+            }
+            unset($values['ssowAttachmentAssetId'], $values['ssowAttachmentFilename']);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Persist the uploaded SSoW file as a Craft Asset in the bozpAttachments
+     * volume. Returns the asset id, or null on failure (caller decides how
+     * to surface the error).
+     */
+    private function saveSsowAsset(UploadedFile $file): ?int
+    {
+        $volume = Craft::$app->getVolumes()->getVolumeByHandle('bozpAttachments');
+        if (!$volume) {
+            Craft::error("BOZP: missing volume 'bozpAttachments' for SSoW upload.", __METHOD__);
+            return null;
+        }
+        $rootFolder = Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id);
+        if (!$rootFolder) {
+            return null;
+        }
+
+        $tempPath = $file->saveAsTempFile();
+        if ($tempPath === false) {
+            return null;
+        }
+
+        $asset = new Asset();
+        $asset->tempFilePath = $tempPath;
+        $asset->filename = Assets::prepareAssetName('ssow-' . $file->name);
+        $asset->newFolderId = $rootFolder->id;
+        $asset->volumeId = $volume->id;
+        $asset->avoidFilenameConflicts = true;
+        $asset->setScenario(Asset::SCENARIO_CREATE);
+
+        if (!Craft::$app->getElements()->saveElement($asset)) {
+            Craft::error('BOZP: SSoW asset save failed: ' . print_r($asset->getErrors(), true), __METHOD__);
+            return null;
+        }
+        return (int) $asset->id;
     }
 
     /**

@@ -12,6 +12,7 @@ use craft\web\View;
 use modules\bozp\controllers\ContractorController;
 use modules\bozp\enums\SubpermitSigningRole;
 use modules\bozp\enums\SubpermitStatus;
+use modules\bozp\enums\SubpermitType;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\SubpermitRecord;
 use modules\bozp\records\SubpermitSigningRequestRecord;
@@ -31,19 +32,22 @@ class SubpermitSigningService extends Component
      * Create one signing request per provided email, flip the subpermit to
      * `pending_signatures`, and dispatch invitation emails.
      *
-     * Required roles (MdlzQualifiedEmergency, AreaSupervisor, MdlzQualifiedApproval)
-     * must have a non-empty email or a RuntimeException is thrown.
+     * Roles flagged `isRequired()` AND in the subpermit type's roster must
+     * have a non-empty email or a RuntimeException is thrown. Roles outside
+     * the type's roster are ignored even if marked required globally.
      *
      * @param array<string, string> $emails  role value => email address (empty values silently skipped)
-     * @throws \RuntimeException if a required role has no email
+     * @throws \RuntimeException if a required role for this type has no email
      */
     public function createRequestsForSubpermit(
         SubpermitRecord $subpermit,
         PermitRecord $permit,
         array $emails,
     ): void {
-        // Validate required roles first
-        foreach (SubpermitSigningRole::cases() as $role) {
+        // Narrow required-role validation to roles relevant to this subpermit type.
+        $subpermitType = SubpermitType::tryFrom($subpermit->type);
+        $typeRoles = $subpermitType ? SubpermitSigningRole::forType($subpermitType) : [];
+        foreach ($typeRoles as $role) {
             if ($role->isRequired() && empty(trim($emails[$role->value] ?? ''))) {
                 throw new \RuntimeException(
                     "Required signing role '{$role->value}' has no email address."
@@ -105,6 +109,7 @@ class SubpermitSigningService extends Component
         string $signerName,
         string $dataUri,
         string $ipAddress,
+        ?string $jobTitle = null,
     ): SubpermitSigningRequestRecord {
         $request = $this->findByToken($token);
         if (!$request) {
@@ -120,6 +125,7 @@ class SubpermitSigningService extends Component
         $assetId = $this->saveSignatureAsset($request, $dataUri);
 
         $request->signerName       = $signerName;
+        $request->jobTitle         = $jobTitle !== null && $jobTitle !== '' ? $jobTitle : null;
         $request->signatureAssetId = $assetId;
         $request->signedAt         = date('Y-m-d H:i:s');
         $request->ipAddress        = substr($ipAddress, 0, 45) ?: null;

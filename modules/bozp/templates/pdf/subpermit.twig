@@ -322,45 +322,194 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 
 {# --- Hot Work --- #}
 {% if subpermitType.value == 'hot_work' %}
+{% set hwPerformerLabels = {
+    'employee':   'Zamestnanec',
+    'contractor': 'Dodávateľ',
+} %}
+{% set hwTristateLabels = {
+    'ok':  '✓ OK',
+    'nok': '✗ NOK',
+    'na':  '— N/A',
+} %}
+{% set hwBase = [
+    {key: 'sprinklersOperational',         label: 'Sprinklery, hydranty a hasiace prístroje na mieste a funkčné'},
+    {key: 'workEquipmentInGoodCondition',  label: 'Pracovné vybavenie v dobrom stave'},
+] %}
+{% set hwZone = [
+    {key: 'dustEquipmentShutDown',         label: 'Zariadenia produkujúce horľavý prach / vlákna vypnuté'},
+    {key: 'conveyorsIsolated',             label: 'Dopravníky / vzduchotechnika / dúchadlá izolované alebo vypnuté'},
+    {key: 'combustibleMaterialsRemoved',   label: 'Horľavé materiály odstránené (inak prikryté nehorľavými plachtami)'},
+    {key: 'explosiveAtmosphereEliminated', label: 'Výbušná atmosféra eliminovaná'},
+    {key: 'floorSweptClean',               label: 'Podlaha riadne pozametaná'},
+    {key: 'combustibleFloorWetDown',       label: 'Horľavá podlaha navlhčená / prikrytá'},
+    {key: 'openingsCovered',               label: 'Otvory v stenách a podlahe prekryté'},
+    {key: 'tarpaulinsSuspended',           label: 'Nehorľavé plachty zavesené pod miestom práce'},
+] %}
+{% set hwWalls = [
+    {key: 'constructionNonCombustible',    label: 'Konštrukcia nehorľavá, bez horľavého obkladu / izolácie'},
+    {key: 'combustiblesOnOtherSideMoved',  label: 'Horľavé materiály na druhej strane stien odstránené'},
+    {key: 'enclosedEquipmentCleaned',      label: 'Uzavreté zariadenie vyčistené od horľavín'},
+    {key: 'containersPurged',              label: 'Nádoby zbavené horľavých kvapalín a výparov'},
+] %}
+{% set hwPatrol = [
+    {key: 'bucketOfWater',                 label: 'Vedro vody'},
+    {key: 'fireBrigadeHasExtinguishers',   label: 'Požiarna hliadka má vhodné hasiace prístroje / vodu'},
+    {key: 'firePatrolTrained',             label: 'Požiarna hliadka vyškolená a oboznámená s požiarnym poriadkom'},
+    {key: 'additionalSupervisionIncluded', label: 'Dodatočný dozor nad priľahlými priestormi (nad / pod)'},
+] %}
+{% set hwOther = [
+    {key: 'confinedSpacePermitsOrLoto',      label: 'Povolenia pre uzavreté priestory (CSE) alebo LOTO vydané'},
+    {key: 'smokeOrHeatDetectionDeactivated', label: 'Detekcia dymu / tepla deaktivovaná (ak prítomná)'},
+] %}
+
+{% macro tri(val, labels) -%}
+    {{- labels[val] ?? '—' -}}
+{%- endmacro %}
+
 <div class="section">
-    <h2>Horúce práce — špecifické informácie</h2>
+    <h2>Horúce práce — Hlavička</h2>
     <table class="dl-table">
-        <tr><td class="label">Číslo pracovného príkazu</td><td class="value">{{ values.jobOrderNumber ?: '—' }}</td></tr>
-        <tr><td class="label">Čas začiatku</td><td class="value">{{ values.workStartTime ?: '—' }}</td></tr>
-        <tr><td class="label">Čas ukončenia</td><td class="value">{{ values.workExpiryTime ?: '—' }}</td></tr>
-        <tr><td class="label">Požiarna hliadka</td><td class="value">{{ values.firePatrolName ?: '—' }}</td></tr>
-        <tr><td class="label">Monitorovanie (hod. po práci)</td><td class="value">{{ values.monitoringHours ?: '—' }}</td></tr>
-        {% if values.additionalMeasures %}<tr><td class="label">Dodatočné opatrenia</td><td class="value">{{ values.additionalMeasures|nl2br }}</td></tr>{% endif %}
-        {% if values.checklist is defined and values.checklist|length > 0 %}
-        <tr>
-            <td class="label">Kontrolný zoznam</td>
-            <td class="value">{% for item in values.checklist %}<span class="checklist-item">✓ {{ item }}</span>{% endfor %}</td>
-        </tr>
-        {% endif %}
+        <tr><td class="label">Povolenie vydal</td><td class="value">{{ values.permitIssuedByName ?: '—' }}</td></tr>
+        <tr><td class="label">Vykonáva</td><td class="value">{{ hwPerformerLabels[values.hwPerformerType] ?? '—' }}</td></tr>
+        <tr><td class="label">Číslo pracovného príkazu / zmeny</td><td class="value">{{ values.jobOrderNumber ?: '—' }}</td></tr>
     </table>
+</div>
+
+<div class="section">
+    <h2>Časové údaje</h2>
+    <table class="dl-table">
+        <tr><td class="label">Čas začiatku prác</td><td class="value">{{ values.workStartTime ?: '—' }}</td></tr>
+        <tr><td class="label">Čas ukončenia prác</td><td class="value">{{ values.workCompletionTime ?: '—' }}</td></tr>
+        <tr><td class="label">Schválené</td><td class="value">{{ subpermit.approvedAt ? subpermit.approvedAt|date('d.m.Y H:i') : '—' }}</td></tr>
+        <tr><td class="label">Platnosť do (auto, +8 h od schválenia)</td><td class="value">{{ subpermit.expiresAt ? subpermit.expiresAt|date('d.m.Y H:i') : '—' }}</td></tr>
+    </table>
+</div>
+
+{% macro tristateTable(rows, values, hwTristateLabels) %}
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>Požiadavka</th>
+                <th style="width:14%">Stav</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in rows %}
+                {% set v = attribute(values, item.key) ?? '' %}
+                <tr>
+                    <td>{{ item.label }}</td>
+                    <td>{{ hwTristateLabels[v] ?? '—' }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
+
+<div class="section">
+    <h2>Kontrolný zoznam preventívnych opatrení</h2>
+    {{ _self.tristateTable(hwBase, values, hwTristateLabels) }}
+</div>
+
+<div class="section">
+    <h2>Požiadavky v 11-metrovej pracovnej zóne</h2>
+    {{ _self.tristateTable(hwZone, values, hwTristateLabels) }}
+</div>
+
+<div class="section">
+    <h2>Práce na stenách, stropoch alebo uzavretých zariadeniach</h2>
+    {{ _self.tristateTable(hwWalls, values, hwTristateLabels) }}
+</div>
+
+<div class="section">
+    <h2>Požiadavky na požiarnu hliadku / monitoring</h2>
+    {{ _self.tristateTable(hwPatrol, values, hwTristateLabels) }}
+    <table class="dl-table">
+        <tr><td class="label">Počet a typ hasiacich prístrojov</td><td class="value">{{ values.extinguisherCountAndType ?: '—' }}</td></tr>
+        <tr><td class="label">Hodín monitorovania po prácach (min. 2 h)</td><td class="value">{{ values.monitoringHoursAfter ?: '—' }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Ďalšie bezpečnostné a protipožiarne opatrenia</h2>
+    {{ _self.tristateTable(hwOther, values, hwTristateLabels) }}
+    {% if values.otherPrecautions %}
+        <table class="dl-table">
+            <tr><td class="label">Iné opatrenia</td><td class="value">{{ values.otherPrecautions|nl2br }}</td></tr>
+        </table>
+    {% endif %}
+    <p style="margin-top:4pt;font-size:8pt;">
+        Požiarna hliadka a požiarny technik vykonávajú kontrolu na papieri.
+        Pred uzavretím subpermitu je vyžadovaná naskenovaná príloha ako dôkaz.
+    </p>
 </div>
 
 {# --- Confined Space --- #}
 {% elseif subpermitType.value == 'confined_space' %}
 <div class="section">
-    <h2>Vstup do uzatvorených priestorov — špecifické informácie</h2>
+    <h2>Vstup do uzavretého priestoru — Hlavička</h2>
     <table class="dl-table">
-        <tr><td class="label">Platnosť do (dátum)</td><td class="value">{{ values.expiryDate ?: '—' }}</td></tr>
-        <tr><td class="label">Platnosť do (čas)</td><td class="value">{{ values.expiryTime ?: '—' }}</td></tr>
-        <tr><td class="label">Školenie absolvované</td><td class="value">{{ _self.yn(values.trainingComplete) }}</td></tr>
-        <tr><td class="label">LOTO aplikované</td><td class="value">{{ _self.yn(values.lotoApplied) }}</td></tr>
-        <tr><td class="label">Čerpadlá zaslepené</td><td class="value">{{ _self.yn(values.pumpsBlinded) }}</td></tr>
-        <tr><td class="label">Ventilácia potrebná</td><td class="value">{{ _self.yn(values.ventilationRequired) }}</td></tr>
-        {% if values.ventilationRequired == 'yes' %}
-        <tr><td class="label">Ventilácia od</td><td class="value">{{ values.ventilationStartTime ?: '—' }}</td></tr>
-        <tr><td class="label">Ventilácia do</td><td class="value">{{ values.ventilationStopTime ?: '—' }}</td></tr>
+        <tr><td class="label">Oprávnená osoba</td><td class="value">{{ values.authorizedPersonName ?: '—' }}</td></tr>
+        <tr><td class="label">Oddelenie</td><td class="value">{{ values.department ?: '—' }}</td></tr>
+        <tr><td class="label">Schválené</td><td class="value">{{ subpermit.approvedAt ? subpermit.approvedAt|date('d.m.Y H:i') : '—' }}</td></tr>
+        <tr><td class="label">Platnosť do (auto, +8 h od schválenia)</td><td class="value">{{ subpermit.expiresAt ? subpermit.expiresAt|date('d.m.Y H:i') : '—' }}</td></tr>
+        {% if values.emergencyRescuePlan %}
+            <tr><td class="label">Havarijný / záchranný plán</td><td class="value">{{ values.emergencyRescuePlan|nl2br }}</td></tr>
         {% endif %}
-        <tr><td class="label">O₂ (%)</td><td class="value">{{ values.o2Percent ?: '—' }}</td></tr>
-        <tr><td class="label">LEL (%)</td><td class="value">{{ values.lelPercent ?: '—' }}</td></tr>
-        <tr><td class="label">CO (ppm)</td><td class="value">{{ values.coPpm ?: '—' }}</td></tr>
-        <tr><td class="label">H₂S (ppm)</td><td class="value">{{ values.h2sPpm ?: '—' }}</td></tr>
-        <tr><td class="label">Komunikácia potvrdená</td><td class="value">{{ _self.yn(values.communicationConfirmed) }}</td></tr>
-        {% if values.emergencyPlan %}<tr><td class="label">Havarijný plán</td><td class="value">{{ values.emergencyPlan|nl2br }}</td></tr>{% endif %}
+    </table>
+</div>
+
+<div class="section">
+    <h2>Izolácia zdroja energie (LOTO)</h2>
+    <table class="dl-table">
+        <tr><td class="label">Čerpadlá / potrubia zaslepené, odpojené, zablokované</td><td class="value">{{ _self.yn(values.pumpsLinesBlinded) }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Ventilácia</h2>
+    <table class="dl-table">
+        <tr><td class="label">Úprava ventilácie potrebná</td><td class="value">{{ _self.yn(values.ventilationModificationRequired) }}</td></tr>
+        {% if values.ventilationNotRequiredReason %}
+            <tr><td class="label">Dôvod (ak nie)</td><td class="value">{{ values.ventilationNotRequiredReason }}</td></tr>
+        {% endif %}
+        <tr><td class="label">Nútené vetranie — začiatok</td><td class="value">{{ values.forcedVentilationStart ?: '—' }}</td></tr>
+        <tr><td class="label">Nútené vetranie — koniec</td><td class="value">{{ values.forcedVentilationStop ?: '—' }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Iniciálne meranie atmosféry</h2>
+    <table class="dl-table">
+        <tr><td class="label">Čas merania</td><td class="value">{{ values.atmosphereTestTime ?: '—' }}</td></tr>
+        <tr><td class="label">Kyslík (O₂) %</td><td class="value">{{ values.oxygenPercent ?: '—' }}</td></tr>
+        <tr><td class="label">% LEL</td><td class="value">{{ values.lelPercent ?: '—' }}</td></tr>
+        <tr><td class="label">CO alebo H₂S (PPM)</td><td class="value">{{ values.coOrH2sPpm ?: '—' }}</td></tr>
+        {% if values.otherChemical %}
+            <tr><td class="label">Iné</td><td class="value">{{ values.otherChemical }}</td></tr>
+        {% endif %}
+    </table>
+    <p style="margin-top:4pt;font-size:8pt;">
+        Periodické testy (každých 30 minút) zaznamenané na papieri.
+        Pred uzavretím subpermitu je vyžadovaná naskenovaná príloha s evidenciou testov.
+    </p>
+</div>
+
+<div class="section">
+    <h2>Komunikácia a pohotovostný tím</h2>
+    <table class="dl-table">
+        <tr><td class="label">Vstupujúci s dozorujúcim</td><td class="value">{{ values.communicationEntrantSupervisor ?: '—' }}</td></tr>
+        <tr><td class="label">Dozorujúci s pohotovostnými službami</td><td class="value">{{ values.communicationSupervisorEmergency ?: '—' }}</td></tr>
+        {% if values.emergencyTeamMembers %}
+            <tr><td class="label">Členovia pohotovostného tímu</td><td class="value">{{ values.emergencyTeamMembers|nl2br }}</td></tr>
+        {% endif %}
+    </table>
+</div>
+
+<div class="section">
+    <h2>Časové údaje vstupu</h2>
+    <table class="dl-table">
+        <tr><td class="label">Čas prvého vstupu</td><td class="value">{{ values.timeOfFirstEnter ?: '—' }}</td></tr>
+        <tr><td class="label">Čas posledného výstupu</td><td class="value">{{ values.timeOfLastExit ?: '—' }}</td></tr>
     </table>
 </div>
 
@@ -483,78 +632,449 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 
 {# --- Electrical --- #}
 {% elseif subpermitType.value == 'electrical' %}
+{% set elWhoPerformsLabels = {
+    'internal_single':   'Interne MDLZ osobou',
+    'internal_multiple': 'Interne MDLZ viacerími osobami',
+    'third_party':       'Treťou stranou',
+} %}
+{% set elVoltageLabels = {
+    'under_50vac':       'Menej ako 50 VAC (QRP)',
+    'between_50_750vac': 'Medzi 50 VAC a 750 VAC',
+    'over_750vac':       'Viac ako 750 VAC (špec. povolenie)',
+} %}
+{% set elDesignLabels = {
+    'ip2x_comp':     'IP2X COMP.',
+    'ip2x_non_comp': 'IP2X NON COMP.',
+} %}
+{% set elArcUnavailableLabels = {
+    'always_3m_over_750vac':           '3 m (vždy > 750 VAC)',
+    'under_3m_restricted_proof_safe':  '< 3 m, priestor obmedzený a proof safe (1 m min)',
+} %}
+{% set elAccessControlLabels = {
+    'signs':   'Značky',
+    'fencing': 'Oplotenie',
+    'staff':   'Obsluha',
+    'other':   'Iné',
+} %}
+
 <div class="section">
-    <h2>Elektrické práce zvýšeného rizika — špecifické informácie</h2>
+    <h2>1. Povolenie na prácu</h2>
     <table class="dl-table">
-        <tr><td class="label">Napätie (V)</td><td class="value">{{ values.voltageLevel ?: '—' }}</td></tr>
-        <tr><td class="label">Označenie obvodu / rozvádzača</td><td class="value">{{ values.circuitId ?: '—' }}</td></tr>
-        <tr><td class="label">Typ práce</td><td class="value">
-            {% if values.liveWork == 'live' %}Práca pod napätím{% elseif values.liveWork == 'dead' %}Práca bez napätia{% else %}—{% endif %}
-        </td></tr>
-        <tr><td class="label">Obvod odistený a uzamknutý (LOTO)</td><td class="value">{{ _self.yn(values.circuitDeEnergized) }}</td></tr>
-        <tr><td class="label">Absencia napätia overená voltmetrom</td><td class="value">{{ _self.yn(values.voltageVerified) }}</td></tr>
-        <tr><td class="label">Uzemnenie aplikované</td><td class="value">{{ _self.yn(values.earthingApplied) }}</td></tr>
-        <tr><td class="label">Meno elektrikára</td><td class="value">{{ values.electricianName ?: '—' }}</td></tr>
-        <tr><td class="label">Číslo osvedčenia (vyhl. 508/2009)</td><td class="value">{{ values.electricianCertificate ?: '—' }}</td></tr>
-        <tr><td class="label">Bezpečnostný dozor prítomný</td><td class="value">{{ _self.yn(values.safetyObserverPresent) }}</td></tr>
-        {% if values.electricalAdditionalMeasures %}<tr><td class="label">Ďalšie bezpečnostné opatrenia</td><td class="value">{{ values.electricalAdditionalMeasures|nl2br }}</td></tr>{% endif %}
-        {% if values.electricalPpe is defined and values.electricalPpe|length > 0 %}
-        {% set ppeLabels = {
-            'insulated_gloves': 'Izolačné rukavice',
-            'insulated_tools':  'Izolačné náradie',
-            'face_shield':      'Ochranný štít tváre',
-            'arc_flash_suit':   'Oblek na ochranu pred oblúkom',
-            'safety_boots':     'Antistatická obuv',
-            'voltage_detector': 'Detektor napätia',
-        } %}
-        <tr><td class="label">Použité OOPP</td><td class="value">{% for key in values.electricalPpe %}<span class="checklist-item">✓ {{ ppeLabels[key] ?? key }}</span>{% endfor %}</td></tr>
+        <tr>
+            <td class="label">Potvrdenia kvalifikácie</td>
+            <td class="value">
+                {% if values.chkApplicantQualified %}<span class="checklist-item">✓ kvalifikovaný elektrikár (§21/22/23)</span>{% endif %}
+                {% if values.chkApplicantTrained   %}<span class="checklist-item">✓ školený na vydanie povolenia</span>{% endif %}
+                {% if values.chkApplicantWillPerform %}<span class="checklist-item">✓ žiadateľ bude vykonávať prácu</span>{% endif %}
+                {% if values.chkRequestForThirdParty %}<span class="checklist-item">✓ požiadavka pre tretiu stranu</span>{% endif %}
+            </td>
+        </tr>
+        <tr><td class="label">Kto vykonáva</td><td class="value">{{ elWhoPerformsLabels[values.whoPerforms] ?? '—' }}</td></tr>
+        <tr><td class="label">Napätie rozvádzača</td><td class="value">{{ elVoltageLabels[values.switchboardVoltage] ?? '—' }}</td></tr>
+        <tr><td class="label">Konštrukcia rozvádzača</td><td class="value">{{ elDesignLabels[values.switchboardDesign] ?? '—' }}</td></tr>
+        <tr><td class="label">SSoW</td><td class="value">{% if values.ssowAttached %}Priložený ako príloha{% if values.ssowAttachmentFilename %} ({{ values.ssowAttachmentFilename }}){% endif %}{% else %}Definovaný v tomto povolení (bod 5){% endif %}</td></tr>
+        <tr><td class="label">Pracovná požiadavka / SAP zákazka</td><td class="value">{{ values.workOrder ?: '—' }}</td></tr>
+        <tr><td class="label">Plánovaný štart</td><td class="value">{{ values.plannedStartDateTime ? values.plannedStartDateTime|replace({'T': ' '}) : '—' }}</td></tr>
+        <tr><td class="label">Plánovaný koniec</td><td class="value">{{ values.plannedEndDateTime ? values.plannedEndDateTime|replace({'T': ' '}) : '—' }}</td></tr>
+        <tr><td class="label">Schválené</td><td class="value">{{ subpermit.approvedAt ? subpermit.approvedAt|date('d.m.Y H:i') : '—' }}</td></tr>
+        <tr><td class="label">Platnosť do (auto, +8 h od schválenia)</td><td class="value">{{ subpermit.expiresAt ? subpermit.expiresAt|date('d.m.Y H:i') : '—' }}</td></tr>
+        {% if values.reasonForLiveWork %}
+            <tr><td class="label">Dôvod práce na živom zariadení</td><td class="value">{{ values.reasonForLiveWork|nl2br }}</td></tr>
         {% endif %}
+    </table>
+</div>
+
+<div class="section">
+    <h2>2. Analýza rizík — Arc Flash hranice</h2>
+    <table class="dl-table">
+        <tr>
+            <td class="label">Arc Flash hranica rizika</td>
+            <td class="value">{{ values.arcFlashBoundaryM ?: '0' }} m {{ values.arcFlashBoundaryCm ?: '0' }} cm</td>
+        </tr>
+        <tr>
+            <td class="label">Hranica obmedzeného prístupu</td>
+            <td class="value">{{ values.limitedAccessBoundaryM ?: '0' }} m {{ values.limitedAccessBoundaryCm ?: '0' }} cm</td>
+        </tr>
+        <tr>
+            <td class="label">Hranica zakázaného prístupu</td>
+            <td class="value">{{ values.prohibitedAccessBoundaryM ?: '0' }} m {{ values.prohibitedAccessBoundaryCm ?: '0' }} cm</td>
+        </tr>
+        <tr><td class="label">Arc Flash nálepka dostupná</td><td class="value">{{ _self.yn(values.arcFlashStickerAvailable) }}</td></tr>
+        <tr><td class="label">Alternatívne hranice (ak nálepka chýba)</td><td class="value">{{ elArcUnavailableLabels[values.arcFlashUnavailableMode] ?? '—' }}</td></tr>
+        <tr>
+            <td class="label">Prvky proti vniku nekvalifikovaných osôb</td>
+            <td class="value">
+                {% set ac = values.accessControls ?? [] %}
+                {% if ac|length > 0 %}
+                    {% for key in ac %}<span class="checklist-item">✓ {{ elAccessControlLabels[key] ?? key }}</span>{% endfor %}
+                {% else %}—{% endif %}
+                {% if values.accessControlsOther %} — {{ values.accessControlsOther }}{% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>2. Bezpečnosť pracoviska</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>Požiadavka</th>
+                <th style="width:12%">Áno / Nie</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Horľavé riziká odstránené, hasiaci prístroj v dosahu</td>
+                <td>{{ _self.yn(values.flammablesRemovedAndExtinguisher) }}</td>
+            </tr>
+            <tr>
+                <td>Dostatočné osvetlenie</td>
+                <td>{{ _self.yn(values.sufficientLighting) }}</td>
+            </tr>
+            <tr>
+                <td>Pohyblivé dvere zabezpečené proti samovoľnému pohybu</td>
+                <td>{{ _self.yn(values.doorsSecured) }}</td>
+            </tr>
+            <tr>
+                <td>Núdzový východ voľný</td>
+                <td>{{ _self.yn(values.emergencyExitClear) }}</td>
+            </tr>
+            <tr>
+                <td>Rozvádzač neobsahuje cudzí objekt</td>
+                <td>{{ _self.yn(values.switchboardNoForeignObjects) }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% if values.ssowAttached or values.ssowDescription %}
+<div class="section">
+    <h2>5. Bezpečný systém práce — SSoW</h2>
+    {% if values.ssowAttached and values.ssowAttachmentAssetId %}
+        {% set ssowAsset = craft.assets().id(values.ssowAttachmentAssetId).one() %}
+        <p>
+            <strong>Príloha SSoW:</strong>
+            {% if ssowAsset %}
+                {{ ssowAsset.filename }}
+            {% else %}
+                {{ values.ssowAttachmentFilename ?: '—' }}
+            {% endif %}
+        </p>
+    {% elseif values.ssowDescription %}
+        <p>{{ values.ssowDescription|nl2br }}</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="section">
+    <h2>Plán núdzovej situácie</h2>
+    <table class="dl-table">
+        <tr><td class="label">AED v oblasti</td><td class="value">{{ _self.yn(values.aedInArea) }}</td></tr>
+        <tr><td class="label">KPR školený</td><td class="value">{{ _self.yn(values.cprTrained) }}</td></tr>
+        <tr><td class="label">AED školený</td><td class="value">{{ _self.yn(values.aedTrained) }}</td></tr>
     </table>
 </div>
 
 {# --- Excavation --- #}
 {% elseif subpermitType.value == 'excavation' %}
+{% set excavationChecklist = [
+    {key: 'needsElectricalIsolation',        label: 'vyžaduje sa izolácia elektrickej energie'},
+    {key: 'needsBarriersSignage',            label: 'vyžadujú sa bariéry (min. 2 m) a výstražné tabule'},
+    {key: 'equipmentIsolated',               label: 'izolované zariadenie'},
+    {key: 'adequateLighting',                label: 'adekvátne osvetlenie'},
+    {key: 'designatedArea',                  label: 'vyhradený priestor'},
+    {key: 'noSmokingOrOpenFire',             label: 'zákaz fajčenia alebo otvoreného ohňa'},
+    {key: 'warningSignsPlaced',              label: 'umiestnenie výstražných značení'},
+    {key: 'shoringRequired',                 label: 'vyžaduje sa paženie'},
+    {key: 'supervisionPresent',              label: 'dozor'},
+    {key: 'firstAidKit',                     label: 'lekárnička'},
+    {key: 'explosivityCheck',                label: 'kontrola výbušnosti'},
+    {key: 'fireExtinguisher',                label: 'hasiaci prístroj'},
+    {key: 'toxicityCheck',                   label: 'kontrola toxicity'},
+    {key: 'rescueLineWithOperator',          label: 'vyžaduje sa záchranné lano s obsluhou'},
+    {key: 'oxygenAbove195',                  label: 'kyslík viac ako 19,5 %'},
+    {key: 'safeAccessAndExit',               label: 'bezpečný prístup k výkopom a výstup z nich'},
+    {key: 'selfContainedBreathingApparatus', label: 'vyžaduje sa samostatný dýchací prístroj'},
+    {key: 'noUndergroundUtilities',          label: 'potvrdené, že sa na mieste nenachádzajú žiadne inžinierske siete (plyn, vodovod, elektrina, telekom.)'},
+    {key: 'dailyInspectionsRecorded',        label: 'záznamy o denných kontrolách kvalifikovanou osobou'},
+    {key: 'supportRequiredOver15m',          label: 'vyžaduje sa podpera (viac ako 1,5 m)'},
+] %}
+
 <div class="section">
-    <h2>Výkopové práce — špecifické informácie</h2>
+    <h2>Výkopové práce — Spôsobilosť vykonávateľa</h2>
     <table class="dl-table">
-        <tr><td class="label">Pracovník vyškolený</td><td class="value">{{ _self.yn(values.workerTrained) }}</td></tr>
-        <tr><td class="label">Meno na stretnutí</td><td class="value">{{ values.meetingName ?: '—' }}</td></tr>
-        <tr><td class="label">Pozícia na stretnutí</td><td class="value">{{ values.meetingPosition ?: '—' }}</td></tr>
-        <tr><td class="label">Dátum stretnutia</td><td class="value">{{ values.meetingDateTime ?: '—' }}</td></tr>
-        {% if values.checklist is defined and values.checklist|length > 0 %}
-        <tr><td class="label">Kontrolný zoznam</td><td class="value">{% for item in values.checklist %}<span class="checklist-item">✓ {{ item }}</span>{% endfor %}</td></tr>
-        {% endif %}
+        <tr>
+            <td class="label">Vykonávateľ práce je školený / autorizovaný / spôsobilý</td>
+            <td class="value">{{ _self.yn(values.workerTrained) }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>FÁZA 1 — Vydavateľ povolenia (MDLZ) — bezpečnostné požiadavky</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>Požiadavka</th>
+                <th style="width:12%">Áno / Nie</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in excavationChecklist %}
+                {% set v = attribute(values, item.key) ?? '' %}
+                <tr>
+                    <td>{{ item.label }}</td>
+                    <td>{{ _self.yn(v) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Plánovaná činnosť</h2>
+    <table class="dl-table">
+        <tr>
+            <td class="label">Stretnutie k plánovanej činnosti dňa</td>
+            <td class="value">{{ values.plannedActivityMeetingDate ? values.plannedActivityMeetingDate|date('d.m.Y') : '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Barikády / Prechodové lávky</td>
+            <td class="value">{{ _self.yn(values.barricadesWalkways) }}</td>
+        </tr>
     </table>
 </div>
 
 {# --- Lifting --- #}
 {% elseif subpermitType.value == 'lifting' %}
+{% set liftingPreparation = [
+    {key: 'canFenceOffWorkplace',      label: 'Je možné ohradiť pracovisko (bariéry, výstražná páska, piktogramy)'},
+    {key: 'workerTrained',             label: 'Vykonávateľ je školený / autorizovaný / spôsobilý'},
+    {key: 'processConditionsSuitable', label: 'Procesné podmienky vhodné (dostatočná nosnosť)'},
+    {key: 'otherWorkAffectingPermit',  label: 'Vykonáva sa iná práca, ktorá by mohla ovplyvniť toto povolenie'},
+] %}
+{% set liftingSafety = [
+    {key: 'craneInSafestPosition',           label: 'Žeriav premiestnený do najbezpečnejšej polohy'},
+    {key: 'safeAccessEnsured',               label: 'Bezpečný prístup na pracovisko zabezpečený'},
+    {key: 'craneDangerZoneFenced',           label: 'Nebezpečná zóna žeriava ohradená'},
+    {key: 'employeesAwareOfFencingAndBan',   label: 'Zamestnanci oboznámení s ohradením a zákazom vstupu'},
+    {key: 'craneControlsHaveLoadBinderView', label: 'Ovládače žeriava s výhľadom na viazača bremena'},
+    {key: 'craneInGoodCondition',            label: 'Žeriav v dobrom technickom stave'},
+    {key: 'otherCollisionRisks',             label: 'V oblasti iné žeriavy, vozidlá, siete, osoby alebo kolízne riziká'},
+    {key: 'noOtherWorkNearby',               label: 'Skontrolované, že sa v blízkosti nevykonáva iná práca'},
+    {key: 'bindingEquipmentInspected',       label: 'Viazacie prostriedky v dobrom stave s platnou revíziou'},
+    {key: 'communicationAgreed',             label: 'Dohodnutá komunikácia medzi viazačom a obsluhou'},
+    {key: 'fallProtectionRequired',          label: 'Vyžadujú sa prostriedky ochrany pred pádom'},
+] %}
+{% set liftingFinal = [
+    {key: 'liftingPlanEstablished',     label: 'Plán pre zdvíhacie a žeriavové práce vypracovaný a overený'},
+    {key: 'workChecksDiscussedOnSite',  label: 'Práca / činnosť skontrolovaná a prediskutovaná na mieste'},
+] %}
+
 <div class="section">
-    <h2>Zdvíhacie práce — špecifické informácie</h2>
-    <table class="dl-table">
-        <tr><td class="label">Pracovisko uzavierateľné</td><td class="value">{{ _self.yn(values.workplaceEnclosable) }}</td></tr>
-        <tr><td class="label">Pracovník vyškolený</td><td class="value">{{ _self.yn(values.workerTrained) }}</td></tr>
-        <tr><td class="label">Špeciálne náradie</td><td class="value">{{ _self.yn(values.specialTools) }}</td></tr>
-        <tr><td class="label">Zdvíhací plán vypracovaný</td><td class="value">{{ _self.yn(values.liftingPlanEstablished) }}</td></tr>
-        <tr><td class="label">Ochrana pred pádom potrebná</td><td class="value">{{ _self.yn(values.fallProtectionRequired) }}</td></tr>
-        {% if values.checklist is defined and values.checklist|length > 0 %}
-        <tr><td class="label">Kontrolný zoznam</td><td class="value">{% for item in values.checklist %}<span class="checklist-item">✓ {{ item }}</span>{% endfor %}</td></tr>
-        {% endif %}
+    <h2>Zdvíhacie práce — Príprava na činnosť</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>Požiadavka</th>
+                <th style="width:12%">Áno / Nie</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in liftingPreparation %}
+                <tr>
+                    <td>{{ item.label }}</td>
+                    <td>{{ _self.yn(attribute(values, item.key) ?? '') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if values.specialToolsUsed %}
+        <table class="dl-table">
+            <tr>
+                <td class="label">Špeciálne náradie / vybavenie</td>
+                <td class="value">{{ values.specialToolsUsed|nl2br }}</td>
+            </tr>
+        </table>
+    {% endif %}
+</div>
+
+<div class="section">
+    <h2>Bezpečnostné požiadavky</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>Požiadavka</th>
+                <th style="width:12%">Áno / Nie</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in liftingSafety %}
+                <tr>
+                    <td>{{ item.label }}</td>
+                    <td>{{ _self.yn(attribute(values, item.key) ?? '') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Záverečné potvrdenia</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>Požiadavka</th>
+                <th style="width:12%">Áno / Nie</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in liftingFinal %}
+                <tr>
+                    <td>{{ item.label }}</td>
+                    <td>{{ _self.yn(attribute(values, item.key) ?? '') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 
 {# --- ATEX --- #}
 {% elseif subpermitType.value == 'atex' %}
+{% set atexZoneLabels = {
+    'zone_22': 'Zóna 22', 'zone_21': 'Zóna 21',
+    'zone_2':  'Zóna 2',  'zone_1':  'Zóna 1', 'zone_0': 'Zóna 0',
+} %}
+{% set atexSecuringStatusLabels = {
+    'secured':       'Pracovisko bolo zabezpečené',
+    'not_possible':  'Pracovisko nie je možné zabezpečiť (vyžadované dodatočné opatrenia)',
+} %}
+{% set atexMethodLabels = {
+    'emptying':         'Vyprázdnenie zariadenia / priestoru',
+    'wetting_water':    'Zvlhčenie výbušnej látky vodou',
+    'inertization_gas': 'Inertizácia plynom',
+    'other':            'Iné',
+} %}
+{% set atexPpeLabels = {
+    'hard_hat': 'Prilba', 'safety_glasses': 'Ochranné okuliare',
+    'safety_gloves': 'Ochranné rukavice', 'respirator': 'Respirátor',
+    'hearing_protection': 'Ochrana sluchu', 'safety_shoes': 'Ochranná obuv',
+    'safety_harness': 'Bezpečnostný postroj', 'antistatic_clothing': 'Antistatický odev',
+    'other': 'Iné',
+} %}
+{% set atexToolLabels = {
+    'hand_tools': 'Ručné náradie', 'non_sparking_tools': 'Neiskrivé náradie',
+    'portable_power_tools': 'Prenosné elektrické náradie', 'welding_machine': 'Zvárací stroj',
+} %}
+{% set atexInsulationLabels = {
+    'safety_net': 'Záchytná sieť', 'safety_tape': 'Výstražná páska',
+    'fixed_barriers': 'Pevné zábrany', 'reinforcement': 'Vystuženie',
+    'safety_markings': 'Bezpečnostné označenie', 'trench_covers': 'Kryty výkopov',
+    'other': 'Iné',
+} %}
+
 <div class="section">
-    <h2>Práce v priestoroch s nebezpečenstvom výbuchu (ATEX) — špecifické informácie</h2>
+    <h2>ATEX — EX zóna a zabezpečenie pracoviska</h2>
     <table class="dl-table">
-        <tr><td class="label">Pracovisko zabezpečené</td><td class="value">{{ _self.yn(values.workplaceSecured) }}</td></tr>
-        <tr><td class="label">Neiskrecie náradie</td><td class="value">{{ _self.yn(values.nonSparkingTools) }}</td></tr>
-        <tr><td class="label">ATEX elektrické náradie</td><td class="value">{{ _self.yn(values.atexPowerTools) }}</td></tr>
-        <tr><td class="label">Antistatický odev</td><td class="value">{{ _self.yn(values.antistaticClothing) }}</td></tr>
-        <tr><td class="label">Čas začiatku</td><td class="value">{{ values.workStartTime ?: '—' }}</td></tr>
-        <tr><td class="label">Čas ukončenia</td><td class="value">{{ values.workFinishTime ?: '—' }}</td></tr>
-        {% if values.additionalMeasures %}<tr><td class="label">Dodatočné opatrenia</td><td class="value">{{ values.additionalMeasures|nl2br }}</td></tr>{% endif %}
+        <tr>
+            <td class="label">EX zóna</td>
+            <td class="value">
+                {% set zones = values.exZone ?? [] %}
+                {% if zones|length > 0 %}
+                    {% for key in zones %}<span class="checklist-item">✓ {{ atexZoneLabels[key] ?? key }}</span>{% endfor %}
+                {% else %}—{% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Stav zabezpečenia</td>
+            <td class="value">{{ atexSecuringStatusLabels[values.securingStatus] ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Spôsob zabezpečenia</td>
+            <td class="value">
+                {% set sm = values.securingMethods ?? [] %}
+                {% if sm|length > 0 %}
+                    {% for key in sm %}<span class="checklist-item">✓ {{ atexMethodLabels[key] ?? key }}</span>{% endfor %}
+                {% else %}—{% endif %}
+                {% if values.securingMethodsOther %} — {{ values.securingMethodsOther }}{% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Dodatočné opatrenia</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>Opatrenie</th>
+                <th style="width:12%">Áno / Nie</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Neiskrivé ručné náradie schválené pre ATEX</td>
+                <td>{{ _self.yn(values.measureNonSparkingHandTools) }}</td>
+            </tr>
+            <tr>
+                <td>Prenosné elektrické náradie s ATEX certifikáciou</td>
+                <td>{{ _self.yn(values.measurePortablePowerToolsAtex) }}</td>
+            </tr>
+            <tr>
+                <td>Antistatický odev (čiapka, maska, odev, obuv)</td>
+                <td>{{ _self.yn(values.measureAntistaticClothing) }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="margin-top:4pt;font-size:8pt;">
+        Hodinová kontrola vykonávania opatrení je v zodpovednosti vedúceho prác.
+        Pri uzavretí subpermitu je vyžadovaná príloha s evidenciou kontrol.
+    </p>
+</div>
+
+<div class="section">
+    <h2>Plán a OOPP</h2>
+    <table class="dl-table">
+        <tr>
+            <td class="label">Plán na obmedzenie nebezpečnej energie</td>
+            <td class="value">{{ _self.yn(values.hazardousEnergyPlanEstablished) }}</td>
+        </tr>
+        <tr>
+            <td class="label">Použité OOPP</td>
+            <td class="value">
+                {% set p = values.usedPpe ?? [] %}
+                {% if p|length > 0 %}
+                    {% for key in p %}<span class="checklist-item">✓ {{ atexPpeLabels[key] ?? key }}</span>{% endfor %}
+                {% else %}—{% endif %}
+                {% if values.usedPpeOther %} — {{ values.usedPpeOther }}{% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Náradie a izolácia pracoviska</h2>
+    <table class="dl-table">
+        <tr>
+            <td class="label">Použité náradie</td>
+            <td class="value">
+                {% set t = values.toolsUsed ?? [] %}
+                {% if t|length > 0 %}
+                    {% for key in t %}<span class="checklist-item">✓ {{ atexToolLabels[key] ?? key }}</span>{% endfor %}
+                {% else %}—{% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Izolácia pracoviska</td>
+            <td class="value">
+                {% set i = values.workspaceInsulation ?? [] %}
+                {% if i|length > 0 %}
+                    {% for key in i %}<span class="checklist-item">✓ {{ atexInsulationLabels[key] ?? key }}</span>{% endfor %}
+                {% else %}—{% endif %}
+                {% if values.workspaceInsulationOther %} — {{ values.workspaceInsulationOther }}{% endif %}
+            </td>
+        </tr>
     </table>
 </div>
 
@@ -658,21 +1178,29 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
 <div class="section">
     <h2>Signatári subpermitu</h2>
     {% set roleLabels = {
-        'mdlz_qualified_emergency': 'Kvalifikovaná osoba MDLZ — havarijný plán',
-        'area_supervisor':          'Vedúci pracoviska',
-        'mdlz_qualified_approval':  'Kvalifikovaná osoba MDLZ — schválenie SSoW',
-        'third_party':              'Dodávateľ (tretia strana)',
-        'second_technician':        'Druhý technik (>750 VAC)',
-        'safety_rep':               'Zástupca pre bezpečnosť (>750 VAC)',
-        'maintenance_manager':      'Vedúci údržby (>750 VAC)',
+        'mdlz_qualified_emergency':       'Kvalifikovaná osoba MDLZ — havarijný plán',
+        'area_supervisor':                'Vedúci pracoviska',
+        'mdlz_qualified_approval':        'Kvalifikovaná osoba MDLZ — schválenie SSoW',
+        'third_party':                    'Dodávateľ (tretia strana)',
+        'second_technician':              'Druhý technik (>750 VAC)',
+        'safety_rep':                     'Zástupca pre bezpečnosť (>750 VAC)',
+        'maintenance_manager':            'Vedúci údržby (>750 VAC)',
+        'excavation_hse_approval':        'FÁZA 2 — Schválenie HSE oddelením',
+        'excavation_authority_approval':  'FÁZA 3 — Schválenie oprávneným orgánom',
+        'cs_entrant':                     'Vstupujúci (entrant)',
+        'cs_supervisor_entrant':          'Dozorujúci pri vstupe',
+        'cs_supervisor_cse':              'Vedúci vstupu (supervisor in CSE)',
+        'cs_mdlz_orderant':               'Objednávateľ MDLZ',
+        'cs_hse_department':              'HSE oddelenie',
     } %}
     <table class="signer-table">
         <thead>
             <tr>
-                <th style="width:35%">Rola</th>
-                <th style="width:25%">Meno</th>
-                <th style="width:20%">Dátum podpisu</th>
-                <th style="width:20%">Podpis</th>
+                <th style="width:30%">Rola</th>
+                <th style="width:20%">Meno</th>
+                <th style="width:20%">Funkcia</th>
+                <th style="width:15%">Dátum podpisu</th>
+                <th style="width:15%">Podpis</th>
             </tr>
         </thead>
         <tbody>
@@ -680,6 +1208,7 @@ h3 { font-size: 9pt; color: #4F2170; margin: 5pt 0 3pt; }
             <tr>
                 <td>{{ roleLabels[roleValue] ?? roleValue }}</td>
                 <td>{{ req.signerName ?: '—' }}</td>
+                <td>{{ req.jobTitle ?: '—' }}</td>
                 <td>{{ req.signedAt ? req.signedAt|date('d.m.Y H:i') : '—' }}</td>
                 <td>
                     {% if signingImages[roleValue] is defined and signingImages[roleValue] %}

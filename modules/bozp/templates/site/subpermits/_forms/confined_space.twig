@@ -1,118 +1,208 @@
-{# Appendix 3 — Permission to enter a confined space #}
+{# Príloha č. 3 — Povolenie na vstup do uzavretého priestoru (Confined Space).
+   Common Who/When/Where fields come from the parent subpermits/form.twig
+   wrapper. This file adds confined-space specifics + the 5 mandatory
+   token-mailed signers (cs_entrant, cs_supervisor_entrant, cs_supervisor_cse,
+   cs_mdlz_orderant, cs_hse_department). Periodic atmospheric tests are
+   recorded on paper and uploaded as a `contractor_upload` attachment before
+   the contractor closure signature can be captured. #}
 
-<fieldset class="bozp-form-section">
-    <legend class="bozp-form-section__title">{{ 'Platnosť a havarijný plán'|t('bozp') }}</legend>
-
-    <div class="bozp-form-grid bozp-form-grid--2col">
-        <div class="bozp-form-row">
-            <label for="expiryDate">{{ 'Dátum expirácie'|t('bozp') }}</label>
-            <input type="date" id="expiryDate" name="expiryDate"
-                   value="{{ values.expiryDate ?? '' }}">
-        </div>
-        <div class="bozp-form-row">
-            <label for="expiryTime">{{ 'Čas expirácie'|t('bozp') }}</label>
-            <input type="time" id="expiryTime" name="expiryTime"
-                   value="{{ values.expiryTime ?? '' }}">
-        </div>
-    </div>
-
+{% macro yn_row(name, value, label) %}
     <div class="bozp-form-row">
-        <label for="emergencyPlan">{{ 'Opis havarijného / záchranného plánu'|t('bozp') }}</label>
-        <textarea id="emergencyPlan" name="emergencyPlan" rows="4">{{ values.emergencyPlan ?? '' }}</textarea>
-    </div>
-
-    <div class="bozp-form-row">
-        <span class="bozp-form-row__label">{{ 'Účastníci absolvovali školenie?'|t('bozp') }}</span>
+        <span class="bozp-form-row__label">{{ label }}</span>
         <div class="bozp-form__yesno">
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="trainingComplete" value="yes" required {% if (values.trainingComplete ?? '') == 'yes' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Áno'|t('bozp') }}</span>
             </label>
             <label class="bozp-form__yesno-opt">
-                <input type="radio" name="trainingComplete" value="no" required {% if (values.trainingComplete ?? '') == 'no' %}checked{% endif %}>
+                <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
+                <div class="custom_radio"></div>
                 <span>{{ 'Nie'|t('bozp') }}</span>
             </label>
         </div>
     </div>
-</fieldset>
+{% endmacro %}
 
+{# ─── Hlavička ───────────────────────────────────────────────────────── #}
 <fieldset class="bozp-form-section">
-    <legend class="bozp-form-section__title">{{ 'Izolácia a ventilácia'|t('bozp') }}</legend>
-
-    {% macro yn_row(name, value, label) %}
-        <div class="bozp-form-row">
-            <span class="bozp-form-row__label">{{ label }}</span>
-            <div class="bozp-form__yesno">
-                <label class="bozp-form__yesno-opt">
-                    <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
-                    <span>{{ 'Áno'|t('bozp') }}</span>
-                </label>
-                <label class="bozp-form__yesno-opt">
-                    <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
-                    <span>{{ 'Nie'|t('bozp') }}</span>
-                </label>
-            </div>
-        </div>
-    {% endmacro %}
-
-    {{ _self.yn_row('lotoApplied', values.lotoApplied ?? '', 'LOTO bol aplikovaný na zdroj energie?'|t('bozp')) }}
-    {{ _self.yn_row('pumpsBlinded', values.pumpsBlinded ?? '', 'Čerpadlá / potrubia sú zaslepené, odpojené alebo zablokované?'|t('bozp')) }}
-    {{ _self.yn_row('ventilationRequired', values.ventilationRequired ?? '', 'Je potrebná úprava ventilácie?'|t('bozp')) }}
+    <legend class="bozp-form-section__title">{{ 'Hlavička povolenia'|t('bozp') }}</legend>
 
     <div class="bozp-form-grid bozp-form-grid--2col">
         <div class="bozp-form-row">
-            <label for="ventilationStartTime">{{ 'Nútené vetranie — začiatok'|t('bozp') }}</label>
-            <input type="time" id="ventilationStartTime" name="ventilationStartTime"
-                   value="{{ values.ventilationStartTime ?? '' }}">
+            <label for="authorizedPersonName">{{ 'Oprávnená osoba (povolenie)'|t('bozp') }}</label>
+            <input type="text" id="authorizedPersonName" name="authorizedPersonName"
+                   value="{{ values.authorizedPersonName ?? '' }}" maxlength="255">
         </div>
         <div class="bozp-form-row">
-            <label for="ventilationStopTime">{{ 'Nútené vetranie — koniec'|t('bozp') }}</label>
-            <input type="time" id="ventilationStopTime" name="ventilationStopTime"
-                   value="{{ values.ventilationStopTime ?? '' }}">
+            <label for="department">{{ 'Oddelenie'|t('bozp') }}</label>
+            <input type="text" id="department" name="department"
+                   value="{{ values.department ?? '' }}" maxlength="255">
+        </div>
+    </div>
+
+    <div class="bozp-form-row">
+        <label for="emergencyRescuePlan">{{ 'Popis havarijného / záchranného plánu (samostatný dokument)'|t('bozp') }}</label>
+        <textarea id="emergencyRescuePlan" name="emergencyRescuePlan" rows="4">{{ values.emergencyRescuePlan ?? '' }}</textarea>
+    </div>
+
+    <p class="bozp-form-section__hint">
+        {{ 'Dátum a čas expirácie sa nastavia automaticky pri schválení HSE (+ 8 hodín od schválenia).'|t('bozp') }}
+    </p>
+</fieldset>
+
+{# ─── Izolácia ──────────────────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Izolácia zdroja energie'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        <strong>{{ 'Lock Out Tag Out (LOTO) musí byť aplikovaný.'|t('bozp') }}</strong>
+    </p>
+
+    {{ _self.yn_row(
+        'pumpsLinesBlinded',
+        values.pumpsLinesBlinded ?? '',
+        'Čerpadlá / potrubia sú zaslepené, odpojené alebo zablokované'|t('bozp')
+    ) }}
+</fieldset>
+
+{# ─── Ventilácia ───────────────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Ventilácia'|t('bozp') }}</legend>
+
+    {{ _self.yn_row(
+        'ventilationModificationRequired',
+        values.ventilationModificationRequired ?? '',
+        'Je potrebná úprava ventilácie?'|t('bozp')
+    ) }}
+
+    <div class="bozp-form-row">
+        <label for="ventilationNotRequiredReason">{{ 'Ak nie, popíšte dôvod'|t('bozp') }}</label>
+        <input type="text" id="ventilationNotRequiredReason" name="ventilationNotRequiredReason"
+               value="{{ values.ventilationNotRequiredReason ?? '' }}" maxlength="500">
+    </div>
+
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
+            <label for="forcedVentilationStart">{{ 'Nútené vetranie — začiatok'|t('bozp') }}</label>
+            <input type="time" id="forcedVentilationStart" name="forcedVentilationStart"
+                   value="{{ values.forcedVentilationStart ?? '' }}">
+        </div>
+        <div class="bozp-form-row">
+            <label for="forcedVentilationStop">{{ 'Nútené vetranie — koniec'|t('bozp') }}</label>
+            <input type="time" id="forcedVentilationStop" name="forcedVentilationStop"
+                   value="{{ values.forcedVentilationStop ?? '' }}">
         </div>
     </div>
 </fieldset>
 
+{# ─── Kontrola atmosféry ──────────────────────────────────────────── #}
 <fieldset class="bozp-form-section">
-    <legend class="bozp-form-section__title">{{ 'Kontrola atmosféry'|t('bozp') }}</legend>
-    <p class="bozp-form-section__hint">{{ 'Vstup povolený: O₂ 19,5 – 23,5 %, LEL < 10 %, CO a H₂S = 0 PPM.'|t('bozp') }}</p>
+    <legend class="bozp-form-section__title">{{ 'Kontrola atmosféry (iniciálne meranie)'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Vstup povolený: O₂ 19,5 – 23,5 %, LEL < 10 %, CO a H₂S = 0 PPM. Periodické testy (každých 30 minút) zaznamenajte na papieri a priložte ako prílohu pred uzatvorením subpermitu.'|t('bozp') }}
+    </p>
 
-    <div class="bozp-form-grid bozp-form-grid--4col">
+    <div class="bozp-form-grid bozp-form-grid--2col">
         <div class="bozp-form-row">
-            <label for="o2Percent">{{ 'O₂ (%)'|t('bozp') }}</label>
-            <input type="text" id="o2Percent" name="o2Percent"
-                   value="{{ values.o2Percent ?? '' }}" maxlength="10" style="width:100px">
+            <label for="atmosphereTestTime">{{ 'Čas merania'|t('bozp') }}</label>
+            <input type="time" id="atmosphereTestTime" name="atmosphereTestTime"
+                   value="{{ values.atmosphereTestTime ?? '' }}">
         </div>
         <div class="bozp-form-row">
-            <label for="lelPercent">{{ '%LEL'|t('bozp') }}</label>
+            <label for="oxygenPercent">{{ 'Kyslík (O₂) %'|t('bozp') }}</label>
+            <input type="text" id="oxygenPercent" name="oxygenPercent"
+                   value="{{ values.oxygenPercent ?? '' }}" maxlength="10">
+        </div>
+    </div>
+
+    <div class="bozp-form-grid bozp-form-grid--3col">
+        <div class="bozp-form-row">
+            <label for="lelPercent">{{ '% LEL (musí byť < 10 %)'|t('bozp') }}</label>
             <input type="text" id="lelPercent" name="lelPercent"
-                   value="{{ values.lelPercent ?? '' }}" maxlength="10" style="width:100px">
+                   value="{{ values.lelPercent ?? '' }}" maxlength="10">
         </div>
         <div class="bozp-form-row">
-            <label for="coPpm">{{ 'CO (PPM)'|t('bozp') }}</label>
-            <input type="text" id="coPpm" name="coPpm"
-                   value="{{ values.coPpm ?? '' }}" maxlength="10" style="width:100px">
+            <label for="coOrH2sPpm">{{ 'CO alebo H₂S (PPM)'|t('bozp') }}</label>
+            <input type="text" id="coOrH2sPpm" name="coOrH2sPpm"
+                   value="{{ values.coOrH2sPpm ?? '' }}" maxlength="10">
         </div>
         <div class="bozp-form-row">
-            <label for="h2sPpm">{{ 'H₂S (PPM)'|t('bozp') }}</label>
-            <input type="text" id="h2sPpm" name="h2sPpm"
-                   value="{{ values.h2sPpm ?? '' }}" maxlength="10" style="width:100px">
+            <label for="otherChemical">{{ 'Iné (názov, hodnota)'|t('bozp') }}</label>
+            <input type="text" id="otherChemical" name="otherChemical"
+                   value="{{ values.otherChemical ?? '' }}" maxlength="100">
         </div>
+    </div>
+</fieldset>
+
+{# ─── Komunikácia ──────────────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Spôsob komunikácie'|t('bozp') }}</legend>
+
+    <div class="bozp-form-row">
+        <label for="communicationEntrantSupervisor">{{ 'Vstupujúci s dozorujúcim'|t('bozp') }}</label>
+        <input type="text" id="communicationEntrantSupervisor" name="communicationEntrantSupervisor"
+               value="{{ values.communicationEntrantSupervisor ?? '' }}" maxlength="255">
     </div>
 
     <div class="bozp-form-row">
-        <span class="bozp-form-row__label">{{ 'Komunikácia vstupujúceho s dozorom je potvrdená?'|t('bozp') }}</span>
-        <div class="bozp-form__yesno">
-            <label class="bozp-form__yesno-opt">
-                <input type="radio" name="communicationConfirmed" value="yes" required
-                       {% if (values.communicationConfirmed ?? '') == 'yes' %}checked{% endif %}>
-                <span>{{ 'Áno'|t('bozp') }}</span>
-            </label>
-            <label class="bozp-form__yesno-opt">
-                <input type="radio" name="communicationConfirmed" value="no" required
-                       {% if (values.communicationConfirmed ?? '') == 'no' %}checked{% endif %}>
-                <span>{{ 'Nie'|t('bozp') }}</span>
-            </label>
+        <label for="communicationSupervisorEmergency">{{ 'Dozorujúci s pohotovostnými službami'|t('bozp') }}</label>
+        <input type="text" id="communicationSupervisorEmergency" name="communicationSupervisorEmergency"
+               value="{{ values.communicationSupervisorEmergency ?? '' }}" maxlength="255">
+    </div>
+
+    <div class="bozp-form-row">
+        <label for="emergencyTeamMembers">{{ 'Mená členov pohotovostného tímu'|t('bozp') }}</label>
+        <textarea id="emergencyTeamMembers" name="emergencyTeamMembers" rows="2">{{ values.emergencyTeamMembers ?? '' }}</textarea>
+    </div>
+</fieldset>
+
+{# ─── Časové údaje vstupu ─────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Časové údaje vstupu'|t('bozp') }}</legend>
+
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
+            <label for="timeOfFirstEnter">{{ 'Čas prvého vstupu'|t('bozp') }}</label>
+            <input type="time" id="timeOfFirstEnter" name="timeOfFirstEnter"
+                   value="{{ values.timeOfFirstEnter ?? '' }}">
+        </div>
+        <div class="bozp-form-row">
+            <label for="timeOfLastExit">{{ 'Čas posledného výstupu'|t('bozp') }}</label>
+            <input type="time" id="timeOfLastExit" name="timeOfLastExit"
+                   value="{{ values.timeOfLastExit ?? '' }}">
         </div>
     </div>
+</fieldset>
+
+{# ─── Povinné podpisy (token-mailed) ───────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Povinné podpisy'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">
+        {{ 'Každej osobe bude po uložení odoslaný e-mail s odkazom na elektronický podpis. Bez podpisu všetkých osôb nie je možné subpermit schváliť HSE. Všetky e-maily sú povinné.'|t('bozp') }}
+    </p>
+
+    {% set csRoles = [
+        { key: 'cs_entrant',            label: 'Vstupujúci (entrant)'|t('bozp') },
+        { key: 'cs_supervisor_entrant', label: 'Dozorujúci pri vstupe (supervisor entrant)'|t('bozp') },
+        { key: 'cs_supervisor_cse',     label: 'Vedúci vstupu do uzavretého priestoru (supervisor in CSE)'|t('bozp') },
+        { key: 'cs_mdlz_orderant',      label: 'Objednávateľ MDLZ (review)'|t('bozp') },
+        { key: 'cs_hse_department',     label: 'HSE oddelenie (review)'|t('bozp') },
+    ] %}
+
+    {% for role in csRoles %}
+        {% set fieldName = 'signEmail_' ~ role.key %}
+        <div class="bozp-form-row{% if errors[fieldName] is defined %} bozp-form-row--error{% endif %}">
+            <label for="{{ fieldName }}">
+                {{ role.label }} <span class="bozp-form-row__req">*</span>
+            </label>
+            <input type="email" id="{{ fieldName }}" name="{{ fieldName }}"
+                   value="{{ attribute(values, fieldName) ?? '' }}"
+                   maxlength="255"
+                   placeholder="meno@firma.sk"
+                   {% if errors[fieldName] is defined %}aria-invalid="true"{% endif %}>
+            {% if errors[fieldName] is defined %}
+                <p class="bozp-form-row__error">{{ errors[fieldName] }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
 </fieldset>
