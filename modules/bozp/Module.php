@@ -143,6 +143,14 @@ class Module extends BaseModule
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
             static function (RegisterUrlRulesEvent $event): void {
+                // PWA shell assets (served from module, scope = site root)
+                $event->rules['manifest.webmanifest']            = 'bozp/pwa/manifest';
+                $event->rules['sw.js']                           = 'bozp/pwa/service-worker';
+                $event->rules['bozp-pwa-icon.svg']               = 'bozp/pwa/icon';
+                // iOS Safari "Add to Home Screen" probes both filenames.
+                $event->rules['apple-touch-icon.png']            = 'bozp/pwa/apple-touch-icon';
+                $event->rules['apple-touch-icon-precomposed.png']= 'bozp/pwa/apple-touch-icon';
+
                 // Auth
                 $event->rules['bozp/login'] = 'bozp/auth/login';
                 $event->rules['POST bozp/login'] = 'bozp/auth/login';

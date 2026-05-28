@@ -1,0 +1,21 @@
+{
+    "name": "Mondelēz BOZP",
+    "short_name": "BOZP",
+    "description": "Mondelēz BOZP — povolenia na prácu",
+    "start_url": "/bozp",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#FEFFFD",
+    "theme_color": "#4F2170",
+    "lang": "sk",
+    "categories": ["business", "productivity"],
+    "icons": [
+        {
+            "src": "/bozp-pwa-icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
