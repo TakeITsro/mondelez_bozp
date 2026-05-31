@@ -3,90 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+    @font-face{font-family:'Calibri';src:url('/assets/font/calibri-regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Calibri", Arial, Helvetica, sans-serif;}
 body {
-    font-family: DejaVu Sans, Arial, sans-serif;
+    font-family: "Calibri", Arial, Helvetica, sans-serif;
     font-size: 9pt;
     color: #000000;
     line-height: 1.4;
+
 }
-h1 { font-size: 14pt; color: #4F2170; margin-bottom: 4pt; }
-h2 { font-size: 10pt; color: #4F2170; margin: 8pt 0 4pt; border-bottom: 1pt solid #4F2170; padding-bottom: 2pt; }
+h1 { font-size: 20px; line-height: 24px; color: #4F2170;}
+h2 { font-size: 18px; color: #FEFFFD; margin: 0; background-color: #4F2170; padding: 10px }
 h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
 
 /* Header */
 .doc-header {
-    border: 2pt solid #4F2170;
-    padding: 8pt;
-    margin-bottom: 10pt;
+    background-color: #FAF4FF;
+    padding: 20px;
 }
-.doc-header table { width: 100%; border-collapse: collapse; }
-.doc-header .logo-cell { width: 30%; vertical-align: middle; }
-.doc-header .title-cell { vertical-align: middle; text-align: center; }
-.doc-header .meta-cell { width: 30%; vertical-align: middle; text-align: right; font-size: 8pt; }
-.permit-number { font-size: 16pt; font-weight: bold; color: #4F2170; }
-.status-badge {
-    display: inline-block;
-    background: #4F2170;
-    color: #FEFFFD;
-    padding: 2pt 6pt;
+.doc-header table { width: 100%; border-collapse: collapse; border-spacing: 20px}
+.doc-header .logo-cell { width: 120px; vertical-align: middle; }
+.doc-header .logo-cell img {width: 120px;}
+.doc-header .title-cell {
+    width: 40%;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 20px;
+}
+.doc-header .meta-cell {
+    width: 200px;
+    vertical-align: middle;
+    text-align: right;
     font-size: 8pt;
-    font-weight: bold;
 }
+.doc-header .meta-cell td {
+    font-family: "Calibri", Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #4F2170;
+    line-height: 1.4;
+}
+
 
 /* Sections */
-.section { margin-bottom: 8pt; }
-.dl-table { width: 100%; border-collapse: collapse; margin-bottom: 4pt; }
-.dl-table td { padding: 2pt 4pt; vertical-align: top; border-bottom: 0.5pt solid #000000; }
-.dl-table .label { width: 35%; font-weight: bold; background: #FEFFFD; }
-.dl-table .value { width: 65%; }
+.section { margin-bottom: 0 }
+.dl-table { width: 100%; border-spacing: 0; border-collapse: collapse; border: 0; padding: 0;}
+.dl-table td {width: 50%;}
+
+.data-table {width: 100%; border-spacing: 0; border-collapse: collapse; border: 0; padding: 0;}
+.data-table .label { width: 50%; height: 50px; font-size: 14px; font-weight: 700; background-color: #F1E0FF; padding: 5px 10px}
+.data-table .value { width: 50%; height: 50px; font-size: 14px; background-color: #FAF4FF; padding: 5px 10px}
+.data-table .label.tall {height: 100px;}
+.data-table .value.tall {height: 100px;}
+
+.hints-table {height: 200px; background-color: #4F2170; padding: 10px; border-spacing: 0; border-collapse: collapse; border: 0;}
+.hints-table td:nth-child(1) {font-size: 12px; color: #FEFFFD; line-height: 1.2; vertical-align: top; padding: 2px 10px}
+.hints-table td:nth-child(2) {font-size: 12px; color: #FEFFFD; line-height: 1.2; vertical-align: top; padding: 2px 10px}
+
 
 /* Hazards */
-.hazard-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
-.hazard-table th {
-    background: #4F2170;
-    color: #FEFFFD;
-    padding: 3pt 4pt;
-    text-align: left;
-    border: 0.5pt solid #4F2170;
-}
-.hazard-table td {
-    padding: 2pt 4pt;
-    border: 0.5pt solid #000000;
-    vertical-align: top;
-}
-.hazard-table tr:nth-child(even) td { background: #f5f0f8; }
+.hazard-table {width: 100%; border-spacing: 2px;}
+.hazard-table th {font-size: 14px; color: #4F2170; line-height: 1.2; vertical-align: middle; text-align: left; padding: 5px 10px}
+.hazard-table th:nth-child(1) { width: 50px; background-color: #FAF4FF;}
+.hazard-table th:nth-child(2) { width: 100px; background-color: #F1E0FF;}
+.hazard-table th:nth-child(3) { width: 60px; background-color: #F1E0FF;}
+.hazard-table th:nth-child(4) { width: 80px; background-color: #F1E0FF;}
+.hazard-table th:nth-child(5) { padding: 5px; background-color: #FFCD30;}
+.hazard-table td {font-size: 12px; color: #4F2170; line-height: 1.2; vertical-align: middle; text-align: left; padding: 5px 10px}
+.hazard-table td:nth-child(1) { width: 50px; background-color: #FAF4FF;}
+.hazard-table td:nth-child(2) { width: 100px; background-color: #F1E0FF;}
+.hazard-table td:nth-child(3) { width: 60px; background-color: #F1E0FF;}
+.hazard-table td:nth-child(4) { width: 80px; background-color: #F1E0FF;}
+.hazard-table td:nth-child(5) { padding: 5px; background-color: #FFCD30;}
 
 /* Subpermits */
-.subpermit-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
-.subpermit-table th {
-    background: #4F2170;
-    color: #FEFFFD;
-    padding: 3pt 4pt;
-    text-align: left;
-    border: 0.5pt solid #4F2170;
-}
-.subpermit-table td { padding: 2pt 4pt; border: 0.5pt solid #000000; }
+
 
 /* Signatures */
-.sig-section { margin-top: 8pt; }
-.sig-grid { width: 100%; border-collapse: collapse; }
-.sig-grid td { width: 50%; vertical-align: top; padding: 4pt; border: 0.5pt solid #000000; }
-.sig-label { font-size: 8pt; font-weight: bold; color: #4F2170; margin-bottom: 3pt; }
-.sig-image { max-width: 200pt; max-height: 60pt; }
-.sig-meta { font-size: 7.5pt; color: #000000; margin-top: 3pt; }
-.sig-line { border-bottom: 0.5pt solid #000000; margin-top: 25pt; margin-bottom: 2pt; }
+.signature-table {width: 100%;}
+.signature-table td {width: 50%;}
+.signature-table td div {font-size: 14px; color: #4F2170; line-height: 1.2;}
+.signature-table td img {
+    width: 100%;
+}
 
 /* Controls */
-.control-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
-.control-table th {
-    background: #4F2170;
-    color: #FEFFFD;
-    padding: 3pt 4pt;
-    text-align: left;
-    border: 0.5pt solid #4F2170;
-}
-.control-table td { padding: 2pt 4pt; border: 0.5pt solid #000000; vertical-align: top; }
+
 
 /* Yes/No */
 .yn-yes { font-weight: bold; }
@@ -139,29 +140,79 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
     <table>
         <tr>
             <td class="logo-cell">
-                <strong style="font-size:11pt;color:#4F2170;">MONDELĒZ</strong><br>
-                <span style="font-size:8pt;">Bezpečnosť a ochrana zdravia pri práci</span>
+                <img src="https://testing.takeitsro.sk/assets/svg/pdf_logo.svg" alt="Logo" width="120">
             </td>
             <td class="title-cell">
-                <div style="font-size:10pt;font-weight:bold;color:#000000;margin-bottom:4pt;">
-                    VŠEOBECNÉ POVOLENIE NA PRÁCU
-                </div>
-                <div class="permit-number">{{ permit.permitNumber }}</div>
+                <h1>
+                    {{ "HSE - Povolenie na prácu"|t('bozp') }}
+                    {{ "Príloha č. 1"|t('bozp') }}
+                    {{ "Všeobecné povolanie na prácu GPTW"|t('bozp') }}
+                </h1>
             </td>
             <td class="meta-cell">
-                <div class="status-badge">{{ statusLabels[permit.status] ?? permit.status }}</div>
-                <br><br>
-                <div>Vygenerované: {{ generatedAt }}</div>
-                {% if permit.validFrom %}
-                    <div>Platné od: {{ permit.validFrom|date('d.m.Y') }}</div>
-                {% endif %}
-                {% if permit.validTo %}
-                    <div>Platné do: {{ permit.validTo|date('d.m.Y H:i') }}</div>
-                {% endif %}
+                <table class="data-table">
+                    <tr>
+                        <td>{{ "Kód"|t('bozp') }}:</td>
+                        <td>{{ permit.permitNumber }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ "Dátum vydania"|t('bozp') }}:</td>
+                        <td>{{ generatedAt|date('d.m.Y') }}</td>
+                    </tr>
+                    {% if permit.validFrom %}
+                        <tr>
+                            <td>{{ "Platné od"|t('bozp') }}:</td>
+                            <td>{{ permit.validFrom|date('d.m.Y') }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if permit.validTo %}
+                        <tr>
+                            <td>{{ "Platné do"|t('bozp') }}:</td>
+                            <td>{{ permit.validTo|date('d.m.Y') }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td>{{ "Stav"|t('bozp') }}:</td>
+                        <td>{{ statusLabels[permit.status] ?? permit.status }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+
+{# ── Shorts and QR ────────────────────────────────────────────────────────── #}
+<div class="section">
+    <h2>{{ "Pojmy a skratky"|t('bozp') }}</h2>
+    <table>
+        <tr>
+            <td style="height: 120px">
+                <table class="hints-table" style="height: 120px">
+                    <tr>
+                        <td style="padding: 10px 10px 2px 10px">{{ "PTW – Povolenie na prácu"|t('bozp') }}</td>
+                        <td style="padding: 10px 10px 2px 10px">{{ "GPTW – Všeobecné povolenie na prácu"|t('bozp') }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ "CSE – Práce v stiesnených priestoroch"|t('bozp') }}</td>
+                        <td>{{ "WAH – Práce vo výškach"|t('bozp') }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ "HW – Činnosť so zvýšeným nebezpečenstvom vzniku požiaru"|t('bozp') }}</td>
+                        <td>{{ "OC – Povolenie na výkopové práce"|t('bozp') }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ "EXC – Povolenie na zdvíhacie práce a práce so žeriavom"|t('bozp') }}</td>
+                        <td>{{ "HRA – Vysokorizikové práce"|t('bozp') }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 10px 10px 10px">{{ "OOPP – Osobné ochranné pracovné prostriedky"|t('bozp') }}</td>
+                        <td style="padding: 2px 10px 10px 10px">{{ "LOTO – Lock Out Tag Out"|t('bozp') }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 120px; height: 120px; padding: 10px">
                 {% if contractorQrDataUri %}
-                    <div style="margin-top:6pt;">
-                        <img src="{{ contractorQrDataUri }}" alt="QR" style="width:80pt;height:80pt;">
-                    </div>
+                    <img src="{{ contractorQrDataUri }}" alt="QR" style="width: 100px; height: 100px;">
                 {% endif %}
             </td>
         </tr>
@@ -170,125 +221,283 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
 
 {# ── Core details ────────────────────────────────────────────────────────── #}
 <div class="section">
-    <h2>Základné informácie</h2>
+    <h2>{{ "Základné informácie"|t('bozp') }}</h2>
     <table class="dl-table">
         <tr>
-            <td class="label">Dodávateľ / spoločnosť</td>
-            <td class="value">{{ permit.contractorCompany ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Kontaktná osoba</td>
-            <td class="value">{{ permit.contractorPersonName ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label">E-mail dodávateľa</td>
-            <td class="value">{{ permit.contractorEmail ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Miesto výkonu prác</td>
-            <td class="value">{{ permit.workLocation ?: '—' }}</td>
-        </tr>
-        {% if zones|length > 0 %}
-        <tr>
-            <td class="label">Zóny</td>
-            <td class="value">
-                {% for z in zones %}{{ z.name }}{% if z.code %} ({{ z.code }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+            <td>
+                <table class="data-table">
+                    <tr class="row">
+                        <td class="label">{{ "Dátum:"|t('bozp') }}</td>
+                        <td class="value">{{ permit.submittedAt|date('d.m.Y') ?: '—' }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label">{{ "Zodpovedná osoba MDLZ:"|t('bozp') }}</td>
+                        <td class="value">{{ issuer ? (issuer.fullName ?: issuer.username) : '—' }}</td>
+                    </tr>
+                </table>
             </td>
         </tr>
-        {% endif %}
         <tr>
-            <td class="label">Popis prác</td>
-            <td class="value">{{ permit.workOverview|nl2br ?: '—' }}</td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label">{{ "Miesto výkonu práce:"|t('bozp') }}</td>
+                        <td class="value">
+                            {{ permit.workLocation ?: '—' }}<br>
+                            {% if zones|length > 0 %}
+                                {% for z in zones %}{{ z.name }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label">{{ "Zúčastnení dodávatelia/osoby:"|t('bozp') }}</td>
+                        <td class="value">{{ permit.contractorCompany ?: '—' }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
-        {% if permit.submittedAt %}
         <tr>
-            <td class="label">Dátum odoslania</td>
-            <td class="value">{{ permit.submittedAt|date('d.m.Y H:i') }}</td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label tall">{{ "Práca, ktorá sa bude vykonávať:"|t('bozp') }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="value tall">{{ permit.workOverview|nl2br ?: '—' }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
-        {% endif %}
-        {% if permit.approvedAt %}
-        <tr>
-            <td class="label">Dátum schválenia</td>
-            <td class="value">{{ permit.approvedAt|date('d.m.Y H:i') }}{% if approver %} — {{ approver.fullName ?: approver.username }}{% endif %}</td>
-        </tr>
-        {% endif %}
-        {% if permit.approvalComment %}
-        <tr>
-            <td class="label">Komentár HSE</td>
-            <td class="value">{{ permit.approvalComment|nl2br }}</td>
-        </tr>
-        {% endif %}
-        {% if permit.rejectedAt %}
-        <tr>
-            <td class="label">Dátum zamietnutia</td>
-            <td class="value">{{ permit.rejectedAt|date('d.m.Y H:i') }}{% if approver %} — {{ approver.fullName ?: approver.username }}{% endif %}</td>
-        </tr>
-        {% endif %}
-        {% if permit.closedAt %}
-        <tr>
-            <td class="label">Dátum uzavretia</td>
-            <td class="value">{{ permit.closedAt|date('d.m.Y H:i') }}</td>
-        </tr>
-        {% endif %}
-        {% if permit.cancelledAt %}
-        <tr>
-            <td class="label">Dátum zrušenia</td>
-            <td class="value">{{ permit.cancelledAt|date('d.m.Y H:i') }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <td class="label">Vydavateľ permitu</td>
-            <td class="value">{{ issuer ? (issuer.fullName ?: issuer.username) : '—' }}</td>
-        </tr>
+
+
+{#                    <tr class="row">#}
+{#                        <td class="label">{{ "Kontaktná osoba:"|t('bozp') }}</td>#}
+{#                        <td class="value">{{ permit.contractorPersonName ?: '—' }}</td>#}
+{#                    </tr>#}
+{#                    <tr class="row">#}
+{#                        <td class="label">{{ "E-mail dodávateľa:"|t('bozp') }}</td>#}
+{#                        <td class="value">{{ permit.contractorEmail ?: '—' }}</td>#}
+{#                    </tr>#}
+
+{#                    {% if permit.approvedAt %}#}
+{#                        <tr class="row">#}
+{#                            <td class="label">{{ "Dátum schválenia:"|t('bozp') }}</td>#}
+{#                            <td class="value">{{ permit.approvedAt|date('d.m.Y H:i') }}</td>#}
+{#                        </tr>#}
+{#                    {% endif %}#}
+{#                    {% if approver %}#}
+{#                        <tr class="row">#}
+{#                            <td class="label">{{ "Schválil:"|t('bozp') }}</td>#}
+{#                            <td class="value">{{ approver.fullName ?: approver.username }}</td>#}
+{#                        </tr>#}
+{#                    {% endif %}#}
+{#                    {% if permit.approvalComment %}#}
+{#                        <tr class="row">#}
+{#                            <td class="label">{{ ""|t('bozp') }}Komentár HSE:</td>#}
+{#                            <td class="value">{{ permit.approvalComment|nl2br }}</td>#}
+{#                        </tr>#}
+{#                    {% endif %}#}
+{#                    {% if permit.rejectedAt %}#}
+{#                        <tr class="row">#}
+{#                            <td class="label">{{ ""|t('bozp') }}Dátum zamietnutia:</td>#}
+{#                            <td class="value">{{ permit.rejectedAt|date('d.m.Y H:i') }}{% if approver %} — {{ approver.fullName ?: approver.username }}{% endif %}</td>#}
+{#                        </tr>#}
+{#                    {% endif %}#}
+{#                    {% if permit.closedAt %}#}
+{#                        <tr class="row">#}
+{#                            <td class="label">{{ ""|t('bozp') }}Dátum uzavretia:</td>#}
+{#                            <td class="value">{{ permit.closedAt|date('d.m.Y H:i') }}</td>#}
+{#                        </tr>#}
+{#                    {% endif %}#}
+{#                    {% if permit.cancelledAt %}#}
+{#                        <tr class="row">#}
+{#                            <td class="label">{{ ""|t('bozp') }}Dátum zrušenia:</td>#}
+{#                            <td class="value">{{ permit.cancelledAt|date('d.m.Y H:i') }}</td>#}
+{#                        </tr>#}
+{#                    {% endif %}#}
+{#                    <tr class="row">#}
+{#                        <td class="label" style="padding: 5px 20px 20px 20px">{{ ""|t('bozp') }}Vydavateľ permitu:</td>#}
+{#                        <td class="value" style="padding: 5px 20px 20px 20px">{{ issuer ? (issuer.fullName ?: issuer.username) : '—' }}</td>#}
+{#                    </tr>#}
     </table>
 </div>
 
 {# ── Preparation checks ──────────────────────────────────────────────────── #}
 <div class="section">
-    <h2>Príprava pracoviska</h2>
+    <h2>{{ "Príprava pracoviska"|t('bozp') }}</h2>
     <table class="dl-table">
         <tr>
-            <td class="label">Pracovné podmienky sú vhodné</td>
-            <td class="value">{{ _self.yn(permit.conditionsSuitable) }}</td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label tall">{{ "Konštrukčné/procesné podmienky vhodné pre prácu:"|t('bozp') }}</td>
+                        <td class="value tall">{{ _self.yn(permit.conditionsSuitable) }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label tall">{{ "Použité náradie/pracovné prostriedky sú v dobrom technickom stave:"|t('bozp') }}</td>
+                        <td class="value tall">{{ _self.yn(permit.toolsInGoodCondition) }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
         <tr>
-            <td class="label">Náradie v dobrom stave</td>
-            <td class="value">{{ _self.yn(permit.toolsInGoodCondition) }}</td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label tall">{{ "Sú obmedzenia/situácie, kedy musí byť práca zastavená:"|t('bozp') }}</td>
+                        <td class="value tall">{{ _self.yn(permit.hasStopConditions) }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label tall">{{ "Popis podmienok zastavenia:"|t('bozp') }}</td>
+                        <td class="value tall">{{ permit.stopConditionsDescription|nl2br ?: "-" }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
         <tr>
-            <td class="label">Podmienky pre zastavenie prác</td>
-            <td class="value">{{ _self.yn(permit.hasStopConditions) }}</td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label tall">{{ "Zavedený plán izolácie, LOTO prediskutovaný, implementovaný a overený (vyskúšaný):"|t('bozp') }}</td>
+                        <td class="value tall">{{ _self.yn(permit.conditionsSuitable) }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label tall">{{ "Vyžadujú sa dodatočné vysokorizikové povolenie.:"|t('bozp') }}</td>
+                        <td class="value tall">
+                            {# Decode requiresHighRisk JSON into a list of subpermit-type values
+                               and render their human labels via the SubpermitType enum.
+                               Twig restricts `is X` tests on attribute accessors in some
+                               setups — copy into a local simple var first. #}
+                            {% set rawReq = permit.requiresHighRisk %}
+                            {% set reqList = [] %}
+                            {% if rawReq is iterable %}
+                                {% set reqList = rawReq %}
+                            {% elseif rawReq %}
+                                {% set decoded = rawReq|json_decode %}
+                                {% if decoded is iterable %}
+                                    {% set reqList = decoded %}
+                                {% endif %}
+                            {% endif %}
+
+                            {% if reqList|length > 0 %}
+                                {% set reqLabels = [] %}
+                                {% for t in subpermitTypes %}
+                                    {% if t.value in reqList %}
+                                        {% set reqLabels = reqLabels|merge([t.label()]) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ reqLabels|join(', ') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
         </tr>
-        {% if permit.stopConditionsDescription %}
         <tr>
-            <td class="label">Popis podmienok zastavenia</td>
-            <td class="value">{{ permit.stopConditionsDescription|nl2br }}</td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label tall">{{ "Plán riadenia núdzových situácií pre každý pracovný krok/činnosť:"|t('bozp') }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="value tall">{{ permit.emergencyPlan|nl2br ?: "-" }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
-        {% endif %}
+    </table>
+</div>
+<br>
+
+{# ── Document header ────────────────────────────────────────────────────── #}
+<div class="doc-header">
+    <table>
         <tr>
-            <td class="label">LOTO zavedené</td>
-            <td class="value">{{ _self.yn(permit.lotoImplemented) }}</td>
+            <td class="logo-cell">
+                <img src="https://testing.takeitsro.sk/assets/svg/pdf_logo.svg" alt="Logo" width="120">
+            </td>
+            <td class="title-cell">
+                <h1>
+                    {{ "HSE - Povolenie na prácu"|t('bozp') }}
+                    {{ "Príloha č. 1"|t('bozp') }}
+                    {{ "Všeobecné povolanie na prácu GPTW"|t('bozp') }}
+                </h1>
+            </td>
+            <td class="meta-cell">
+                <table class="data-table">
+                    <tr>
+                        <td>{{ "Kód"|t('bozp') }}:</td>
+                        <td>{{ permit.permitNumber }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ "Dátum vydania"|t('bozp') }}:</td>
+                        <td>{{ generatedAt|date('d.m.Y') }}</td>
+                    </tr>
+                    {% if permit.validFrom %}
+                        <tr>
+                            <td>{{ "Platné od"|t('bozp') }}:</td>
+                            <td>{{ permit.validFrom|date('d.m.Y') }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if permit.validTo %}
+                        <tr>
+                            <td>{{ "Platné do"|t('bozp') }}:</td>
+                            <td>{{ permit.validTo|date('d.m.Y') }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td>{{ "Stav"|t('bozp') }}:</td>
+                        <td>{{ statusLabels[permit.status] ?? permit.status }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
-        {% if permit.emergencyPlan %}
-        <tr>
-            <td class="label">Núdzový plán</td>
-            <td class="value">{{ permit.emergencyPlan|nl2br }}</td>
-        </tr>
-        {% endif %}
     </table>
 </div>
 
 {# ── Hazards matrix ──────────────────────────────────────────────────────── #}
 {% if hazards|length > 0 %}
 <div class="section">
-    <h2>Riziká a OOPP</h2>
+    <h2>{{ "Riziká a OOPP"|t('bozp') }}</h2>
     <table class="hazard-table">
         <thead>
             <tr>
-                <th style="width:30%">Riziko</th>
-                <th style="width:10%">Exponovaný</th>
-                <th style="width:35%">Opatrenie / OOPP</th>
-                <th style="width:25%">Kontrola počas činnosti</th>
+                <th>{{ "Pikto"|t('bozp') }}</th>
+                <th>{{ "Riziko"|t('bozp') }}</th>
+                <th>{{ "Exponovaný"|t('bozp') }}</th>
+                <th>{{ "Opatrenie / OOPP"|t('bozp') }}</th>
+                <th>{{ "Kontrola počas činnosti"|t('bozp') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -301,6 +510,7 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
                 {% set row = hazards[cat.value] ?? null %}
                 {% if row %}
                 <tr>
+                    <td><img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon" width="40"></td>
                     <td><strong>{{ cat.label() }}</strong></td>
                     <td>{{ _self.yn(row.exposed) }}</td>
                     <td>{{ row.measure ? row.measure|nl2br : '—' }}</td>
@@ -315,6 +525,53 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
     </table>
 </div>
 {% endif %}
+
+<br>
+{# ── Document header ────────────────────────────────────────────────────── #}
+<div class="doc-header">
+    <table>
+        <tr>
+            <td class="logo-cell">
+                <img src="https://testing.takeitsro.sk/assets/svg/pdf_logo.svg" alt="Logo" width="120">
+            </td>
+            <td class="title-cell">
+                <h1>
+                    {{ "HSE - Povolenie na prácu"|t('bozp') }}
+                    {{ "Príloha č. 1"|t('bozp') }}
+                    {{ "Všeobecné povolanie na prácu GPTW"|t('bozp') }}
+                </h1>
+            </td>
+            <td class="meta-cell">
+                <table class="data-table">
+                    <tr>
+                        <td>{{ "Kód"|t('bozp') }}:</td>
+                        <td>{{ permit.permitNumber }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ "Dátum vydania"|t('bozp') }}:</td>
+                        <td>{{ generatedAt|date('d.m.Y') }}</td>
+                    </tr>
+                    {% if permit.validFrom %}
+                        <tr>
+                            <td>{{ "Platné od"|t('bozp') }}:</td>
+                            <td>{{ permit.validFrom|date('d.m.Y') }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if permit.validTo %}
+                        <tr>
+                            <td>{{ "Platné do"|t('bozp') }}:</td>
+                            <td>{{ permit.validTo|date('d.m.Y') }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td>{{ "Stav"|t('bozp') }}:</td>
+                        <td>{{ statusLabels[permit.status] ?? permit.status }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
 
 {# ── Subpermits ──────────────────────────────────────────────────────────── #}
 {% if subpermits|length > 0 %}
@@ -400,54 +657,16 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
 {% endif %}
 
 {# ── Signatures ──────────────────────────────────────────────────────────── #}
+{# General permit closure flow has exactly three signatures, captured in
+   strict order: contractor closure → issuer closure → HSE final close.
+   No issuance-time signatures appear on the printed permit. #}
 <div class="section sig-section">
-    <h2>Podpisy</h2>
-    <table class="sig-grid">
+    <h2>{{ "Podpisy pri uzavretí"|t('bozp') }}</h2>
+    <table class="signature-table">
         <tr>
-            {# Issuer signature #}
+            {# 1. Contractor (recipient) closure #}
             <td>
-                <div class="sig-label">Vydavateľ permitu (Issuer)</div>
-                {% set issuerSig = signatures['issuer'] ?? null %}
-                {% if issuerSig %}
-                    {% if sigImages['issuer'] is defined and sigImages['issuer'] %}
-                        <img src="{{ sigImages['issuer'] }}" class="sig-image">
-                    {% else %}
-                        <div class="sig-line"></div>
-                    {% endif %}
-                    <div class="sig-meta">
-                        <strong>{{ issuerSig.signerName }}</strong>
-                        {% if issuerSig.signatureDate %} · {{ issuerSig.signatureDate|date('d.m.Y') }}{% endif %}
-                    </div>
-                {% else %}
-                    <div class="sig-line"></div>
-                    <div class="sig-meta">{{ issuer ? (issuer.fullName ?: issuer.username) : '—' }}</div>
-                {% endif %}
-            </td>
-
-            {# HSE approval #}
-            <td>
-                <div class="sig-label">Schválenie HSE (Approver)</div>
-                {% set approvalSig = signatures['hse_approval'] ?? null %}
-                {% if approvalSig %}
-                    {% if sigImages['hse_approval'] is defined and sigImages['hse_approval'] %}
-                        <img src="{{ sigImages['hse_approval'] }}" class="sig-image">
-                    {% else %}
-                        <div class="sig-line"></div>
-                    {% endif %}
-                    <div class="sig-meta">
-                        <strong>{{ approvalSig.signerName }}</strong>
-                        {% if approvalSig.signatureDate %} · {{ approvalSig.signatureDate|date('d.m.Y') }}{% endif %}
-                    </div>
-                {% else %}
-                    <div class="sig-line"></div>
-                    <div class="sig-meta">{{ approver ? (approver.fullName ?: approver.username) : '—' }}</div>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            {# Recipient closure #}
-            <td>
-                <div class="sig-label">Podpis dodávateľa — dokončenie (Recipient Closure)</div>
+                <div class="sig-label">1. Dodávateľ — dokončenie prác (Recipient Closure)</div>
                 {% set rcSig = signatures['recipient_closure'] ?? null %}
                 {% if rcSig %}
                     {% if sigImages['recipient_closure'] is defined and sigImages['recipient_closure'] %}
@@ -466,9 +685,9 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
                 {% endif %}
             </td>
 
-            {# Issuer closure #}
+            {# 2. Issuer closure #}
             <td>
-                <div class="sig-label">Podpis vydavateľa — uzavretie (Issuer Closure)</div>
+                <div class="sig-label">2. Vydavateľ — uzavretie (Issuer Closure)</div>
                 {% set icSig = signatures['issuer_closure'] ?? null %}
                 {% if icSig %}
                     {% if sigImages['issuer_closure'] is defined and sigImages['issuer_closure'] %}
@@ -482,7 +701,27 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
                     </div>
                 {% else %}
                     <div class="sig-line"></div>
-                    <div class="sig-meta">Vydavateľ — uzavretie</div>
+                    <div class="sig-meta">{{ issuer ? (issuer.fullName ?: issuer.username) : 'Vydavateľ — uzavretie' }}</div>
+                {% endif %}
+            </td>
+
+            {# 3. HSE final close #}
+            <td>
+                <div class="sig-label">3. HSE officer — záverečné uzavretie (HSE Closure)</div>
+                {% set hseSig = signatures['hse_closure'] ?? null %}
+                {% if hseSig %}
+                    {% if sigImages['hse_closure'] is defined and sigImages['hse_closure'] %}
+                        <img src="{{ sigImages['hse_closure'] }}" class="sig-image">
+                    {% else %}
+                        <div class="sig-line"></div>
+                    {% endif %}
+                    <div class="sig-meta">
+                        <strong>{{ hseSig.signerName }}</strong>
+                        {% if hseSig.signatureDate %} · {{ hseSig.signatureDate|date('d.m.Y') }}{% endif %}
+                    </div>
+                {% else %}
+                    <div class="sig-line"></div>
+                    <div class="sig-meta">HSE officer — záverečné uzavretie</div>
                 {% endif %}
             </td>
         </tr>

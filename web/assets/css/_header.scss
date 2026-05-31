@@ -8,6 +8,35 @@
     justify-content: flex-end;
     gap: 1.25em;
     padding: 0.625em 5em;
+
+    > span {
+      color: var(--main-color);
+      font-size: 1.25em;
+      font-weight: 400;
+      line-height: 1.2em;
+    }
+
+    .bozp-header__logout {
+      margin: 0 0 0 auto;
+    }
+
+    .bozp-header__logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 1em;
+
+      svg {
+        width: 2em;
+      }
+
+      span {
+        color: var(--main-color);
+        font-size: 1em;
+        font-weight: 400;
+        line-height: 1.2em;
+      }
+    }
   }
 
   .bozp-header__inner {
@@ -76,13 +105,20 @@
       gap: 2.5em;
       padding: 2.5em 10px;
 
+      .bozp-header__brand {
+        svg {
+          height: 40px;
+        }
+      }
+
       .bozp-header__nav {
-        flex-direction: column;
+        //flex-direction: column;
         gap: 20px;
 
         a {
           color: var(--main-color-light);
-          font-size: 1.5em;
+          font-size: 1.25em;
+          text-align: center;
         }
       }
     }

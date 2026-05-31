@@ -356,12 +356,22 @@
                     value: defaultHseName,
                     required: true,
                 }) }}
-                {{ forms.dateField({
-                    label: 'Dátum'|t('bozp'),
-                    name: 'signatureDate',
-                    value: now|date('Y-m-d'),
-                    required: true,
-                }) }}
+                {# Plain HTML date input — Craft's forms.dateField submits
+                   `name[date]` + `name[time]` as an array, which trips the
+                   `(string) $request->getBodyParam('signatureDate')` cast
+                   in QueueController::actionHseClose. #}
+                <div class="field">
+                    <div class="heading">
+                        <label for="bozp-hse-signature-date">{{ 'Dátum'|t('bozp') }}</label>
+                    </div>
+                    <div class="input">
+                        <input type="date"
+                               id="bozp-hse-signature-date"
+                               name="signatureDate"
+                               value="{{ now|date('Y-m-d') }}"
+                               required>
+                    </div>
+                </div>
 
                 <div class="field">
                     <div class="heading"><label>{{ 'Podpis'|t('bozp') }}</label></div>

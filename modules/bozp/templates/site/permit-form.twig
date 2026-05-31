@@ -42,15 +42,54 @@
 {% macro yes_no(name, value) %}
     <div class="bozp-form__yesno">
         <label class="bozp-form__yesno-opt">
-            <input type="radio" name="{{ name }}" value="yes" {% if value == 'yes' %}checked{% endif %}>
+            <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
             <div class="custom_radio"></div>
             <span>{{ 'Áno'|t('bozp') }}</span>
         </label>
         <label class="bozp-form__yesno-opt">
-            <input type="radio" name="{{ name }}" value="no" {% if value == 'no' %}checked{% endif %}>
+            <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
             <div class="custom_radio"></div>
             <span>{{ 'Nie'|t('bozp') }}</span>
         </label>
+    </div>
+{% endmacro %}
+
+{# Styled file picker — paperclip trigger + hidden input. No CTA button.
+   Variables:
+     name        input name (e.g. 'riskAssessment')
+     id          input id   (same as name unless conflict)
+     label       row label  (left side)
+     required    bool       (renders the * marker + HTML required attr)
+     hint        helper text (right side, above the trigger)
+     accept      file types (passed straight to the input)
+     errorMsg    null|string — pre-resolved error to show inline #}
+{% macro file_picker(name, id, label, required, hint, accept, errorMsg) %}
+    <div class="bozp-form-row bozp-form-row--file{% if errorMsg %} bozp-form-row--error{% endif %}">
+{#        <span class="bozp-form-row__label">#}
+{#            {{ label }}#}
+{#            {% if required %}<span class="bozp-form-row__req">*</span>{% endif %}#}
+{#        </span>#}
+        <span class="bozp-form__file-selected" data-file-empty-label="{{ 'Žiadne prílohy.'|t('bozp') }}">{{ 'Žiadne prílohy.'|t('bozp') }}</span>
+
+        <div class="bozp-form__file">
+            <span class="bozp-form__file-hint">{{ hint }}</span>
+            <label class="bozp-form__file-trigger" for="{{ id }}">
+                <svg class="bozp-form__file-icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 26">
+                    <path fill="#4F2170" transform="translate(0.535156 0.760986)" d="M18.249035 8.4962654C19.109362 7.6256075 19.779554 6.800283 20.131506 5.6922946C20.612911 4.1749768 19.861811 2.258997 18.204536 1.8790008C17.039454 1.612337 15.754358 2.2523303 14.814472 2.8909903C13.053366 4.0896444 11.385303 5.2882986 9.8723154 6.7856164L2.6256166 13.950875C1.255567 16.10952 1.4982923 19.02549 3.2553539 20.838804C4.5310102 22.290789 6.2678447 22.466787 7.9439979 21.632128C9.9356937 20.640139 11.760179 19.453484 13.432286 17.9415L19.860462 12.130894C20.228596 11.796231 20.941938 11.688232 21.248041 11.90423C22.475153 12.773554 20.41873 14.412204 19.02306 15.672191L15.661314 18.706825C12.972457 21.136133 7.9332099 24.966761 4.6092215 23.776106C1.1746585 22.546785 -0.53520638 19.030823 0.14846988 15.537525C0.33321083 14.601535 0.5395273 13.597546 1.2636578 12.881553L9.6282415 4.6123056C10.814898 3.4403179 12.163373 2.546994 13.511847 1.604337C15.595239 0.14835219 18.220718 -0.76097167 20.212414 0.86301142C21.977566 2.3029964 22.448183 4.7043047 21.567631 6.8136163C21.095663 7.9469376 20.313549 8.8589277 19.442434 9.7482519L13.774799 15.528192C11.787148 17.556171 8.4092216 20.869471 6.0332103 19.565483C4.6307974 18.796158 4.0698323 16.872177 4.8222804 15.420193C5.5410171 14.032207 6.6993561 13.006885 7.8037562 11.886897C10.624763 9.0242596 13.46465 6.3642874 16.603897 3.8443136C16.852016 3.6443157 17.392756 3.6816487 17.541086 3.89498C17.684025 4.1003108 17.613905 4.5616398 17.417027 4.7736373C16.972031 5.2522988 16.617382 5.777627 16.173735 6.1736226L10.635551 11.122905C9.5554237 12.088228 8.5885687 13.070885 7.5718188 14.114874C7.0728836 14.628201 6.6481142 15.278861 6.2476177 15.898855C5.7958789 16.598848 5.9091506 17.688169 6.7087955 18.141499C7.8361197 18.780159 10.383387 16.417517 11.703543 15.104197L12.60702 14.205539L18.249035 8.4962654Z" fill-rule="evenodd"/>
+                </svg>
+                <span class="bozp-form__file-trigger-label">{{ 'Vybrať prílohu'|t('bozp') }}</span>
+            </label>
+            <input type="file"
+                   id="{{ id }}"
+                   name="{{ name }}"
+                   class="bozp-form__file-input"
+                   accept="{{ accept }}"
+                   {% if required %}required{% endif %}
+                   {% if errorMsg %}aria-invalid="true" aria-describedby="err-{{ id }}"{% endif %}>
+        </div>
+        {% if errorMsg %}
+            <p class="bozp-form-row__error" id="err-{{ id }}">{{ errorMsg }}</p>
+        {% endif %}
     </div>
 {% endmacro %}
 
@@ -85,21 +124,23 @@
                 </div>
 
                 <div class="bozp-form-row">
-                    <label for="contractorPersonName">{{ 'Kontaktná osoba'|t('bozp') }}</label>
+                    <label for="contractorPersonName">{{ 'Kontaktná osoba'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="text"
                            id="contractorPersonName"
                            name="contractorPersonName"
                            value="{{ values.contractorPersonName ?? '' }}"
-                           maxlength="255">
+                           maxlength="255"
+                           required>
                 </div>
 
                 <div class="bozp-form-row{% if errors.contractorEmail is defined %} bozp-form-row--error{% endif %}">
-                    <label for="contractorEmail">{{ 'E-mail'|t('bozp') }}</label>
+                    <label for="contractorEmail">{{ 'E-mail'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="email"
                            id="contractorEmail"
                            name="contractorEmail"
                            value="{{ values.contractorEmail ?? '' }}"
                            maxlength="255"
+                           required
                            {% if errors.contractorEmail is defined %}aria-invalid="true" aria-describedby="err-contractorEmail"{% endif %}>
                     {{ _self.field_error(errors, 'contractorEmail') }}
                 </div>
@@ -111,8 +152,8 @@
                     <p class="bozp-form-section__hint">{{ 'Vyberte zónu, v ktorej sa práca vykonáva.'|t('bozp') }}</p>
 
                     <div class="bozp-form-row">
-                        <label for="zoneId">{{ 'Zóna'|t('bozp') }}</label>
-                        <select name="zoneId" id="zoneId">
+                        <label for="zoneId">{{ 'Zóna'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+                        <select name="zoneId" id="zoneId" required>
                             <option value="">{{ '— Vyberte zónu —'|t('bozp') }}</option>
                             {% for zone in zones %}
                                 <option value="{{ zone.id }}"
@@ -151,11 +192,12 @@
                 </div>
 
                 <div class="bozp-form-row{% if errors.validFrom is defined %} bozp-form-row--error{% endif %}">
-                    <label for="validFrom">{{ 'Platnosť od'|t('bozp') }}</label>
+                    <label for="validFrom">{{ 'Platnosť od'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="date"
                            id="validFrom"
                            name="validFrom"
                            value="{{ values.validFrom ?? '' }}"
+                           required
                            {% if errors.validFrom is defined %}aria-invalid="true" aria-describedby="err-validFrom"{% endif %}>
                     <p class="bozp-form-section__hint">
                         {{ 'Platnosť permitu je 7 dní od dátumu schválenia HSE.'|t('bozp') }}
@@ -168,18 +210,17 @@
             <fieldset class="bozp-form-section">
                 <legend class="bozp-form-section__title">{{ 'Hodnotenie rizík'|t('bozp') }}</legend>
                 <p class="bozp-form-section__hint">
-                    {{ 'Pripojte dokument s hodnotením rizík (PDF, DOCX alebo XLSX, max. 10 MB). Pri odoslaní na schválenie je príloha povinná.'|t('bozp') }}
+                    {{ 'Pripojte dokument s hodnotením rizík. Pri odoslaní na schválenie je príloha povinná.'|t('bozp') }}
                 </p>
-
-                <div class="bozp-form-row{% if errors.riskAssessment is defined %} bozp-form-row--error{% endif %}">
-                    <label for="riskAssessment">{{ 'Súbor hodnotenia rizík'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
-                    <input type="file"
-                           id="riskAssessment"
-                           name="riskAssessment"
-                           accept=".pdf,.docx,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                           {% if errors.riskAssessment is defined %}aria-invalid="true" aria-describedby="err-riskAssessment"{% endif %}>
-                    {{ _self.field_error(errors, 'riskAssessment') }}
-                </div>
+                {{ _self.file_picker(
+                    'riskAssessment',
+                    'riskAssessment',
+                    'Súbor hodnotenia rizík'|t('bozp'),
+                    true,
+                    'Nahrať prílohu (PDF, DOCX, XLSX, max 10 MB)'|t('bozp'),
+                    '.pdf,.docx,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    errors.riskAssessment ?? null
+                ) }}
             </fieldset>
 
             {# ----- Hazard matrix ----- #}
@@ -321,6 +362,23 @@
                 </div>
             </fieldset>
 
+            {# ----- Additional optional attachment ----- #}
+            <fieldset class="bozp-form-section">
+                <legend class="bozp-form-section__title">{{ 'Príloha'|t('bozp') }}</legend>
+                <p class="bozp-form-section__hint">
+                    {{ 'Voliteľná dodatočná príloha k permitu (napr. plán pracoviska, certifikáty, fotografie).'|t('bozp') }}
+                </p>
+                {{ _self.file_picker(
+                    'additionalAttachment',
+                    'additionalAttachment',
+                    'Dodatočná príloha'|t('bozp'),
+                    false,
+                    'Nahrať prílohu (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp'),
+                    '.pdf,.docx,.jpg,.jpeg,.png,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
+                    errors.additionalAttachment ?? null
+                ) }}
+            </fieldset>
+
             <div class="bozp-form__actions">
                 <a href="{{ url('bozp') }}" class="bozp-btn bozp-btn--cancel">{{ 'Zrušiť'|t('bozp') }}</a>
                 <button type="submit" name="intent" value="save" class="bozp-btn bozp-btn--primary">
@@ -331,5 +389,20 @@
                 </button>
             </div>
         </form>
+
+        <script>
+        // Display selected filename next to the .bozp-form__file-trigger.
+        document.querySelectorAll('.bozp-form__file-input').forEach(function (input) {
+            input.addEventListener('change', function () {
+                var label = input.parentNode.parentNode.querySelector('.bozp-form__file-selected');
+                if (!label) return;
+                if (input.files && input.files.length > 0) {
+                    label.textContent = input.files[0].name;
+                } else {
+                    label.textContent = label.getAttribute('data-file-empty-label') || '';
+                }
+            });
+        });
+        </script>
     </section>
 {% endblock %}

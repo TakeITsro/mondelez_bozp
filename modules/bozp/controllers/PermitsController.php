@@ -575,6 +575,13 @@ class PermitsController extends BaseSiteController
             $errors['riskAssessment'] = $riskAssessmentError;
         }
 
+        // Optional additional attachment. Validate only type/size if provided.
+        $additionalAttachmentFile = UploadedFile::getInstanceByName('additionalAttachment');
+        $additionalAttachmentError = $this->validateAdditionalAttachmentFile($additionalAttachmentFile);
+        if ($additionalAttachmentError !== null) {
+            $errors['additionalAttachment'] = $additionalAttachmentError;
+        }
+
         if ($errors !== []) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Skontrolujte chyby vo formulári.'));
             $zones = ZoneRecord::find()
@@ -646,6 +653,11 @@ class PermitsController extends BaseSiteController
                 $this->saveRiskAssessmentAttachment($permit, $riskAssessmentFile, $userId);
             }
 
+            // Save additional optional attachment (if uploaded).
+            if ($additionalAttachmentFile !== null && !$additionalAttachmentFile->getHasError()) {
+                $this->saveAdditionalAttachment($permit, $additionalAttachmentFile, $userId);
+            }
+
             $module->auditLogger->log(
                 permitId: (int) $permit->id,
                 userId: $userId,
@@ -693,6 +705,16 @@ class PermitsController extends BaseSiteController
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ];
     private const RA_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+
+    /** Additional optional attachment — wider type set. */
+    private const ATT_ALLOWED_EXT  = ['pdf', 'docx', 'jpg', 'jpeg', 'png'];
+    private const ATT_ALLOWED_MIME = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png',
+    ];
+    private const ATT_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
     /**
      * Validate the uploaded risk-assessment file. Required at submit intent,
@@ -762,6 +784,68 @@ class PermitsController extends BaseSiteController
         $att->uploadedById = $userId;
         if (!$att->save()) {
             throw new \RuntimeException('Risk-assessment attachment row save failed: ' . print_r($att->getErrors(), true));
+        }
+    }
+
+    /**
+     * Validate the optional additional attachment. Always optional — no
+     * required check, only type + size. Returns error message or null.
+     */
+    private function validateAdditionalAttachmentFile(?UploadedFile $file): ?string
+    {
+        if ($file === null || $file->getHasError()) {
+            return null;
+        }
+        if ($file->size > self::ATT_MAX_BYTES) {
+            return (string) Craft::t('bozp', 'Súbor je príliš veľký. Maximálna veľkosť je 10 MB.');
+        }
+        $ext = strtolower((string) pathinfo($file->name, PATHINFO_EXTENSION));
+        $mime = (string) FileHelper::getMimeType($file->tempName);
+        if (!in_array($ext, self::ATT_ALLOWED_EXT, true) || !in_array($mime, self::ATT_ALLOWED_MIME, true)) {
+            return (string) Craft::t('bozp', 'Nepodporovaný typ súboru. Povolené: PDF, DOCX, JPG, PNG.');
+        }
+        return null;
+    }
+
+    /**
+     * Save the additional attachment as an Asset + PermitAttachmentRecord
+     * with attachmentType='additional'.
+     */
+    private function saveAdditionalAttachment(PermitRecord $permit, UploadedFile $file, ?int $userId): void
+    {
+        $volume = Craft::$app->getVolumes()->getVolumeByHandle('bozpAttachments');
+        if (!$volume) {
+            throw new \RuntimeException("Missing asset volume 'bozpAttachments'");
+        }
+        $rootFolder = Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id);
+        if (!$rootFolder) {
+            throw new \RuntimeException("No root folder for volume 'bozpAttachments'");
+        }
+
+        $tempPath = $file->saveAsTempFile();
+        if ($tempPath === false) {
+            throw new \RuntimeException('Could not copy uploaded additional attachment to temp location.');
+        }
+
+        $asset = new Asset();
+        $asset->tempFilePath = $tempPath;
+        $asset->filename = Assets::prepareAssetName($file->name);
+        $asset->newFolderId = $rootFolder->id;
+        $asset->volumeId = $volume->id;
+        $asset->avoidFilenameConflicts = true;
+        $asset->setScenario(Asset::SCENARIO_CREATE);
+
+        if (!Craft::$app->getElements()->saveElement($asset)) {
+            throw new \RuntimeException('Additional attachment asset save failed: ' . print_r($asset->getErrors(), true));
+        }
+
+        $att = new PermitAttachmentRecord();
+        $att->permitId = (int) $permit->id;
+        $att->attachmentType = 'additional';
+        $att->assetId = (int) $asset->id;
+        $att->uploadedById = $userId;
+        if (!$att->save()) {
+            throw new \RuntimeException('Additional attachment row save failed: ' . print_r($att->getErrors(), true));
         }
     }
 

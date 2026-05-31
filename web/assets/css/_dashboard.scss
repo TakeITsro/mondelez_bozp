@@ -76,25 +76,6 @@
         &:nth-child(5) {
           border-radius: 0 2.5em 2.5em 0;
         }
-
-        .bozp-status {
-          font-size: 1em;
-          //font-weight: 600;
-          line-height: 1.2em;
-          white-space: nowrap;
-
-          &.bozp-status--draft{color:#6b7280}
-          &.bozp-status--submitted{color:#d97706}
-          &.bozp-status--approved{color:#16a34a}
-          &.bozp-status--rejected{color:#dc2626}
-          &.bozp-status--signed{color:#2563eb}
-          &.bozp-status--active{color:#0891b2}
-          &.bozp-status--pending_closure{color:#ea580c}
-          &.bozp-status--pending{color:#d97706}
-          &.bozp-status--closed{color:#374151}
-          &.bozp-status--cancelled{color:#991b1b}
-          &.bozp-status--expired{color:#9f1239}
-        }
       }
 
       &:hover {
@@ -132,11 +113,16 @@
 
   @media (max-width: 600px) {
     gap: 2.5em;
-    padding: 5em 10px;
+    padding: 2.5em 10px 5em 10px;
 
     .bozp-page__header {
       flex-direction: column;
       align-items: center;
+      gap: 1.25em;
+
+      h1 {
+        font-size: 3em;
+      }
 
       .bozp-btn {
         width: 100%;

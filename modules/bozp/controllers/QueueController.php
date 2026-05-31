@@ -575,7 +575,7 @@ class QueueController extends Controller
                 $permit,
                 SignatureRole::HseClosure,
                 $signerName,
-                $userId,
+                null, // signerEmployer — HSE officer has no employer string here
                 $signatureDate,
                 $signatureData,
             );

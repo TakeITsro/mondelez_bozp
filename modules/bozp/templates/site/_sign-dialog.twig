@@ -18,7 +18,7 @@
         {% if openOnLoad %}data-open-on-load="form"{% endif %}>
     <form method="post" action="{{ action }}"
           class="bozp-form bozp-form--sign"
-          style="margin:0;padding:24px;" novalidate>
+          novalidate>
         {{ csrfInput() }}
 
         {# Stage 1 — confirmation + warning #}
@@ -31,10 +31,10 @@
             </p>
             <div class="bozp-dialog__actions"
                  style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
-                <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="cancel">
+                <button type="button" class="bozp-btn bozp-btn--primary" data-bozp-action="cancel">
                     {{ 'Zrušiť'|t('bozp') }}
                 </button>
-                <button type="button" class="bozp-btn bozp-btn--primary" data-bozp-action="proceed">
+                <button type="button" class="bozp-btn bozp-btn--approve" data-bozp-action="proceed">
                     {{ 'Pokračovať k podpisu'|t('bozp') }}
                 </button>
             </div>
@@ -76,7 +76,7 @@
                             style="display:block;width:100%;height:180px;touch-action:none;"></canvas>
                 </div>
                 <div class="bozp-sigpad__actions" style="margin-top:8px;">
-                    <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-sigpad-clear>
+                    <button type="button" class="bozp-btn bozp-btn--primary" data-bozp-sigpad-clear>
                         {{ 'Vyčistiť'|t('bozp') }}
                     </button>
                 </div>
@@ -88,10 +88,10 @@
 
             <div class="bozp-dialog__actions"
                  style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;">
-                <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="back">
+                <button type="button" class="bozp-btn bozp-btn--cancel" data-bozp-action="back">
                     {{ 'Späť'|t('bozp') }}
                 </button>
-                <button type="submit" class="bozp-btn bozp-btn--primary">{{ submitLabel }}</button>
+                <button type="submit" class="bozp-btn bozp-btn--approve">{{ submitLabel }}</button>
             </div>
         </div>
     </form>

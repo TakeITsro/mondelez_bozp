@@ -127,7 +127,7 @@
     }
   }
 
-  .bozp-form__hint {
+  .bozp-form-section__hint {
     width: 100%;
     max-width: 500px;
     color: var(--main-color);
@@ -145,7 +145,7 @@
 
     > label, .bozp-form-row__label {
       width: calc(50% - 1.5625em);
-      min-width: 300px;
+      min-width: 280px;
       color: var(--main-color);
       font-size: 1.25em;
       font-weight: 400;
@@ -155,11 +155,12 @@
 
     > input {
       width: calc(50% - 1.5625em);
-      min-width: 300px;
+      min-width: 280px;
       min-height: 4em;
       color: var(--main-color) !important;
+      font-family: "Calibri", Arial, Helvetica, sans-serif;
       font-size: 1em;
-      font-weight: 400;
+      font-weight: 700;
       line-height: 1.2em;
       border: 2px solid var(--main-color) !important;
       border-radius: 0.4em;
@@ -170,8 +171,9 @@
     > textarea {
       width: calc(50% - 1.5625em);
       color: var(--main-color) !important;
+      font-family: "Calibri", Arial, Helvetica, sans-serif;
       font-size: 1em;
-      font-weight: 400;
+      font-weight: 700;
       line-height: 1.2em;
       border: 2px solid var(--main-color) !important;
       border-radius: 0.4em;
@@ -181,11 +183,12 @@
 
     > select {
       width: calc(50% - 1.5625em);
-      min-width: 300px;
+      min-width: 280px;
       min-height: 4em;
       color: var(--main-color) !important;
+      font-family: "Calibri", Arial, Helvetica, sans-serif;
       font-size: 1em;
-      font-weight: 400;
+      font-weight: 700;
       line-height: 1.2em;
       border: 2px solid var(--main-color) !important;
       border-radius: 0.4em;
@@ -195,16 +198,28 @@
 
     > .bozp-form__yesno {
       width: calc(50% - 1.5625em);
-      min-width: 300px;
+      min-width: 280px;
     }
   }
 
+  &.bozp-form-section--hazards {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: 100%;
+    overflow: hidden;
+  }
+
   .bozp-form__hazards {
+    display: block;
     width: 100%;
+    max-width: 100%;
+    align-self: flex-start;
     overflow-x: auto;
 
     .bozp-hazards {
-      //width: 100%;
+      width: max-content;
+      min-width: 100%;
+      table-layout: auto;
 
       th {
         color: var(--main-color);
@@ -267,8 +282,9 @@
               width: 100%;
               height: calc(4.1875em + 10px);
               color: var(--main-color) !important;
+              font-family: "Calibri", Arial, Helvetica, sans-serif;
               font-size: 1em;
-              font-weight: 400;
+              font-weight: 700;
               line-height: 1.2em;
               border: 2px solid var(--main-color) !important;
               border-radius: 0.4em;
@@ -281,8 +297,9 @@
             select {
               width: 100%;
               color: var(--main-color) !important;
+              font-family: "Calibri", Arial, Helvetica, sans-serif;
               font-size: 1em;
-              font-weight: 400;
+              font-weight: 700;
               line-height: 1.2em;
               border: 2px solid var(--main-color) !important;
               border-radius: 0.4em;
@@ -293,8 +310,9 @@
             input {
               width: 100%;
               color: var(--main-color) !important;
+              font-family: "Calibri", Arial, Helvetica, sans-serif;
               font-size: 1em;
-              font-weight: 400;
+              font-weight: 700;
               line-height: 1.2em;
               border: 2px solid var(--main-color) !important;
               border-radius: 0.4em;
@@ -529,6 +547,57 @@
     }
   }
 
+  .bozp-form-row--file {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2.5em;
+
+    .bozp-form__file-selected {
+      color: var(--main-color);
+      font-size: 1.75em;
+      font-weight: 400;
+      line-height: 1.2em;
+      text-transform: uppercase;
+    }
+
+    .bozp-form__file {
+      display: flex;
+      align-items: center;
+      gap: 1.25em;
+
+      .bozp-form__file-hint {
+        color: var(--main-color);
+        font-family: "Calibri", Arial, Helvetica, sans-serif;
+        font-size: 1.25em;
+        font-weight: 400;
+        line-height: 1.2em;
+      }
+
+      .bozp-form__file-trigger {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+
+        .bozp-form__file-icon {
+          height: 1.5em;
+        }
+
+        .bozp-form__file-trigger-label {
+          color: var(--main-color);
+          font-size: 1.75em;
+          font-weight: 400;
+          line-height: 1.2em;
+          text-decoration: underline;
+          cursor: pointer;
+        }
+      }
+
+      .bozp-form__file-input {
+        display: none;
+      }
+    }
+  }
+
   @media (max-width: 1200px) {
     .bozp-form-row {
       gap: 2.5em;
@@ -551,8 +620,26 @@
     }
   }
 
+  @media (max-width: 800px) {
+    .bozp-form-row--file {
+      .bozp-form__file {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+
+        .bozp-form__file-trigger {
+          align-self: flex-end;
+        }
+      }
+    }
+  }
+
   @media (max-width: 600px) {
     padding: 1.25em 10px 2.5em 10px;
+
+    legend {
+      font-size: 2em;
+    }
 
     .bozp-form-row {
       gap: 10px;
@@ -565,14 +652,17 @@
 
       > input {
         width: 100%;
+        min-height: 3em;
       }
 
       > textarea {
         width: 100%;
+        min-height: 3em;
       }
 
       > select {
         width: 100%;
+        min-height: 3em;
       }
     }
   }
@@ -580,7 +670,7 @@
 
 .bozp-page--permit-form {
   min-height: calc(100vh - 3.75em);
-  gap: 5em;
+  gap: 2.5em;
   padding: 5em;
 
   .bozp-page__header {
@@ -605,6 +695,7 @@
     max-width: 980px;
     display: flex;
     flex-direction: column;
+    //align-items: start;
     gap: 2.5em;
 
     .bozp-form__actions {
@@ -613,8 +704,6 @@
       align-items: center;
       justify-content: flex-end;
       gap: 2.5em;
-
-
     }
   }
 
@@ -623,6 +712,27 @@
   }
 
   @media (max-width: 600px) {
-    padding: 5em 10px;
+    gap: 2.5em;
+    padding: 2.5em 10px 5em 10px;
+
+    .bozp-page__header {
+      gap: 1.25em;
+
+      h1 {
+        font-size: 2.5em;
+      }
+    }
+
+    .bozp-form {
+      .bozp-form__actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25em;
+
+        .bozp-btn {
+          width: 100%;
+        }
+      }
+    }
   }
 }

@@ -1,4 +1,7 @@
 @font-face{font-family:'Mondelez';src:url('/assets/font/mondelez_font.TTF') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Calibri';src:url('/assets/font/calibri-regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Calibri';src:url('/assets/font/calibri-bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap}
+
 
 * {
   position: relative;
@@ -44,6 +47,16 @@ p {
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
+}
+
+ul, ol {
+  li {
+    color: var(--main-color-dark);
+    font-size: 1.25em;
+    font-weight: 400;
+    line-height: 1.2em;
+    text-transform: uppercase;
+  }
 }
 
 .bozp {
@@ -93,6 +106,105 @@ p {
       background-color: red;
       border-radius: 4px;
       padding: 5px 10px;
+    }
+  }
+}
+
+.bozp-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 1em;
+  //font-weight: 600;
+  line-height: 1.2em;
+  white-space: nowrap;
+
+  &::before {
+    content: "";
+    display: block;
+    width: 1.125em;
+    height: 1.125em;
+    background-size: contain;
+    background-position: left center;
+    background-repeat: no-repeat;
+  }
+
+  &.bozp-status--draft{
+    color:#6b7280;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/draft.svg');
+    }
+  }
+  &.bozp-status--submitted{
+    color:#d97706;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/submitted.svg');
+    }
+  }
+  &.bozp-status--approved{
+    color:#16a34a;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/approved.svg');
+    }
+  }
+  &.bozp-status--rejected{
+    color:#dc2626;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/rejected.svg');
+    }
+  }
+  &.bozp-status--signed{
+    color:#2563eb;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/rejected.svg');
+    }
+  }
+  &.bozp-status--active{
+    color:#0891b2;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/rejected.svg');
+    }
+  }
+  &.bozp-status--pending_closure{
+    color:#ea580c;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/pending-closure.svg');
+    }
+  }
+  &.bozp-status--pending,
+  &.bozp-status--pending_signatures {
+    color:#d97706;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/pending.svg');
+    }
+  }
+  &.bozp-status--closed{
+    color:#2286EF;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/closed.svg');
+    }
+  }
+  &.bozp-status--cancelled{
+    color:#991b1b;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/cancel.svg');
+    }
+  }
+  &.bozp-status--expired{
+    color:#9f1239;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/expired.svg');
     }
   }
 }

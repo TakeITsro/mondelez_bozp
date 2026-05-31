@@ -36,6 +36,36 @@
     {%- endif -%}
 {% endmacro %}
 
+{% macro file_picker(name, id, label, required, hint, accept, errorMsg) %}
+    <div class="bozp-form-row bozp-form-row--file{% if errorMsg %} bozp-form-row--error{% endif %}">
+        {#        <span class="bozp-form-row__label">#}
+        {#            {{ label }}#}
+        {#            {% if required %}<span class="bozp-form-row__req">*</span>{% endif %}#}
+        {#        </span>#}
+        <span class="bozp-form__file-selected" data-file-empty-label="{{ 'Žiadne prílohy.'|t('bozp') }}">{{ 'Žiadne prílohy.'|t('bozp') }}</span>
+
+        <div class="bozp-form__file">
+            <span class="bozp-form__file-hint">{{ hint }}</span>
+            <label class="bozp-form__file-trigger" for="{{ id }}">
+                <svg class="bozp-form__file-icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 26">
+                    <path fill="#4F2170" transform="translate(0.535156 0.760986)" d="M18.249035 8.4962654C19.109362 7.6256075 19.779554 6.800283 20.131506 5.6922946C20.612911 4.1749768 19.861811 2.258997 18.204536 1.8790008C17.039454 1.612337 15.754358 2.2523303 14.814472 2.8909903C13.053366 4.0896444 11.385303 5.2882986 9.8723154 6.7856164L2.6256166 13.950875C1.255567 16.10952 1.4982923 19.02549 3.2553539 20.838804C4.5310102 22.290789 6.2678447 22.466787 7.9439979 21.632128C9.9356937 20.640139 11.760179 19.453484 13.432286 17.9415L19.860462 12.130894C20.228596 11.796231 20.941938 11.688232 21.248041 11.90423C22.475153 12.773554 20.41873 14.412204 19.02306 15.672191L15.661314 18.706825C12.972457 21.136133 7.9332099 24.966761 4.6092215 23.776106C1.1746585 22.546785 -0.53520638 19.030823 0.14846988 15.537525C0.33321083 14.601535 0.5395273 13.597546 1.2636578 12.881553L9.6282415 4.6123056C10.814898 3.4403179 12.163373 2.546994 13.511847 1.604337C15.595239 0.14835219 18.220718 -0.76097167 20.212414 0.86301142C21.977566 2.3029964 22.448183 4.7043047 21.567631 6.8136163C21.095663 7.9469376 20.313549 8.8589277 19.442434 9.7482519L13.774799 15.528192C11.787148 17.556171 8.4092216 20.869471 6.0332103 19.565483C4.6307974 18.796158 4.0698323 16.872177 4.8222804 15.420193C5.5410171 14.032207 6.6993561 13.006885 7.8037562 11.886897C10.624763 9.0242596 13.46465 6.3642874 16.603897 3.8443136C16.852016 3.6443157 17.392756 3.6816487 17.541086 3.89498C17.684025 4.1003108 17.613905 4.5616398 17.417027 4.7736373C16.972031 5.2522988 16.617382 5.777627 16.173735 6.1736226L10.635551 11.122905C9.5554237 12.088228 8.5885687 13.070885 7.5718188 14.114874C7.0728836 14.628201 6.6481142 15.278861 6.2476177 15.898855C5.7958789 16.598848 5.9091506 17.688169 6.7087955 18.141499C7.8361197 18.780159 10.383387 16.417517 11.703543 15.104197L12.60702 14.205539L18.249035 8.4962654Z" fill-rule="evenodd"/>
+                </svg>
+                <span class="bozp-form__file-trigger-label">{{ 'Vybrať prílohu'|t('bozp') }}</span>
+            </label>
+            <input type="file"
+                   id="{{ id }}"
+                   name="{{ name }}"
+                   class="bozp-form__file-input"
+                   accept="{{ accept }}"
+                   {% if required %}required{% endif %}
+                    {% if errorMsg %}aria-invalid="true" aria-describedby="err-{{ id }}"{% endif %}>
+        </div>
+        {% if errorMsg %}
+            <p class="bozp-form-row__error" id="err-{{ id }}">{{ errorMsg }}</p>
+        {% endif %}
+    </div>
+{% endmacro %}
+
 {% block title %}{{ permit.permitNumber }}{% endblock %}
 
 {% block content %}
@@ -45,7 +75,7 @@
                 <a href="{{ url('bozp') }}">← {{ 'Moje permity'|t('bozp') }}</a>
             </p>
             <h1>{{ permit.permitNumber }}</h1>
-            <div. class="bozp-status__wrapper">
+            <div class="bozp-status__wrapper">
                 <span class="bozp-status bozp-status--{{ permit.status }}">
                     {{ statusLabels[permit.status] ?? permit.status }}
                 </span>
@@ -197,41 +227,43 @@
             {% if not hasHazards %}
                 <p class="bozp-empty">{{ 'Neboli uvedené žiadne riziká.'|t('bozp') }}</p>
             {% else %}
-                <table class="bozp-table bozp-hazards">
-                    <thead>
-                        <tr>
-                            <th>{{ 'Riziko'|t('bozp') }}</th>
-                            <th>{{ 'Exponovaný?'|t('bozp') }}</th>
-                            <th>{{ 'Opatrenie / OOPP'|t('bozp') }}</th>
-                            <th>{{ 'Kontrola počas činnosti'|t('bozp') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cat in hazardCategories %}
-                            {% set row = hazards[cat.value] ?? null %}
-                            {% if row %}
-                                <tr>
-                                    <th scope="row">
-                                        <div class="label_wrapper">
-                                            <img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
-                                            {{ cat.label()|t('bozp') }}
-                                        </div>
-                                    </th>
-                                    <td>{{ _self.yn(row.exposed) }}</td>
-                                    <td>{{ row.measure ? row.measure|nl2br : '—' }}</td>
-                                    <td>
-                                        {%- if row.controlDuringActivity -%}
-                                            {{ controlLabels[row.controlDuringActivity] ?? row.controlDuringActivity }}
-                                            {%- if row.controlDuringActivityOther -%}
-                                                <br><span class="bozp-muted">{{ row.controlDuringActivityOther }}</span>
-                                            {%- endif -%}
-                                        {%- else -%}—{%- endif -%}
-                                    </td>
-                                </tr>
-                            {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="bozp-hazards">
+                    <table class="bozp-table">
+                        <thead>
+                            <tr>
+                                <th>{{ 'Riziko'|t('bozp') }}</th>
+                                <th>{{ 'Exponovaný?'|t('bozp') }}</th>
+                                <th>{{ 'Opatrenie / OOPP'|t('bozp') }}</th>
+                                <th>{{ 'Kontrola počas činnosti'|t('bozp') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in hazardCategories %}
+                                {% set row = hazards[cat.value] ?? null %}
+                                {% if row %}
+                                    <tr>
+                                        <th scope="row">
+                                            <div class="label_wrapper">
+                                                <img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
+                                                {{ cat.label()|t('bozp') }}
+                                            </div>
+                                        </th>
+                                        <td>{{ _self.yn(row.exposed) }}</td>
+                                        <td>{{ row.measure ? row.measure|nl2br : '—' }}</td>
+                                        <td>
+                                            {%- if row.controlDuringActivity -%}
+                                                {{ controlLabels[row.controlDuringActivity] ?? row.controlDuringActivity }}
+                                                {%- if row.controlDuringActivityOther -%}
+                                                    <br><span class="bozp-muted">{{ row.controlDuringActivityOther }}</span>
+                                                {%- endif -%}
+                                            {%- else -%}—{%- endif -%}
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
         </section>
 
@@ -246,15 +278,29 @@
             {% endfor %}
         {% endif %}
 
-        {% if requiredSubpermitTypes|length > 0 or subpermits|length > 0 %}
-            <section class="bozp-detail-section bozp-detail-section--subpermits">
+        {# Subpermits section is always rendered — subpermits can be added
+           after permit creation, including for permits where no subpermits
+           were initially selected. Adding is blocked once the parent permit
+           reaches a terminal state (closed / cancelled / expired). #}
+        {% set subpermitAddingLocked = permit.status in ['closed', 'cancelled', 'expired'] %}
+        <section class="bozp-detail-section bozp-detail-section--subpermits">
                 <div class="bozp-detail-section__header">
                     <h2>{{ 'Subpermity zvýšeného rizika'|t('bozp') }}</h2>
                     {% if isIssuer is defined and isIssuer %}
-                        <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/new') }}"
-                           class="bozp-btn bozp-btn--primary bozp-btn--sm">
-                            + {{ 'Pridať subpermit'|t('bozp') }}
-                        </a>
+                        {% if subpermitAddingLocked %}
+                            <button type="button"
+                                    class="bozp-btn bozp-btn--primary bozp-btn--sm"
+                                    disabled
+                                    aria-disabled="true"
+                                    title="{{ 'Permit je uzavretý — pridanie subpermitu nie je možné.'|t('bozp') }}">
+                                + {{ 'Pridať subpermit'|t('bozp') }}
+                            </button>
+                        {% else %}
+                            <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/new') }}"
+                               class="bozp-btn bozp-btn--primary bozp-btn--sm">
+                                + {{ 'Pridať subpermit'|t('bozp') }}
+                            </a>
+                        {% endif %}
                     {% endif %}
                 </div>
 
@@ -332,7 +378,6 @@
                     </div>
                 {% endif %}
             </section>
-        {% endif %}
 
         {# ---- Attachments (list + upload form for issuer) ---- #}
         <section class="bozp-detail-section bozp-detail-section--attachments">
@@ -368,15 +413,18 @@
                       novalidate>
                     {{ csrfInput() }}
                     <input type="hidden" name="action" value="bozp/permits/upload-attachment">
-                    <div class="bozp-form-row">
-                        <div class="bozp-form-row_wrapper">
-                            <label for="issuer-attachment">
-                                {{ 'Nahrať prílohu (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp') }}
-                            </label>
-                            <input type="file" id="issuer-attachment" name="attachment"
-                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                   required>
-                        </div>
+
+                    {{ _self.file_picker(
+                        'attachment',
+                        'issuer-attachment',
+                        'Príloha'|t('bozp'),
+                        true,
+                        'Nahrať prílohu (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp'),
+                        '.pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
+                        null
+                    ) }}
+
+                    <div class="bozp-form__actions">
                         <button type="submit" class="bozp-btn bozp-btn--primary">
                             {{ 'Nahrať'|t('bozp') }}
                         </button>
@@ -393,11 +441,6 @@
                 {% if issuerClosureSignature %}
                     {% set sigAsset = craft.assets().id(issuerClosureSignature.signatureAssetId).one() %}
                     <div class="bozp-signature bozp-signature--signed">
-                        {% if sigAsset %}
-                            <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
-                                 class="bozp-signature__image"
-                                 style="max-width:360px;max-height:140px;border:1px solid #ddd;background:#fff;">
-                        {% endif %}
                         <div class="bozp-detail-list bozp-signature__meta">
                             <div class="bozp-detail-row">
                                 <div class="bozp-detail-row__label">{{ 'Stav'|t('bozp') }}</div>
@@ -426,6 +469,14 @@
                                 </div>
                             {% endif %}
                         </div>
+                        {% if sigAsset %}
+                            <div class="bozp-detail-row">
+                                <div class="bozp-detail-row__label">{{ 'Podpis'|t('bozp') }}</div>
+                                <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                     class="bozp-signature__image"
+                                     style="max-width:360px;max-height:140px;border:1px solid #ddd;background:#fff;">
+                            </div>
+                        {% endif %}
                     </div>
                 {% else %}
                     {% set hasContractorClosure = recipientClosureSignature is defined and recipientClosureSignature %}
@@ -438,14 +489,14 @@
 
                     <div class="bozp-issuer-actions" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
                         {% if canCancel %}
-                            <button type="button" class="bozp-btn bozp-btn--secondary"
+                            <button type="button" class="bozp-btn bozp-btn--cancel"
                                     data-bozp-dialog-open="bozp-dialog-issuer-cancel"
                                     style="background:#cf2929;color:#fff;border-color:#cf2929;">
                                 {{ 'Zrušiť permit'|t('bozp') }}
                             </button>
                         {% endif %}
                         {% if canClose %}
-                            <button type="button" class="bozp-btn bozp-btn--primary"
+                            <button type="button" class="bozp-btn bozp-btn--approve"
                                     data-bozp-dialog-open="bozp-dialog-issuer-close">
                                 {{ 'Uzavrieť permit'|t('bozp') }}
                             </button>
@@ -611,11 +662,6 @@
                             {% endfor %}
                         </ul>
                     {% endif %}
-                    {% if sigAsset %}
-                        <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
-                             class="bozp-signature__image"
-                             style="max-width:360px;max-height:140px;border:1px solid #ddd;background:#fff;">
-                    {% endif %}
                     <div class="bozp-detail-list bozp-signature__meta">
                         <div class="bozp-detail-row">
                             <div class="bozp-detail-row__label">{{ 'Podpísal'|t('bozp') }}</div>
@@ -626,6 +672,14 @@
                             <div class="bozp-detail-row__value">{{ recipientClosureSignature.signatureDate ? recipientClosureSignature.signatureDate|date('d.m.Y') : '—' }}</div>
                         </div>
                     </div>
+                    {% if sigAsset %}
+                        <div class="bozp-detail-row">
+                            <div class="bozp-detail-row__label">{{ 'Podpis'|t('bozp') }}</div>
+                            <img src="{{ sigAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                 class="bozp-signature__image"
+                                 style="max-width:360px;max-height:140px;border:1px solid #ddd;background:#fff;">
+                        </div>
+                    {% endif %}
                 </div>
             </section>
         {% endif %}
@@ -704,4 +758,19 @@
             </section>
         {% endif %}
     </section>
+
+    <script>
+    // Display selected filename next to the .bozp-form__file-trigger.
+    document.querySelectorAll('.bozp-form__file-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var label = input.closest('.bozp-form-row--file').querySelector('.bozp-form__file-selected');
+            if (!label) return;
+            if (input.files && input.files.length > 0) {
+                label.textContent = input.files[0].name;
+            } else {
+                label.textContent = label.getAttribute('data-file-empty-label') || '';
+            }
+        });
+    });
+    </script>
 {% endblock %}
