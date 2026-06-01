@@ -54,11 +54,11 @@
         <input type="hidden" name="signatureData" id="bozp-ctrl-sig-data">
         <input type="hidden" name="signatureDate" id="bozp-ctrl-sig-date">
 
-        <fieldset class="bozp-form__section">
+        <fieldset class="bozp-form-section">
             <legend>{{ 'Kontrola'|t('bozp') }}</legend>
 
             {# Date / time of control #}
-            <div class="bozp-form__field{% if errors.controlledAt is defined %} bozp-form__field--error{% endif %}">
+            <div class="bozp-form-row{% if errors.controlledAt is defined %} bozp-form__field--error{% endif %}">
                 <label for="controlledAt">
                     {{ 'Dátum a čas kontroly'|t('bozp') }} <span class="bozp-form__req">*</span>
                 </label>
@@ -71,7 +71,7 @@
             </div>
 
             {# Controller name #}
-            <div class="bozp-form__field{% if errors.controllerName is defined %} bozp-form__field--error{% endif %}">
+            <div class="bozp-form-row{% if errors.controllerName is defined %} bozp-form__field--error{% endif %}">
                 <label for="controllerName">
                     {{ 'Meno kontrolóra'|t('bozp') }} <span class="bozp-form__req">*</span>
                 </label>
@@ -85,7 +85,7 @@
             </div>
 
             {# Result #}
-            <div class="bozp-form__field{% if errors.result is defined %} bozp-form__field--error{% endif %}">
+            <div class="bozp-form-row{% if errors.result is defined %} bozp-form__field--error{% endif %}">
                 <label for="result">
                     {{ 'Výsledok kontroly'|t('bozp') }} <span class="bozp-form__req">*</span>
                 </label>
@@ -104,7 +104,7 @@
             </div>
 
             {# Notes #}
-            <div class="bozp-form__field">
+            <div class="bozp-form-row">
                 <label for="notes">{{ 'Poznámky / zistenia'|t('bozp') }}</label>
                 <textarea id="notes" name="notes" rows="4"
                           maxlength="2000">{{ values.notes ?? '' }}</textarea>
@@ -129,7 +129,7 @@
 
     {# ---- Past controls list ---- #}
     {% if controls is defined and controls|length > 0 %}
-        <section class="bozp-detail__section" style="margin-top:40px;">
+        <section class="bozp-detail-section" style="margin-top:40px;">
             <h2>{{ 'Predchádzajúce kontroly'|t('bozp') }}</h2>
             <table class="bozp-table" style="width:100%;border-collapse:collapse;">
                 <thead>
@@ -137,6 +137,7 @@
                         <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Dátum a čas'|t('bozp') }}</th>
                         <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Kontrolór'|t('bozp') }}</th>
                         <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Výsledok'|t('bozp') }}</th>
+                        <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Poznámka'|t('bozp') }}</th>
                         <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #e3e5e8;">{{ 'Podpis'|t('bozp') }}</th>
                     </tr>
                 </thead>
@@ -150,6 +151,8 @@
                                 <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:{{ resultCss[c.result] ?? '#6b7280' }};color:#fff;font-size:.8em;font-weight:600;">
                                     {{ resultLabels[c.result] ?? c.result }}
                                 </span>
+                            </td>
+                            <td style="padding:8px 10px;vertical-align:top;">
                                 {% if c.notes %}
                                     <p style="margin:4px 0 0;font-size:.85em;color:#555;">{{ c.notes }}</p>
                                 {% endif %}
@@ -187,10 +190,10 @@
                     {{ 'Skontrolujte, že výsledok a poznámky sú správne vyplnené pred podpisom.'|t('bozp') }}
                 </p>
                 <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
-                    <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="cancel">
+                    <button type="button" class="bozp-btn bozp-btn--cancel" data-bozp-action="cancel">
                         {{ 'Zrušiť'|t('bozp') }}
                     </button>
-                    <button type="button" class="bozp-btn bozp-btn--primary" data-bozp-action="proceed">
+                    <button type="button" class="bozp-btn bozp-btn--approve" data-bozp-action="proceed">
                         {{ 'Pokračovať k podpisu'|t('bozp') }}
                     </button>
                 </div>
@@ -214,17 +217,17 @@
                                 style="display:block;width:100%;height:180px;touch-action:none;"></canvas>
                     </div>
                     <div style="margin-top:8px;">
-                        <button type="button" class="bozp-btn bozp-btn--secondary" id="bozp-ctrl-clear">
+                        <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-ctrl-clear">
                             {{ 'Vyčistiť'|t('bozp') }}
                         </button>
                     </div>
                 </div>
 
                 <div style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;">
-                    <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="back">
+                    <button type="button" class="bozp-btn bozp-btn--cancel" data-bozp-action="back">
                         {{ 'Späť'|t('bozp') }}
                     </button>
-                    <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-ctrl-submit">
+                    <button type="button" class="bozp-btn bozp-btn--approve" id="bozp-ctrl-submit">
                         {{ 'Podpísať a uložiť'|t('bozp') }}
                     </button>
                 </div>

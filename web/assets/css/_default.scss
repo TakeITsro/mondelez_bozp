@@ -207,4 +207,26 @@ ul, ol {
       background-image: url('https://testing.takeitsro.sk/assets/svg/state/expired.svg');
     }
   }
+
+  &.bozp-status--ok{
+    color:#16a34a;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/approved.svg');
+    }
+  }
+  &.bozp-status--stopped{
+    color:#991b1b;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/cancel.svg');
+    }
+  }
+  &.bozp-status--issues {
+    color:#d97706;
+
+    &::before {
+      background-image: url('https://testing.takeitsro.sk/assets/svg/state/pending.svg');
+    }
+  }
 }

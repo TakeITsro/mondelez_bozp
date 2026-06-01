@@ -16,31 +16,324 @@
         <div class="bozp-map">
             {# ── Replace this <svg> with your facility map. Keep the viewBox 0 0 1000 600
                and the .bozp-map__svg class. Zone overlays sit on top. #}
-            <svg class="bozp-map__svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-                <rect x="0" y="0" width="1000" height="600" fill="#FEFFFD" stroke="#4F2170" stroke-width="2"/>
-                <text x="500" y="305" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" fill="#4F2170" opacity="0.45">
-                    {{ 'Sem vložte mapu závodu (SVG)'|t('bozp') }}
-                </text>
+            <svg class="bozp-map__svg" width="1794px" height="980px" viewBox="0 0 1794 980" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <title>map</title>
+                <defs>
+                    <path d="M1760,879 L1760,956 L1721.5,956 L1721.5,977.5 L1657,977.5 C1651.47715,977.5 1647,973.022847 1647,967.5 L1647,958 C1647,952.477153 1642.52285,948 1637,948 L1596.5,948 L1596.5,911.5 L1637,911.5 C1642.52285,911.5 1647,907.022847 1647,901.5 L1647,880.5 L1683,880.5 L1683,879 L1760,879 Z M582.720779,2.5 C606.590263,2.5 629.482116,11.9821156 646.36039,28.8603897 L730,112.5 L1758.5,112.5 L1758.5,149.5 L1753,149.5 L1753,668.924924 C1753,691.12325 1740.74382,711.507706 1721.13788,721.917938 L1244.5,975 L2,975 L0.103039234,52.6028275 C0.0461665466,24.9484833 22.4485308,2.5 50.1029335,2.5 L582.720779,2.5 Z M1589,897 L1589,961 L1404,961 L1404,897 L1589,897 Z M1153,25 L1153,98 L876,98 L876,25 L1153,25 Z M953,0 L953,20 L875,20 L875,0 L953,0 Z M1722.5,133.5 L1790.5,133.5 L1722.5,889.5 L1722.5,133.5 Z" id="path-1"></path>
+                </defs>
+                <g id="map" stroke="none" fill="none" transform="translate(2, 0)" xlink:href="#path-1">
+                    <g id="btns" stroke-width="1" fill-rule="evenodd" transform="translate(321, 25)">
+                        {% set zone = zones[0] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('bozp/map/zone/' ~ zone.id) }}" id="yard_btn" transform="translate(-321, -22.5)">
+                            <path d="M2,972.5 L1244.5,972.5 L1721.13788,719.417938 C1740.74382,709.007706 1753,688.62325 1753,666.424924 L1753,147 L1758.5,147 L1758.5,110 L730,110 L646.36039,26.3603897 C629.482116,9.48211563 606.590263,0 582.720779,0 L50.1029335,0 C22.4485308,0 0.0461665466,22.4484833 0.103039234,50.1028275 L2,972.5 Z" id="yard" stroke="#4F2170" stroke-width="3" fill="#F1E0FF" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8"></path>
+                            <path d="M1683,878 L1647,878 L1647,899 C1647,904.522847 1642.52285,909 1637,909 L1596.5,909 L1596.5,945.5 L1637,945.5 C1642.52285,945.5 1647,949.977153 1647,955.5 L1647,965 C1647,970.522847 1651.47715,975 1657,975 L1721.5,975 L1721.5,953.5" id="Path-2" stroke="#4F2170" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8"></path>
+                            <path d="M1237.36802,650.376261 L1237.36802,871.000393 C1237.36802,898.898532 1267.00126,916.823484 1291.72294,903.879827 L1679.18914,705.526995 C1691.89116,696.723496 1694.75271,696.775525 1694.75271,681.968459 L1694.75271,681.968459 C1694.75271,674.450269 1688.83975,668.57581 1684.27901,666.860781 C1669.06337,661.140482 1621.37994,650.376261 1621.37994,650.376261 L1237.36802,650.376261 Z" id="yard" stroke="#4F2170" stroke-width="2.73239545" stroke-linecap="round"></path>
+                            <text id="courtyard" transform="translate(174, 551) rotate(-90) translate(-174, -551)" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="118.711" y="562">{{ name }}</tspan>
+                            </text>
+                            <g id="permit" transform="translate(154, 445.5)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="15.81" y="28">{{ count }}</tspan>
+                                </text>
+                            </g>
+                        </a>
+                        <polygon id="room_fill" fill="#FEFFFD" points="178 759 231 759 231 846 419.5 846 419.5 903 178 903"></polygon>
+                        <rect id="room_fill" fill="#FEFFFD" x="530" y="604" width="287" height="154"></rect>
+                        {% set zone = zones[1] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('bozp/map/zone/' ~ zone.id) }}" id="btn" transform="translate(0, 140.2291)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" transform="translate(423, 309.3855) scale(1, -1) translate(-423, -309.3855)" points="0 617.770903 845.839157 617.770903 846 1 817.50468 1 817.004776 544 19.6571181 544 19.6571181 389 0.160843049 389"></polygon>
+                            <text id="Main-coridor" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="329.463" y="39.7709029">Main coridor</tspan>
+                            </text>
+                            <text id="Ground-floor" font-family="Calibri" font-size="20" font-weight="normal" fill="#4F2170">
+                                <tspan x="204" y="35.7709029">{{ name }}</tspan>
+                            </text>
+                            <g id="permit" transform="translate(479, 9.7709)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="8.23" y="28">{{ count }}</tspan>
+                                </text>
+                            </g>
+                        </a>
+
+                        {% set zone = zones[13] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('bozp/map/zone/' ~ zone.id) }}" id="btn" transform="translate(297, 434)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 86 320.901774 86 320.901774 0 0 0"></polygon>
+                            <text id="BR-Packaging" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="90.995" y="54">{{ name }}</tspan>
+                            </text>
+                            <g id="permit" transform="translate(241, 25)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="15.81" y="28">{{ count }}</tspan>
+                                </text>
+                            </g>
+                        </a>
+
+                        {% set zone = zones[10] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('bozp/map/zone/' ~ zone.id) }}" id="btn" transform="translate(487, 215)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 155 329.931047 155 330 0 276.580938 0 276.580938 88.0526274 0 88.0526274"></polygon>
+                            <text id="CR1-Packaging" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="90.965" y="133">{{ name }}</tspan>
+                            </text>
+                            <g id="permit" transform="translate(249.5, 100)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="15.81" y="28">{{ count }}</tspan>
+                                </text>
+                            </g>
+                        </a>
+                        <g id="btn" transform="translate(487, 215)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 88 277 88 277 0 0 0"></polygon>
+                            <text id="CR1-Injection" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="44.989" y="55">CR1 Injection</tspan>
+                            </text>
+                            <g id="permit" transform="translate(194.5, 25)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="2" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="16.19" y="28">2</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(555, 0)">
+                            <polygon id="btn-" stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 73 277 73 277 0 0 0"></polygon>
+                            <text id="Offices" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="77.559" y="48">Offices</tspan>
+                            </text>
+                            <g id="permit" transform="translate(165, 16)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="8.23" y="28">125</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(846, 271)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 273 410 273 410 0 0 0"></polygon>
+                            <text id="Dambach" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="158.441" y="148">Dambach</tspan>
+                            </text>
+                            <g id="permit" transform="translate(183, 154)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="8.23" y="28">125</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(846, 141)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" transform="translate(205, 65) scale(1, -1) translate(-205, -65)" points="0 130 410 130 410 0 0 0"></polygon>
+                            <text id="carton-warehouse" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="105.42" y="76">carton warehouse</tspan>
+                            </text>
+                            <g id="permit" transform="translate(323, 45)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="8.23" y="28">125</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(845.5624, 543.876)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 77 410 77 410 0 0 0"></polygon>
+                            <text id="Ares" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="173.270128" y="45.3314625">Ares</tspan>
+                            </text>
+                            <g id="permit" transform="translate(234.4376, 18.124)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="8.23" y="28">125</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(420, 758)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 145 425 145 425 0 0 0"></polygon>
+                            <text id="CR2-Lamination" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="105.997" y="84">CR2 Lamination</tspan>
+                            </text>
+                            <g id="permit" transform="translate(279, 52)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="15.81" y="28">0</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(230.833, 757.8001)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 88 189 88 189 2.27373675e-13 0 2.27373675e-13"></polygon>
+                            <text id="CR2-Injection" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="23.2403466" y="32.8477234">CR2 Injection</tspan>
+                            </text>
+                            <g id="permit" transform="translate(74.167, 41.1999)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="52" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="11.41" y="28">52</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(153, 604)">
+                            <polygon id="btn-" stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 154 377 154 377 2.27373675e-13 0 2.27373675e-13"></polygon>
+                            <text id="CR2-Packaging" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="84.281" y="88">CR2 Packaging</tspan>
+                            </text>
+                            <g id="permit" transform="translate(247, 57)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="236" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="6.75" y="28">236</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(297, 369)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 65 520 65 520 0 0 0"></polygon>
+                            <text id="BR-Lamination" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="202.541281" y="44.2505211">BR Lamination</tspan>
+                            </text>
+                            <g id="permit" transform="translate(362, 12)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="15.81" y="28">0</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(122, 369)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 151 175 151 175 0 0 0"></polygon>
+                            <text id="BR-Grotte" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="35.285" y="66">BR Grotte</tspan>
+                            </text>
+                            <g id="permit" transform="translate(67, 77)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="236" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="6.75" y="28">236</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(1083, 854)">
+                            <rect stroke="#4F2170" stroke-width="3" fill="#FAF4FF" x="280.5" y="1.5" width="74" height="74"></rect>
+                            <text id="water-treatment-plan" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="0" y="45">water treatment</tspan>
+                                <tspan x="0" y="77">plant</tspan>
+                            </text>
+                            <g id="permit" transform="translate(298, 18)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="15.81" y="28">0</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(223.4792, 517)">
+                            <polygon stroke="#4F2170" stroke-width="2.73239545" fill="#FAF4FF" points="-0.479187773 87.0057414 593.520812 87.0057414 593.520812 3.00574139 -0.479187773 3.00574139"></polygon>
+                            <polygon id="stroke-22" stroke="#4F2170" points="0 87.2548086 32.6094771 87.2548086 32.6094771 44.7519379 0 44.7519379"></polygon>
+                            <polygon id="stroke-21" stroke="#4F2170" points="32.6094771 87.2548086 51.9598486 87.2548086 51.9598486 44.7519379 32.6094771 44.7519379"></polygon>
+                            <polygon id="stroke-20" stroke="#4F2170" points="51.9598486 87.2548086 107.31712 87.2548086 107.31712 44.7519379 51.9598486 44.7519379"></polygon>
+                            <polygon id="stroke-19" stroke="#4F2170" points="107.31712 87.2548086 140.039363 87.2548086 140.039363 30.3630305 107.31712 30.3630305"></polygon>
+                            <polygon id="stroke-18" stroke="#4F2170" points="140.038399 87.2548086 225.667913 87.2548086 225.667913 30.3630305 140.038399 30.3630305"></polygon>
+                            <polygon id="stroke-17" stroke="#4F2170" points="225.668877 87.2548086 284.963304 87.2548086 284.963304 30.3630305 225.668877 30.3630305"></polygon>
+                            <polygon id="stroke-16" stroke="#4F2170" points="284.963304 87.2548086 344.257731 87.2548086 344.257731 30.3630305 284.963304 30.3630305"></polygon>
+                            <polygon id="stroke-15" stroke="#4F2170" points="379.067582 87.2548086 398.977926 87.2548086 398.977926 27.3646189 379.067582 27.3646189"></polygon>
+                            <polygon id="stroke-14" stroke="#4F2170" points="399.048283 87.2548086 478.02174 87.2548086 478.02174 27.3646189 399.048283 27.3646189"></polygon>
+                            <polygon id="stroke-10" stroke="#4F2170" points="478.02174 87.2548086 502.785821 87.2548086 502.785821 60.7691601 478.02174 60.7691601"></polygon>
+                            <polygon id="stroke-9" stroke="#4F2170" points="502.785821 87.2548086 544.480152 87.2548086 544.480152 30.3630305 502.785821 30.3630305"></polygon>
+                            <polygon id="stroke-8" stroke="#4F2170" points="544.480152 87.2548086 594.086381 87.2548086 594.086381 30.3630305 544.480152 30.3630305"></polygon>
+                            <text id="Feedstock" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="243.700812" y="27">Feedstock</tspan>
+                            </text>
+                            <g id="permit" transform="translate(276.5208, 36)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="15.81" y="28">0</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(617.9018, 434)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" transform="translate(99.5, 43) scale(-1, 1) translate(-99.5, -43)" points="0 86 199 86 199 0 0 0"></polygon>
+                            <polygon id="stroke-13" stroke="#4F2170" points="119.309202 85.2500307 137.635045 85.2500307 137.635045 52.4457499 119.309202 52.4457499"></polygon>
+                            <polygon id="stroke-12" stroke="#4F2170" points="137.635045 85.2500307 169.96791 85.2500307 169.96791 52.4457499 137.635045 52.4457499"></polygon>
+                            <polygon id="stroke-11" stroke="#4F2170" points="88.1700135 85.2497416 14.5803876 85.2497416 14.5803876 46.969891 48.0958441 46.969891 48.0958441 52.4454609 88.1700135 52.4454609"></polygon>
+                            <polygon id="stroke-4" stroke="#4F2170" points="88.1704954 85.2500307 119.309202 85.2500307 119.309202 52.4457499 88.1704954 52.4457499"></polygon>
+                            <text id="Crumb" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="66.1172263" y="36">Crumb</tspan>
+                            </text>
+                            <g id="permit" transform="translate(136.0982, 5)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="15.81" y="28">0</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(19.7128, 215.0914)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0.287154521 153.908578 467.287155 153.908578 467.287155 -0.0914215832 0.287154521 -0.0914215832"></polygon>
+                            <polygon id="stroke-6" stroke="#4F2170" points="0 134.13171 135.906554 134.13171 135.906554 1.13686838e-13 0 1.13686838e-13"></polygon>
+                            <polygon id="stroke-5" stroke="#4F2170" points="153.006435 140.451306 320.001577 140.451306 320.001577 70.5175935 153.006435 70.5175935"></polygon>
+                            <polygon id="stroke-3" stroke="#4F2170" points="-18.8737193 -17.8623245 826.126281 -17.8623245 826.126281 -74.8623245 -18.8737193 -74.8623245"></polygon>
+                            <text id="CR1-Lamination" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="154.468155" y="42.9085784">CR1 Lamination</tspan>
+                            </text>
+                            <g id="permit" transform="translate(322.2872, 12.9086)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="8.23" y="28">125</tspan>
+                                </text>
+                            </g>
+                        </g>
+                        <g id="btn" transform="translate(0, 370)">
+                            <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 533 178 533 178 388.5 153 388.5 153 234.5 223 234 223 150 122 150 122.12121 0 0 0"></polygon>
+                            <polygon id="stroke-23" stroke="#4F2170" points="121.960336 233.283512 222.960336 233.283512 222.960336 181.283512 121.960336 181.283512"></polygon>
+                            <polygon id="stroke-7" stroke="#4F2170" points="138.162911 434.601122 178.198528 434.601122 178.198528 388.601122 138.162911 388.601122"></polygon>
+                            <text id="RAW-Material-Warehou" transform="translate(61, 269.5) rotate(-90) translate(-61, -269.5)" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
+                                <tspan x="-74.044" y="280.5">RAW Material Warehouse</tspan>
+                            </text>
+                            <g id="permit" transform="translate(41, 80)">
+                                <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
+                                <text id="6" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
+                                    <tspan x="16.12" y="28">6</tspan>
+                                </text>
+                            </g>
+                        </g>
+                    </g>
+                    <g id="paths" stroke-width="1" fill-rule="evenodd" transform="translate(35.2197, 57.327)" stroke="#4F2170">
+                        <polyline id="Stroke-4" stroke-width="16" points="1131.03004 676.836128 1131.03004 595.549496 1548.34344 595.549496 1548.34344 101.478314 278.592052 101.478314 278.592052 182.764945"></polyline>
+                        <line x1="1131.61497" y1="810.832273" x2="1131.61497" y2="698.745441" id="Stroke-5" stroke-width="16"></line>
+                        <polyline id="Stroke-6" stroke-width="16" points="280.371627 695.8877 280.371627 877.51321 1131.61449 877.51321 1131.61449 832.106351"></polyline>
+                        <line x1="0.481903959" y1="133.189986" x2="0.481903959" y2="835.306809" id="Stroke-45" stroke-width="16"></line>
+                        <polyline id="Stroke-46" stroke-width="16" points="14.2458521 0 14.2458521 62.6583249 87.0885269 62.6583249 87.0885269 28.7893767 101.063742 28.7893767 101.063742 2.53978571 253.525625 2.53978571 253.525625 31.3291625 578.777064 31.3291625"></polyline>
+                        <line x1="570.780338" y1="94.1730421" x2="570.780338" y2="24.1730421" id="Path" stroke-width="16" stroke-dasharray="4"></line>
+                        <line x1="278.780338" y1="94.1730421" x2="278.780338" y2="24.1730421" id="Path-2" stroke-width="16.8" stroke-dasharray="4"></line>
+                    </g>
+                    <g id="strokes" stroke-width="1" fill-rule="evenodd" transform="translate(42.6678, 79.8539)" fill="#FEFFFD" stroke="#4F2170">
+                        <polygon id="stroke-2" stroke-width="3" points="0.332223494 112 86.3322235 112 86.3322235 45 0.332223494 45"></polygon>
+                        <polygon id="stroke-1" stroke-width="3" transform="translate(43.3948, 22.5) scale(1, -1) translate(-43.3948, -22.5)" points="13.3947779 45 73.3947779 45 73.3947779 0 13.3947779 0"></polygon>
+                    </g>
+                    <text id="First-floor" font-family="Calibri" font-size="20" font-weight="normal" fill="#4F2170">
+                        <tspan x="875" y="15">First floor</tspan>
+                    </text>
+                    <path id="Path-3" d="M918.5,58.5 C914.634007,58.5 911.5,61.6340068 911.5,65.5 C911.5,69.3659932 914.634007,72.5 918.5,72.5 C922.365993,72.5 925.5,69.3659932 925.5,65.5 C925.5,61.6340068 922.365993,58.5 918.5,58.5 Z M918.5,60.5 C921.261424,60.5 923.5,62.7385763 923.5,65.5 C923.5,68.2614237 921.261424,70.5 918.5,70.5 C915.738576,70.5 913.5,68.2614237 913.5,65.5 C913.5,62.7385763 915.738576,60.5 918.5,60.5 Z M912.5,201.5 L924.5,201.5 L924.5,199.5 L912.5,199.5 L912.5,201.5 Z M917.5,71.5 L917.5,200.5 L919.5,200.5 L919.5,71.5 L917.5,71.5 Z" fill="#CCB8DC" fill-rule="nonzero"></path>
+                    <path id="Path-4" d="M1791.5,139.5 L1791.5,127.5 L1789.5,127.5 L1789.5,139.5 L1791.5,139.5 Z M1722.5,896.5 C1726.36599,896.5 1729.5,893.365993 1729.5,889.5 C1729.5,885.634007 1726.36599,882.5 1722.5,882.5 C1718.63401,882.5 1715.5,885.634007 1715.5,889.5 C1715.5,893.365993 1718.63401,896.5 1722.5,896.5 Z M1722.5,894.5 C1719.73858,894.5 1717.5,892.261424 1717.5,889.5 C1717.5,886.738576 1719.73858,884.5 1722.5,884.5 C1725.26142,884.5 1727.5,886.738576 1727.5,889.5 C1727.5,892.261424 1725.26142,894.5 1722.5,894.5 Z M1790.5,132.5 L1722.5,132.5 L1721.5,132.5 L1721.5,133.5 L1721.5,883.5 L1723.5,883.5 L1723.5,133.5 L1722.5,134.5 L1790.5,134.5 L1790.5,132.5 Z" fill="#CCB8DC" fill-rule="nonzero"></path>
+                </g>
             </svg>
 
             {# ── Zone overlays. Each zone has its own slug-based class
                (e.g. .bozp-map__zone--courtyard) so you can pin it to the
                correct spot over the SVG via the CSS block at the bottom. #}
-            <div class="bozp-map__zones">
-                {% for zone in zones %}
-                    {% set count = counts[zone.id] ?? 0 %}
-                    {% set slug = zone.code ?: ('zone-' ~ zone.id) %}
-                    <a class="bozp-map__zone bozp-map__zone--{{ slug }} {% if count > 0 %}bozp-map__zone--has-active{% endif %}"
-                       href="{{ url('bozp/map/zone/' ~ zone.id) }}"
-                       data-zone-id="{{ zone.id }}"
-                       data-zone-slug="{{ slug }}">
-                        <span class="bozp-map__zone-name">{{ zone.name }}</span>
-                        <span class="bozp-map__zone-count" aria-label="{{ 'Aktívne permity'|t('bozp') }}">
-                            {{ count }}
-                        </span>
-                    </a>
-                {% endfor %}
-            </div>
+{#            <div class="bozp-map__zones">#}
+{#                {% for zone in zones %}#}
+{#                    {% set count = counts[zone.id] ?? 0 %}#}
+{#                    {% set slug = zone.code ?: ('zone-' ~ zone.id) %}#}
+{#                    <a class="bozp-map__zone bozp-map__zone--{{ slug }} {% if count > 0 %}bozp-map__zone--has-active{% endif %}"#}
+{#                       href="{{ url('bozp/map/zone/' ~ zone.id) }}"#}
+{#                       data-zone-id="{{ zone.id }}"#}
+{#                       data-zone-slug="{{ slug }}">#}
+{#                        <span class="bozp-map__zone-name">{{ zone.name }}</span>#}
+{#                        <span class="bozp-map__zone-count" aria-label="{{ 'Aktívne permity'|t('bozp') }}">#}
+{#                            {{ count }}#}
+{#                        </span>#}
+{#                    </a>#}
+{#                {% endfor %}#}
+{#            </div>#}
         </div>
 
         <ul class="bozp-map__legend">

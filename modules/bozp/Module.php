@@ -188,8 +188,9 @@ class Module extends BaseModule
                 $event->rules['POST bozp/permits/<id:\d+>/upload'] = 'bozp/permits/upload-attachment';
 
                 // Subpermit multi-signer token signing
-                $event->rules['bozp/sp-sign/<token:[A-Za-z0-9]+>'] = 'bozp/subpermit-signing/view';
-                $event->rules['POST bozp/sp-sign/sign']             = 'bozp/subpermit-signing/sign';
+                $event->rules['bozp/sp-sign/<token:[A-Za-z0-9]+>']     = 'bozp/subpermit-signing/view';
+                $event->rules['bozp/sp-sign/<token:[A-Za-z0-9]+>/pdf'] = 'bozp/subpermit-signing/pdf';
+                $event->rules['POST bozp/sp-sign/sign']                = 'bozp/subpermit-signing/sign';
 
                 // Subpermits (high-risk, attached to a general permit)
                 $event->rules['bozp/permits/<permitId:\d+>/subpermits/new'] = 'bozp/subpermits/new';

@@ -178,4 +178,13 @@
       margin-top: 2em;
     }
   }
+
+  @media (max-width: 1200px) {
+    padding: 5em 2.5em;
+  }
+
+  @media (max-width: 600px) {
+    gap: 2.5em;
+    padding: 2.5em 10px 5em 10px;
+  }
 }

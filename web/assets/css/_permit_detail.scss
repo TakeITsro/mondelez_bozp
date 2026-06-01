@@ -18,6 +18,14 @@
     text-transform: uppercase;
   }
 
+  h3, h4 {
+    color: var(--main-color);
+    font-size: 1.75em;
+    font-weight: 400;
+    line-height: 1.2em;
+    text-transform: uppercase;
+  }
+
   .bozp-detail-list {
     width: 100%;
     display: flex;
@@ -326,6 +334,29 @@
     }
   }
 
+  &.bozp-detail-section--controls {
+    .bozp-detail-table {
+      width: 100%;
+
+      th {
+        text-align: left;
+      }
+
+      td {
+        text-align: left;
+
+        p {
+          text-align: left;
+        }
+
+        img {
+          width: 100%;
+          max-width: 200px;
+        }
+      }
+    }
+  }
+
   .bozp-signature {
     width: 100%;
     display: flex;
@@ -342,6 +373,72 @@
   .bozp-signature-slot {
     .bozp-detail-row {
       gap: 5px;
+    }
+  }
+
+  &.bozp-detail-section--subpermits {
+    .bozp-subpermit-card {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.25em;
+      border: 2px solid var(--main-color);
+      border-radius: 10px;
+      background-color: var(--main-color-light);
+      padding: 10px;
+      margin-bottom: 2.5em;
+
+      .bozp-subpermit-card__head {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+
+        .bozp-subpermit-card__title-block {
+          color: var(--main-color);
+          font-size: 1.75em;
+          font-weight: 400;
+          line-height: 1.2em;
+          text-transform: uppercase;
+        }
+
+        .bozp-subpermit-card__meta {
+          width: 100%;
+          display: flex;
+          align-items: center;
+
+          .bozp-btn {
+            margin-left: auto;
+          }
+        }
+      }
+
+      .bozp-subpermit-card__signatures {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+
+        .bozp-subpermit-card__signatures_box {
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.25em;
+
+          .bozp-subpermit-card__sig-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+
+            img {
+              width: 100%;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -510,6 +607,14 @@
         font-size: 1.25em;
       }
     }
+
+    .bozp-page__meta {
+      width: 100%;
+    }
+
+    .bozp-btn--sm {
+      margin-left: auto;
+    }
   }
 
   .bozp-decision {
@@ -553,8 +658,23 @@
         color: var(--main-color);
         font-size: 1.25em;
         padding: 5px 0;
+
+        p {
+          color: var(--main-color);
+          font-size: 1em;
+          display: inline;
+        }
       }
     }
+  }
+
+  .bozp-form__actions {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1.25em;
   }
 
   @media (max-width: 1200px) {
@@ -580,11 +700,32 @@
           width: 100%;
         }
       }
+
+      .bozp-page__meta {
+        flex-direction: column;
+        align-items: flex-start !important;
+
+        .bozp-btn {
+          width: 100%;
+        }
+      }
     }
 
     .bozp-audit {
       h2 {
         font-size: 2em;
+      }
+    }
+
+    .bozp-form__actions {
+      flex-direction: column;
+
+      form {
+        width: 100%;
+      }
+
+      .bozp-btn {
+        width: 100%;
       }
     }
   }

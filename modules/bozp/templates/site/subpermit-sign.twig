@@ -24,41 +24,47 @@
 {% endblock %}
 
 {% block content %}
-<section class="bozp-page bozp-page--subpermit-sign" style="max-width:680px;margin:0 auto;">
+<section class="bozp-page bozp-page--subpermit-sign">
 
     {# ── Header ────────────────────────────────────────────────────────── #}
-    <header class="bozp-page__header" style="margin-bottom:24px;">
-        <p class="bozp-page__eyebrow"
-           style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4F2170;margin:0 0 6px;">
+    <header class="bozp-page__header">
+        <p class="bozp-page__eyebrow">
             {{ 'Elektronický podpis subpermitu'|t('bozp') }}
         </p>
-        <h1 style="margin:0 0 8px;">
+        <h1>
             {{ 'Permit'|t('bozp') }} {{ permit.permitNumber }}
         </h1>
         {% if permit.workLocation %}
-            <p style="margin:0;color:#444;font-size:14px;">{{ permit.workLocation }}</p>
+            <p style="margin:0 0 12px;color:#444;font-size:14px;">{{ permit.workLocation }}</p>
         {% endif %}
+
+        {# PDF preview — gives the signer the full subpermit document before they sign. #}
+        <a href="{{ url('bozp/sp-sign/' ~ request.token ~ '/pdf') }}"
+           target="_blank"
+           rel="noopener"
+           class="bozp-btn bozp-btn--primary bozp-btn--sm bozp-btn--pdf">
+            ⬇ {{ 'Zobraziť PDF subpermitu'|t('bozp') }}
+        </a>
     </header>
 
     {# ── Already signed ────────────────────────────────────────────────── #}
     {% if alreadySigned %}
-        <div class="bozp-alert bozp-alert--success"
-             style="background:#f0fdf4;border-left:4px solid #4F2170;padding:20px 24px;border-radius:4px;margin-bottom:24px;">
-            <p style="margin:0 0 6px;font-weight:700;font-size:16px;">
+        <div class="bozp-alert bozp-alert--success">
+            <p>
                 ✓ {{ 'Podpis bol úspešne zaznamenaný'|t('bozp') }}
             </p>
             {% if request.signerName %}
-                <p style="margin:0;font-size:14px;">
+                <p>
                     {{ 'Podpísal/a: {name}'|t('bozp', {name: request.signerName}) }}
                 </p>
             {% endif %}
             {% if request.signedAt %}
-                <p style="margin:4px 0 0;font-size:13px;color:#555;">
+                <p>
                     {{ request.signedAt|date('d.m.Y H:i') }}
                 </p>
             {% endif %}
         </div>
-        <p style="font-size:14px;">
+        <p>
             {{ 'Túto záložku môžete zavrieť. Ďakujeme.'|t('bozp') }}
         </p>
 

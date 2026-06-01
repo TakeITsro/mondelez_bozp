@@ -223,6 +223,24 @@ ul li, ol li {
 .bozp-status.bozp-status--expired::before {
   background-image: url("https://testing.takeitsro.sk/assets/svg/state/expired.svg");
 }
+.bozp-status.bozp-status--ok {
+  color: #16a34a;
+}
+.bozp-status.bozp-status--ok::before {
+  background-image: url("https://testing.takeitsro.sk/assets/svg/state/approved.svg");
+}
+.bozp-status.bozp-status--stopped {
+  color: #991b1b;
+}
+.bozp-status.bozp-status--stopped::before {
+  background-image: url("https://testing.takeitsro.sk/assets/svg/state/cancel.svg");
+}
+.bozp-status.bozp-status--issues {
+  color: #d97706;
+}
+.bozp-status.bozp-status--issues::before {
+  background-image: url("https://testing.takeitsro.sk/assets/svg/state/pending.svg");
+}
 
 .bozp-header {
   width: 100%;
@@ -398,7 +416,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog,
 #bozp-subpermit-sign-dialog,
 #bozp-dialog-close,
-#bozp-dialog-issuer-close {
+#bozp-dialog-issuer-close,
+#bozp-ctrl-sign-dialog {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -406,14 +425,16 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form,
 #bozp-subpermit-sign-dialog .bozp-form,
 #bozp-dialog-close .bozp-form,
-#bozp-dialog-issuer-close .bozp-form {
+#bozp-dialog-issuer-close .bozp-form,
+#bozp-ctrl-sign-dialog .bozp-form {
   padding: 24px;
   margin: 0;
 }
 #bozp-sp-sign-dialog .bozp-form-row,
 #bozp-subpermit-sign-dialog .bozp-form-row,
 #bozp-dialog-close .bozp-form-row,
-#bozp-dialog-issuer-close .bozp-form-row {
+#bozp-dialog-issuer-close .bozp-form-row,
+#bozp-ctrl-sign-dialog .bozp-form-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -422,7 +443,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form-row .bozp-form-row__label,
 #bozp-subpermit-sign-dialog .bozp-form-row .bozp-form-row__label,
 #bozp-dialog-close .bozp-form-row .bozp-form-row__label,
-#bozp-dialog-issuer-close .bozp-form-row .bozp-form-row__label {
+#bozp-dialog-issuer-close .bozp-form-row .bozp-form-row__label,
+#bozp-ctrl-sign-dialog .bozp-form-row .bozp-form-row__label {
   width: 100%;
   color: var(--main-color);
   font-size: 16px;
@@ -433,7 +455,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form-row .bozp-form__checklist,
 #bozp-subpermit-sign-dialog .bozp-form-row .bozp-form__checklist,
 #bozp-dialog-close .bozp-form-row .bozp-form__checklist,
-#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist {
+#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist,
+#bozp-ctrl-sign-dialog .bozp-form-row .bozp-form__checklist {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -443,7 +466,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check,
 #bozp-subpermit-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check,
 #bozp-dialog-close .bozp-form-row .bozp-form__checklist .bozp-form__check,
-#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check {
+#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check,
+#bozp-ctrl-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -451,7 +475,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check input,
 #bozp-subpermit-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check input,
 #bozp-dialog-close .bozp-form-row .bozp-form__checklist .bozp-form__check input,
-#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check input {
+#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check input,
+#bozp-ctrl-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check input {
   position: absolute;
   left: 0;
   width: 16px;
@@ -462,7 +487,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox,
 #bozp-subpermit-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox,
 #bozp-dialog-close .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox,
-#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox {
+#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox,
+#bozp-ctrl-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox {
   width: 16px;
   height: 16px;
   display: flex;
@@ -474,7 +500,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox::after,
 #bozp-subpermit-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox::after,
 #bozp-dialog-close .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox::after,
-#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox::after {
+#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox::after,
+#bozp-ctrl-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check .custom_checkbox::after {
   content: "";
   position: absolute;
   width: 10px;
@@ -487,13 +514,15 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check input:checked ~ .custom_checkbox::after,
 #bozp-subpermit-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check input:checked ~ .custom_checkbox::after,
 #bozp-dialog-close .bozp-form-row .bozp-form__checklist .bozp-form__check input:checked ~ .custom_checkbox::after,
-#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check input:checked ~ .custom_checkbox::after {
+#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check input:checked ~ .custom_checkbox::after,
+#bozp-ctrl-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check input:checked ~ .custom_checkbox::after {
   transform: scale(1);
 }
 #bozp-sp-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check span,
 #bozp-subpermit-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check span,
 #bozp-dialog-close .bozp-form-row .bozp-form__checklist .bozp-form__check span,
-#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check span {
+#bozp-dialog-issuer-close .bozp-form-row .bozp-form__checklist .bozp-form__check span,
+#bozp-ctrl-sign-dialog .bozp-form-row .bozp-form__checklist .bozp-form__check span {
   width: calc(100% - 21px);
   color: var(--main-color);
   font-size: 14px;
@@ -504,7 +533,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form__field,
 #bozp-subpermit-sign-dialog .bozp-form__field,
 #bozp-dialog-close .bozp-form__field,
-#bozp-dialog-issuer-close .bozp-form__field {
+#bozp-dialog-issuer-close .bozp-form__field,
+#bozp-ctrl-sign-dialog .bozp-form__field {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -514,7 +544,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form__field label,
 #bozp-subpermit-sign-dialog .bozp-form__field label,
 #bozp-dialog-close .bozp-form__field label,
-#bozp-dialog-issuer-close .bozp-form__field label {
+#bozp-dialog-issuer-close .bozp-form__field label,
+#bozp-ctrl-sign-dialog .bozp-form__field label {
   color: var(--main-color);
   font-size: 14px;
   font-weight: 400;
@@ -524,7 +555,8 @@ ul li, ol li {
 #bozp-sp-sign-dialog .bozp-form__field input,
 #bozp-subpermit-sign-dialog .bozp-form__field input,
 #bozp-dialog-close .bozp-form__field input,
-#bozp-dialog-issuer-close .bozp-form__field input {
+#bozp-dialog-issuer-close .bozp-form__field input,
+#bozp-ctrl-sign-dialog .bozp-form__field input {
   color: var(--main-color);
   font-size: 14px;
   font-weight: 400;
@@ -535,13 +567,15 @@ ul li, ol li {
   #bozp-sp-sign-dialog,
   #bozp-subpermit-sign-dialog,
   #bozp-dialog-close,
-  #bozp-dialog-issuer-close {
+  #bozp-dialog-issuer-close,
+  #bozp-ctrl-sign-dialog {
     height: 92vh;
   }
   #bozp-sp-sign-dialog .bozp-form,
   #bozp-subpermit-sign-dialog .bozp-form,
   #bozp-dialog-close .bozp-form,
-  #bozp-dialog-issuer-close .bozp-form {
+  #bozp-dialog-issuer-close .bozp-form,
+  #bozp-ctrl-sign-dialog .bozp-form {
     height: 100%;
     padding: 20px 10px;
     overflow-y: scroll;
@@ -549,26 +583,30 @@ ul li, ol li {
   #bozp-sp-sign-dialog .bozp-sigpad__actions,
   #bozp-subpermit-sign-dialog .bozp-sigpad__actions,
   #bozp-dialog-close .bozp-sigpad__actions,
-  #bozp-dialog-issuer-close .bozp-sigpad__actions {
+  #bozp-dialog-issuer-close .bozp-sigpad__actions,
+  #bozp-ctrl-sign-dialog .bozp-sigpad__actions {
     width: 100%;
   }
   #bozp-sp-sign-dialog .bozp-sigpad__actions .bozp-btn,
   #bozp-subpermit-sign-dialog .bozp-sigpad__actions .bozp-btn,
   #bozp-dialog-close .bozp-sigpad__actions .bozp-btn,
-  #bozp-dialog-issuer-close .bozp-sigpad__actions .bozp-btn {
+  #bozp-dialog-issuer-close .bozp-sigpad__actions .bozp-btn,
+  #bozp-ctrl-sign-dialog .bozp-sigpad__actions .bozp-btn {
     width: 100%;
   }
   #bozp-sp-sign-dialog .bozp-dialog__actions,
   #bozp-subpermit-sign-dialog .bozp-dialog__actions,
   #bozp-dialog-close .bozp-dialog__actions,
-  #bozp-dialog-issuer-close .bozp-dialog__actions {
+  #bozp-dialog-issuer-close .bozp-dialog__actions,
+  #bozp-ctrl-sign-dialog .bozp-dialog__actions {
     width: 100%;
     flex-direction: column;
   }
   #bozp-sp-sign-dialog .bozp-dialog__actions .bozp-btn,
   #bozp-subpermit-sign-dialog .bozp-dialog__actions .bozp-btn,
   #bozp-dialog-close .bozp-dialog__actions .bozp-btn,
-  #bozp-dialog-issuer-close .bozp-dialog__actions .bozp-btn {
+  #bozp-dialog-issuer-close .bozp-dialog__actions .bozp-btn,
+  #bozp-ctrl-sign-dialog .bozp-dialog__actions .bozp-btn {
     width: 100%;
   }
 }
@@ -879,6 +917,13 @@ ul li, ol li {
 .bozp-form-section legend {
   color: var(--main-color);
   font-size: 2.5em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-form-section h3, .bozp-form-section h4 {
+  color: var(--main-color);
+  font-size: 1.75em;
   font-weight: 400;
   line-height: 1.2em;
   text-transform: uppercase;
@@ -1521,6 +1566,13 @@ ul li, ol li {
   line-height: 1.2em;
   text-transform: uppercase;
 }
+.bozp-detail-section h3, .bozp-detail-section h4 {
+  color: var(--main-color);
+  font-size: 1.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
 .bozp-detail-section .bozp-detail-list {
   width: 100%;
   display: flex;
@@ -1769,6 +1821,22 @@ ul li, ol li {
   justify-content: flex-end;
   gap: 2.5em;
 }
+.bozp-detail-section.bozp-detail-section--controls .bozp-detail-table {
+  width: 100%;
+}
+.bozp-detail-section.bozp-detail-section--controls .bozp-detail-table th {
+  text-align: left;
+}
+.bozp-detail-section.bozp-detail-section--controls .bozp-detail-table td {
+  text-align: left;
+}
+.bozp-detail-section.bozp-detail-section--controls .bozp-detail-table td p {
+  text-align: left;
+}
+.bozp-detail-section.bozp-detail-section--controls .bozp-detail-table td img {
+  width: 100%;
+  max-width: 200px;
+}
 .bozp-detail-section .bozp-signature {
   width: 100%;
   display: flex;
@@ -1782,6 +1850,61 @@ ul li, ol li {
 }
 .bozp-detail-section .bozp-signature-slot .bozp-detail-row {
   gap: 5px;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+  border: 2px solid var(--main-color);
+  border-radius: 10px;
+  background-color: var(--main-color-light);
+  padding: 10px;
+  margin-bottom: 2.5em;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card .bozp-subpermit-card__head {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card .bozp-subpermit-card__head .bozp-subpermit-card__title-block {
+  color: var(--main-color);
+  font-size: 1.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card .bozp-subpermit-card__head .bozp-subpermit-card__meta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card .bozp-subpermit-card__head .bozp-subpermit-card__meta .bozp-btn {
+  margin-left: auto;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card .bozp-subpermit-card__signatures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card .bozp-subpermit-card__signatures .bozp-subpermit-card__signatures_box {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25em;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card .bozp-subpermit-card__signatures .bozp-subpermit-card__signatures_box .bozp-subpermit-card__sig-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.bozp-detail-section.bozp-detail-section--subpermits .bozp-subpermit-card .bozp-subpermit-card__signatures .bozp-subpermit-card__signatures_box .bozp-subpermit-card__sig-row img {
+  width: 100%;
 }
 @media (max-width: 1200px) {
   .bozp-detail-section .bozp-detail-row {
@@ -1920,6 +2043,16 @@ ul li, ol li {
 .bozp-page--contractor-detail .bozp-page__header .bozp-status__wrapper .bozp-status {
   font-size: 1.25em;
 }
+.bozp-page--permit-detail .bozp-page__header .bozp-page__meta,
+.bozp-page--subpermit-view .bozp-page__header .bozp-page__meta,
+.bozp-page--contractor-detail .bozp-page__header .bozp-page__meta {
+  width: 100%;
+}
+.bozp-page--permit-detail .bozp-page__header .bozp-btn--sm,
+.bozp-page--subpermit-view .bozp-page__header .bozp-btn--sm,
+.bozp-page--contractor-detail .bozp-page__header .bozp-btn--sm {
+  margin-left: auto;
+}
 .bozp-page--permit-detail .bozp-decision,
 .bozp-page--subpermit-view .bozp-decision,
 .bozp-page--contractor-detail .bozp-decision {
@@ -1971,6 +2104,23 @@ ul li, ol li {
   font-size: 1.25em;
   padding: 5px 0;
 }
+.bozp-page--permit-detail .bozp-audit .bozp-audit__list li p,
+.bozp-page--subpermit-view .bozp-audit .bozp-audit__list li p,
+.bozp-page--contractor-detail .bozp-audit .bozp-audit__list li p {
+  color: var(--main-color);
+  font-size: 1em;
+  display: inline;
+}
+.bozp-page--permit-detail .bozp-form__actions,
+.bozp-page--subpermit-view .bozp-form__actions,
+.bozp-page--contractor-detail .bozp-form__actions {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.25em;
+}
 @media (max-width: 1200px) {
   .bozp-page--permit-detail,
   .bozp-page--subpermit-view,
@@ -2006,10 +2156,36 @@ ul li, ol li {
   .bozp-page--contractor-detail .bozp-page__header .bozp-status__wrapper .bozp-btn {
     width: 100%;
   }
+  .bozp-page--permit-detail .bozp-page__header .bozp-page__meta,
+  .bozp-page--subpermit-view .bozp-page__header .bozp-page__meta,
+  .bozp-page--contractor-detail .bozp-page__header .bozp-page__meta {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  .bozp-page--permit-detail .bozp-page__header .bozp-page__meta .bozp-btn,
+  .bozp-page--subpermit-view .bozp-page__header .bozp-page__meta .bozp-btn,
+  .bozp-page--contractor-detail .bozp-page__header .bozp-page__meta .bozp-btn {
+    width: 100%;
+  }
   .bozp-page--permit-detail .bozp-audit h2,
   .bozp-page--subpermit-view .bozp-audit h2,
   .bozp-page--contractor-detail .bozp-audit h2 {
     font-size: 2em;
+  }
+  .bozp-page--permit-detail .bozp-form__actions,
+  .bozp-page--subpermit-view .bozp-form__actions,
+  .bozp-page--contractor-detail .bozp-form__actions {
+    flex-direction: column;
+  }
+  .bozp-page--permit-detail .bozp-form__actions form,
+  .bozp-page--subpermit-view .bozp-form__actions form,
+  .bozp-page--contractor-detail .bozp-form__actions form {
+    width: 100%;
+  }
+  .bozp-page--permit-detail .bozp-form__actions .bozp-btn,
+  .bozp-page--subpermit-view .bozp-form__actions .bozp-btn,
+  .bozp-page--contractor-detail .bozp-form__actions .bozp-btn {
+    width: 100%;
   }
 }
 
@@ -2236,6 +2412,76 @@ ul li, ol li {
   gap: 2.5em;
 }
 
+.bozp-page--subpermit-sign,
+.bozp-page--control {
+  min-height: calc(100vh - 3.75em);
+  gap: 2.5em;
+  padding: 5em;
+}
+.bozp-page--subpermit-sign .bozp-page__header,
+.bozp-page--control .bozp-page__header {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25em;
+}
+.bozp-page--subpermit-sign .bozp-page__header h1,
+.bozp-page--control .bozp-page__header h1 {
+  color: var(--main-color);
+  font-size: 3.75em;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-transform: uppercase;
+}
+.bozp-page--subpermit-sign .bozp-alert--success,
+.bozp-page--control .bozp-alert--success {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25em;
+  background: #f0fdf4 !important;
+  padding: 20px !important;
+  border-radius: 4px;
+}
+.bozp-page--subpermit-sign .bozp-alert--success p,
+.bozp-page--control .bozp-alert--success p {
+  font-size: 16px;
+}
+.bozp-page--subpermit-sign .bozp-form,
+.bozp-page--control .bozp-form {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2.5em;
+}
+.bozp-page--subpermit-sign .bozp-form .bozp-form__actions,
+.bozp-page--control .bozp-form .bozp-form__actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2.5em;
+}
+@media (max-width: 1200px) {
+  .bozp-page--subpermit-sign,
+  .bozp-page--control {
+    padding: 5em 2.5em;
+  }
+}
+@media (max-width: 600px) {
+  .bozp-page--subpermit-sign,
+  .bozp-page--control {
+    gap: 2.5em;
+    padding: 2.5em 10px 5em 10px;
+  }
+}
+
 .bozp-page--contractor-auth {
   min-height: calc(100vh - 3.75em);
   justify-content: center;
@@ -2389,6 +2635,17 @@ ul li, ol li {
   line-height: 1.2em;
   text-transform: uppercase;
   margin-top: 2em;
+}
+@media (max-width: 1200px) {
+  .bozp-page--contractor-auth {
+    padding: 5em 2.5em;
+  }
+}
+@media (max-width: 600px) {
+  .bozp-page--contractor-auth {
+    gap: 2.5em;
+    padding: 2.5em 10px 5em 10px;
+  }
 }
 
 /*# sourceMappingURL=main.css.map */

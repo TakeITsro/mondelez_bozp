@@ -179,4 +179,45 @@ class SubpermitSigningController extends Controller
         }
         return is_array($raw) ? $raw : [];
     }
+
+    // -------------------------------------------------------------------------
+    // GET — stream the subpermit PDF (resolves via the signing-request token)
+    // -------------------------------------------------------------------------
+
+    /**
+     * GET bozp/sp-sign/<token>/pdf — redirect to the subpermit PDF asset.
+     *
+     * Same trust level as the signing page itself: anyone holding the
+     * 64-char token can view the PDF. If the asset hasn't been generated
+     * yet (rare — generation happens at subpermit save), regenerate on
+     * the fly before redirecting.
+     */
+    public function actionPdf(string $token): Response
+    {
+        /** @var \modules\bozp\Module $module */
+        $module = Craft::$app->getModule('bozp');
+        $request = $module->subpermitSigningService->findByToken($token);
+        if (!$request) {
+            throw new NotFoundHttpException('Neplatný alebo expirovaný odkaz na podpis.');
+        }
+
+        [$subpermit, $permit] = $this->loadContext((int) $request->subpermitId);
+
+        // Lazily generate the PDF if it isn't on disk yet.
+        if (empty($subpermit->pdfAssetId)) {
+            $module->permitPdfService->generateForSubpermit($subpermit, $permit);
+            $subpermit = SubpermitRecord::findOne(['id' => $subpermit->id]);
+        }
+
+        if (empty($subpermit->pdfAssetId)) {
+            throw new NotFoundHttpException('PDF nie je k dispozícii.');
+        }
+
+        $asset = Craft::$app->getAssets()->getAssetById((int) $subpermit->pdfAssetId);
+        if (!$asset || !$asset->url) {
+            throw new NotFoundHttpException('PDF súbor nebol nájdený.');
+        }
+
+        return $this->redirect($asset->url);
+    }
 }

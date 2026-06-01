@@ -34,7 +34,7 @@
                 </span>
                 <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/' ~ subpermit.id ~ '/pdf') }}"
                    target="_blank" rel="noopener"
-                   class="bozp-btn bozp-btn--secondary bozp-btn--sm"
+                   class="bozp-btn bozp-btn--primary bozp-btn--sm"
                    style="font-size:12px;padding:4px 12px;">
                     ⬇ {{ 'Zobraziť PDF'|t('bozp') }}
                 </a>
@@ -581,7 +581,7 @@
 
         {# --- Actions --- #}
         <div class="bozp-form__actions">
-            <a href="{{ url('bozp/permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--cancel">
+            <a href="{{ url('bozp/permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--primary">
                 {{ 'Späť'|t('bozp') }}
             </a>
             {% if canCancel %}
@@ -591,7 +591,7 @@
                     <input type="hidden" name="action" value="bozp/subpermits/cancel">
                     <input type="hidden" name="permitId" value="{{ permit.id }}">
                     <input type="hidden" name="id" value="{{ subpermit.id }}">
-                    <button type="submit" class="bozp-btn bozp-btn--danger">
+                    <button type="submit" class="bozp-btn bozp-btn--cancel">
                         {{ 'Zrušiť subpermit'|t('bozp') }}
                     </button>
                 </form>

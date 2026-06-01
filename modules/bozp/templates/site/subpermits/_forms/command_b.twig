@@ -164,9 +164,9 @@
         {{ 'Mená a časy nižšie sú evidenčné. Samotné podpisy sa zachytávajú v štandardnom toku podpisov subpermitu.'|t('bozp') }}
     </p>
 
-    <div class="bozp-form-grid bozp-form-grid--2col">
-        <div>
-            <h4>{{ 'Vydal alebo nahlásil'|t('bozp') }}</h4>
+{#    <div class="bozp-form-grid bozp-form-grid--2col">#}
+{#        <div>#}
+            <h3>{{ 'Vydal alebo nahlásil'|t('bozp') }}</h3>
             <div class="bozp-form-row">
                 <label for="issuedByName">{{ 'Meno a priezvisko'|t('bozp') }}</label>
                 <input type="text" id="issuedByName" name="issuedByName"
@@ -184,9 +184,9 @@
                            value="{{ values.issuedByTime ?? '' }}">
                 </div>
             </div>
-        </div>
-        <div>
-            <h4>{{ 'Prijal'|t('bozp') }}</h4>
+{#        </div>#}
+{#        <div>#}
+            <h3>{{ 'Prijal'|t('bozp') }}</h3>
             <div class="bozp-form-row">
                 <label for="receivedByName">{{ 'Meno a priezvisko'|t('bozp') }}</label>
                 <input type="text" id="receivedByName" name="receivedByName"
@@ -204,8 +204,8 @@
                            value="{{ values.receivedByTime ?? '' }}">
                 </div>
             </div>
-        </div>
-    </div>
+{#        </div>#}
+{#    </div>#}
 </fieldset>
 
 {# ─── Order book entry — page 2 header ──────────────────────────────── #}

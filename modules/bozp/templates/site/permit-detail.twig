@@ -330,16 +330,18 @@
                                             {{ sp.type }}
                                         {% endif %}
                                     </td>
-                                    <td>{{ spLabelMap[sp.type] ?? sp.type }}</td>
+                                    <td>
+                                        {{ spLabelMap[sp.type] ?? sp.type }}
+                                        {% if sp.type in requiredSubpermitTypes and sp.status != 'approved' %}
+                                             - <span class="bozp-badge--required" title="{{ 'Vyžadovaný'|t('bozp') }}">{{ 'Vyžadovaný'|t('bozp') }}</span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ spData.placeOfWork ?? '—' }}</td>
                                     <td>{{ spData.date ? spData.date|date('d.m.Y') : sp.dateCreated|date('d.m.Y') }}</td>
                                     <td>
                                         <span class="bozp-status bozp-status--{{ sp.status }}">
                                             {{ sp.status|t('bozp') }}
                                         </span>
-                                        {% if sp.type in requiredSubpermitTypes and sp.status != 'approved' %}
-                                            <span class="bozp-badge bozp-badge--required" title="{{ 'Vyžadovaný'|t('bozp') }}">!</span>
-                                        {% endif %}
                                     </td>
                                     <td>
                                         {% if sp.status == 'approved' and sp.expiresAt %}
@@ -700,6 +702,7 @@
                             <th style="text-align:left;padding:8px 10px;">{{ 'Dátum a čas'|t('bozp') }}</th>
                             <th style="text-align:left;padding:8px 10px;">{{ 'Kontrolór'|t('bozp') }}</th>
                             <th style="text-align:left;padding:8px 10px;">{{ 'Výsledok'|t('bozp') }}</th>
+                            <th style="text-align:left;padding:8px 10px;">{{ 'Poznámka'|t('bozp') }}</th>
                             <th style="text-align:left;padding:8px 10px;">{{ 'Podpis'|t('bozp') }}</th>
                         </tr>
                     </thead>
@@ -712,6 +715,8 @@
                                     <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:{{ resultColors[c.result] ?? '#6b7280' }};color:#fff;font-size:.8em;font-weight:600;">
                                         {{ resultLabels[c.result] ?? c.result }}
                                     </span>
+                                </td>
+                                <td style="padding:8px 10px;vertical-align:top;">
                                     {% if c.notes %}
                                         <p style="margin:4px 0 0;font-size:.85em;color:#555;">{{ c.notes }}</p>
                                     {% endif %}

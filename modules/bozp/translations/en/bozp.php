@@ -462,4 +462,823 @@ return [
     'Označte typy subpermitov, ktoré budú potrebné pre tento permit. Subpermity sa vytvárajú a schvaľujú samostatne po vytvorení permitu.' =>
         'Mark the subpermit types that will be required for this permit. Subpermits are created and approved separately after the permit is created.',
     'Príloha č. {n}'                          => 'Appendix no. {n}',
+
+    // ============================================================
+    // Bulk translation pass — covers every Slovak source string used
+    // in templates + PHP that was previously missing from this file.
+    // ============================================================
+
+    // Severity / general UI
+    'Kritická'                                => 'Critical',
+    'Vysoká'                                  => 'High',
+    'Stredná'                                 => 'Medium',
+    'Nízka'                                   => 'Low',
+    'Závažnosť'                               => 'Severity',
+    'Pridať'                                  => 'Add',
+    'Upraviť'                                 => 'Edit',
+    'Odoslať'                                 => 'Send',
+    'Detail'                                  => 'Details',
+    'Popis'                                   => 'Description',
+    'Komentár / poznámka'                     => 'Comment / note',
+    'Uložiť zmeny'                            => 'Save changes',
+    'Opravte nasledujúce chyby'               => 'Please correct the following errors',
+    'Otvoriť v administrácii'                 => 'Open in admin',
+    'Pridať'                                  => 'Add',
+    'Vaše meno a priezvisko'                  => 'Your name and surname',
+    'Meno a priezvisko'                       => 'Name and surname',
+    'Meno je povinné.'                        => 'Name is required.',
+    'Vymazať podpis'                          => 'Clear signature',
+    'Pridajte svoj podpis.'                   => 'Add your signature.',
+    'Chýba podpis.'                           => 'Signature missing.',
+    'Zadajte meno podpisujúceho.'             => 'Enter the signer name.',
+    'Podpis a meno sú povinné.'               => 'Signature and name are required.',
+    'Funkcia / pracovné zaradenie'            => 'Job title / role',
+    'Váša rola'                               => 'Your role',
+    'Firma'                                   => 'Company',
+    'Oddelenie'                               => 'Department',
+    'Meno'                                    => 'Name',
+    'Meno čitateľne'                          => 'Legible name',
+
+    // Severity / bug report
+    'Nahlásiť chybu'                          => 'Report a bug',
+    'Nahlásiť chybu (vytvorí úlohu v ClickUp)' => 'Report a bug (creates a ClickUp task)',
+    'Nahlásenie chyby zlyhalo. Skúste znova alebo kontaktujte správcu.' =>
+        'Bug report failed. Please try again or contact the administrator.',
+    'Chyba bola nahlásená.'                   => 'Bug reported.',
+    'Chyba bola nahlásená. Sledovať môžete na: {url}' =>
+        'Bug reported. You can track it at: {url}',
+    'Názov chyby'                             => 'Bug title',
+    'Názov chyby je povinný.'                 => 'Bug title is required.',
+    'Názov je príliš dlhý (max. 200 znakov).' => 'Title is too long (max. 200 characters).',
+    'Popis chyby je povinný.'                 => 'Bug description is required.',
+    'Neplatná závažnosť.'                     => 'Invalid severity.',
+    'Po odoslaní sa automaticky vytvorí úloha v ClickUp s vašimi kontextovými údajmi (čas, URL, prehliadač).' =>
+        'On submit a ClickUp task is created automatically with your context (time, URL, browser).',
+    'Čo robíte, čo ste očakávali, čo sa stalo. Pripojte kroky na zopakovanie chyby.' =>
+        'What you do, what you expected, what happened. Include steps to reproduce.',
+
+    // Generic placeholders / boolean labels
+    '(zložené dáta)'                          => '(complex data)',
+    'Vyžadovaný'                              => 'Required',
+    'Voliteľné / podmienené'                  => 'Optional / conditional',
+    '— Vyberte zónu —'                        => '— Select zone —',
+    '— Žiadna —'                              => '— None —',
+
+    // Map / dashboard
+    'Mapa'                                    => 'Map',
+    'Mapa zón'                                => 'Zone map',
+    'Zobraziť mapu zón'                       => 'View zone map',
+    'Späť na mapu'                            => 'Back to map',
+    'Späť na permit'                          => 'Back to permit',
+    'Sem vložte mapu závodu (SVG)'            => 'Insert plant map (SVG) here',
+    'Kliknite na zónu pre zobrazenie aktívnych permitov.' =>
+        'Click on a zone to view active permits.',
+    'V tejto zóne nie sú aktuálne žiadne aktívne permity.' =>
+        'There are currently no active permits in this zone.',
+    'Aktívne permity'                         => 'Active permits',
+    'Zóna'                                    => 'Zone',
+    'Zóna bez aktívnych permitov'             => 'Zone without active permits',
+    'Zóna s aktívnymi permitmi'               => 'Zone with active permits',
+
+    // File picker / attachments
+    'Vybrať prílohu'                          => 'Select attachment',
+    'Aktuálna príloha'                        => 'Current attachment',
+    'Dodatočná príloha'                       => 'Additional attachment',
+    'Príloha'                                 => 'Attachment',
+    'Voliteľná dodatočná príloha k permitu (napr. plán pracoviska, certifikáty, fotografie).' =>
+        'Optional additional attachment to the permit (e.g. workplace plan, certificates, photos).',
+    'Nahrať prílohu (PDF, DOCX, JPG, PNG, max 10 MB)' =>
+        'Upload attachment (PDF, DOCX, JPG, PNG, max 10 MB)',
+    'Nahrať prílohu (PDF, DOCX, XLSX, max 10 MB)' =>
+        'Upload attachment (PDF, DOCX, XLSX, max 10 MB)',
+    'Súbor SSoW (PDF, DOCX, XLSX, max. 10 MB)' => 'SSoW file (PDF, DOCX, XLSX, max. 10 MB)',
+    'Súbor hodnotenia rizík'                  => 'Risk assessment file',
+    'Hodnotenie rizík'                        => 'Risk assessment',
+    'Pripojte dokument s hodnotením rizík. Pri odoslaní na schválenie je príloha povinná.' =>
+        'Attach a risk assessment document. The attachment is required when submitting for approval.',
+    'Príloha s hodnotením rizík je povinná pri odoslaní.' =>
+        'Risk assessment attachment is required on submission.',
+    'Nepodporovaný typ súboru. Povolené: PDF, DOCX, XLSX.' =>
+        'Unsupported file type. Allowed: PDF, DOCX, XLSX.',
+    'Uloženie súboru zlyhalo. Skúste znova.' => 'Could not save the file. Please try again.',
+    'Nahrajte súbor SSoW alebo zrušte výber prílohy a vyplňte popis.' =>
+        'Upload the SSoW file or uncheck the attachment option and fill in the description.',
+    'Popis SSoW je povinný, ak nie je priložený samostatný súbor.' =>
+        'SSoW description is required if no separate file is attached.',
+
+    // Permit / subpermit common
+    'Číslo permitu'                           => 'Permit number',
+    'Číslo povolenia'                         => 'Permit number',
+    'Prehľad povolenia'                       => 'Permit overview',
+    'Hlavička povolenia'                      => 'Permit header',
+    'Základné informácie'                     => 'Basic information',
+    'Špecifické podmienky'                    => 'Specific conditions',
+    'Zúčastnení dodávatelia / osoby'          => 'Participating contractors / persons',
+    'Zodpovedná osoba MDLZ'                   => 'MDLZ responsible person',
+    'Zodpovedná osoba je povinná.'            => 'Responsible person is required.',
+    'Popis vykonávanej práce'                 => 'Description of the work being performed',
+    'Popis práce'                             => 'Work description',
+    'Hlavné kroky'                            => 'Main steps',
+    'Krok {n}'                                => 'Step {n}',
+    'Platnosť'                                => 'Validity',
+    'Platnosť 8 hodín od schválenia'          => 'Valid 8 hours from approval',
+    'Platnosť tohto permitu vypršala'         => 'This permit has expired',
+    'Práce nesmú pokračovať.'                 => 'Work must not continue.',
+    'Permit je platný do'                     => 'Permit is valid until',
+    'Otvoriť permit v CP'                     => 'Open permit in CP',
+    'Otvoriť subpermit'                       => 'Open subpermit',
+    'Otvoriť portál dodávateľa'               => 'Open contractor portal',
+    'Otvoriť portál a podpísať'               => 'Open the portal and sign',
+    'Zobraziť PDF'                            => 'View PDF',
+    'Zobraziť PDF subpermitu'                 => 'View subpermit PDF',
+    'Podpísaný permit (PDF)'                  => 'Signed permit (PDF)',
+    'Žiadne prílohy.'                         => 'No attachments.',
+    'Vyberte zónu, v ktorej sa práca vykonáva.' => 'Select the zone in which the work is performed.',
+
+    // Subpermit listing
+    'Vyžadované subpermity (prílohy)'         => 'Required subpermits (appendices)',
+    'Príloha č. {n} — {type}'                 => 'Appendix no. {n} — {type}',
+    'Priložené subpermity'                    => 'Attached subpermits',
+    'Subpermit'                               => 'Subpermit',
+    'Zatiaľ neboli pridané žiadne subpermity.' => 'No subpermits have been added yet.',
+    'Permit je uzavretý — pridanie subpermitu nie je možné.' =>
+        'Permit is closed — adding a subpermit is not possible.',
+    'Výber typu'                              => 'Type selection',
+    'Vyberte typ subpermitu, ktorý chcete vytvoriť.' => 'Select the subpermit type to create.',
+    'Naozaj chcete zrušiť tento subpermit?'   => 'Really cancel this subpermit?',
+    'Schválený subpermit nie je možné zrušiť.' => 'An approved subpermit cannot be cancelled.',
+    'Zrušiť subpermit'                        => 'Cancel subpermit',
+    'Upraviť subpermit'                       => 'Edit subpermit',
+    'Upraviť údaje subpermitu'                => 'Edit subpermit data',
+    'Upraviť permit'                          => 'Edit permit',
+    'Upraviť permit {n}'                      => 'Edit permit {n}',
+    'Upraviť prílohu č. {n}'                  => 'Edit appendix no. {n}',
+    'Pred uzavretím tohto subpermitu je potrebné nahrať aspoň jednu prílohu.' =>
+        'At least one attachment must be uploaded before closing this subpermit.',
+
+    // Subpermit statuses / sign flow
+    'Subpermit bol podpísaný.'                => 'Subpermit signed.',
+    'Subpermit bol uložený a podpísaný.'      => 'Subpermit saved and signed.',
+    'Subpermit bol uložený. Pozvania na podpis boli odoslané e-mailom.' =>
+        'Subpermit saved. Signing invitations have been sent by email.',
+    'Subpermit bol už podpísaný dodávateľom.' => 'Subpermit has already been signed by the contractor.',
+    'Subpermit nie je v stave na schválenie.' => 'Subpermit is not in a state to be approved.',
+    'Subpermit nie je v stave na zamietnutie.' => 'Subpermit is not in a state to be rejected.',
+    'Subpermit musí byť schválený pred podpísom.' => 'Subpermit must be approved before signing.',
+    'Subpermit bol schválený. Platnosť 8 hodín.' => 'Subpermit approved. Valid for 8 hours.',
+    'Subpermit schválený'                     => 'Subpermit approved',
+    'Subpermit sa nepodarilo schváliť.'       => 'Could not approve the subpermit.',
+    'Subpermit sa nepodarilo zamietnuť.'      => 'Could not reject the subpermit.',
+    'Subpermit sa nepodarilo zrušiť. Skúste znova.' =>
+        'Could not cancel the subpermit. Please try again.',
+    'Subpermit expiruje do 1 hodiny'          => 'Subpermit expires within 1 hour',
+    'Schvaľovacie podpisy (voliteľné)'        => 'Approval signatures (optional)',
+    'Schválenie HSE'                          => 'HSE approval',
+    'Zamietnutie HSE'                         => 'HSE rejection',
+    'Schváliť subpermit'                      => 'Approve subpermit',
+    'Pred schválením musia byť podpísané obidva predpracovné podpisy (vydavateľ + dodávateľ).' =>
+        'Both pre-work signatures (issuer + contractor) must be captured before approval.',
+    'Pred schválením HSE'                     => 'Before HSE approval',
+    'Nie je možné schváliť'                   => 'Cannot be approved',
+    'chýba predpracovný podpis dodávateľa.'   => 'contractor\'s pre-work signature is missing.',
+    'chýba predpracovný podpis vydavateľa.'   => 'issuer\'s pre-work signature is missing.',
+    'Pri zamietnutí je dôvod povinný.'        => 'A reason is required when rejecting.',
+    'Dôvod zamietnutia (povinné)'             => 'Reason for rejection (required)',
+    'Pred začatím prác'                       => 'Before work begins',
+    'Pred začatím prác musíte podpísať každý schválený subpermit.' =>
+        'You must sign every approved subpermit before work begins.',
+
+    // Signatures — common
+    'Podpisy'                                 => 'Signatures',
+    'Podpisy (legacy)'                        => 'Signatures (legacy)',
+    'Podpisy pred prácou'                     => 'Pre-work signatures',
+    'Podpisy pri uzavretí'                    => 'Closure signatures',
+    'Pri uzavretí'                            => 'At closure',
+    'Pri dokončení / zrušení prác'            => 'On completion / cancellation of work',
+    'Nepodpísané'                             => 'Not signed',
+    'Povinné podpisy'                         => 'Mandatory signatures',
+    'Signatári subpermitu'                    => 'Subpermit signatories',
+    'Podpísal vydavateľ'                      => 'Signed by issuer',
+    'Vydavateľ — pred prácou'                 => 'Issuer — before work',
+    'Vydavateľ — uzavretie'                   => 'Issuer — closure',
+    'Vydavateľ (legacy)'                      => 'Issuer (legacy)',
+    'Vydavateľ podpísal'                      => 'Issuer signed',
+    'Vydavateľ podpísal pred prácou'          => 'Issuer signed before work',
+    'Vydavateľ ešte nepodpísal.'              => 'The issuer has not signed yet.',
+    'Vydavateľ ešte nepodpísal pred prácou.'  => 'The issuer has not signed pre-work yet.',
+    'Vydavateľ musí najprv podpísať pred začatím prác.' =>
+        'The issuer must sign before work begins first.',
+    'Vydavateľ podpísal uzavretie. Pre dokončenie procesu pridajte svoj podpis.' =>
+        'The issuer signed the closure. Add your signature to complete the process.',
+    'Dodávateľ — pred prácou'                 => 'Contractor — before work',
+    'Dodávateľ — uzavretie'                   => 'Contractor — closure',
+    'Dodávateľ podpísal'                      => 'Contractor signed',
+    'Dodávateľ podpísal pred prácou'          => 'Contractor signed before work',
+    'Dodávateľ podpísal zrušenie'             => 'Contractor signed cancellation',
+    'Dodávateľ potvrdil dokončenie'           => 'Contractor confirmed completion',
+    'Dodávateľ podpísal uzavretie. Subpermit bude úplne uzavretý po Vašom podpise.' =>
+        'The contractor signed the closure. The subpermit will be fully closed after your signature.',
+    'Dodávateľ musí najprv podpísať uzavretie.' => 'The contractor must sign the closure first.',
+    'Po podpise vydavateľa budete môcť podpísať aj vy.' =>
+        'After the issuer signs, you will be able to sign too.',
+    'Po dokončení prác dodávateľom budete vyzvaní k podpísaniu uzavretia subpermitu.' =>
+        'After the contractor completes the work you will be asked to sign the subpermit closure.',
+    'Najprv musia byť obidva podpisy pred začatím prác.' =>
+        'Both pre-work signatures are required first.',
+    'Najprv musia byť podpísané obidva podpisy pred začatím prác.' =>
+        'Both pre-work signatures must be captured first.',
+    'Čaká na podpis HSE'                      => 'Awaiting HSE signature',
+    'Čaká na uzavretie vydavateľom'           => 'Awaiting closure by issuer',
+    'Čaká sa na predpracovný podpis dodávateľa. HSE bude môcť schváliť subpermit až po jeho podpise.' =>
+        'Awaiting contractor\'s pre-work signature. HSE will only be able to approve the subpermit after that signature.',
+
+    // Signer prework / closure
+    'Podpis dodávateľa'                       => 'Contractor signature',
+    'Podpis dodávateľa je povinný.'           => 'Contractor signature is required.',
+    'Podpis dodávateľa — pred prácou'         => 'Contractor signature — before work',
+    'Podpis vydavateľa'                       => 'Issuer signature',
+    'Podpis vydavateľa je povinný.'           => 'Issuer signature is required.',
+    'Podpis vydavateľa — pred prácou'         => 'Issuer signature — before work',
+    'Podpis vydavateľa — uzavretie'           => 'Issuer signature — closure',
+    'Podpísať'                                => 'Sign',
+    'Podpísať pred prácou'                    => 'Sign before work',
+    'Podpísať subpermit'                      => 'Sign subpermit',
+    'Podpísať uzavretie'                      => 'Sign closure',
+    'Podpísať a odoslať'                      => 'Sign and submit',
+    'Podpísať a uložiť'                       => 'Sign and save',
+    'Podpísať a uložiť kontrolu'              => 'Sign and save inspection',
+    'Podpísať a uložiť subpermit'             => 'Sign and save subpermit',
+    'Podpísať a uzavrieť'                     => 'Sign and close',
+    'Podpíšte pred začatím prác.'             => 'Sign before work begins.',
+    'Podpíšte dokončenie / zrušenie subpermitu' => 'Sign the completion / cancellation of the subpermit',
+    'Podpíšte subpermit ako dodávateľ pred začatím prác.' =>
+        'Sign the subpermit as the contractor before work begins.',
+    'Podpíšte subpermit ako vydavateľ povolenia. Po uložení bude odoslaný HSE na schválenie.' =>
+        'Sign the subpermit as the permit issuer. After saving it will be sent to HSE for approval.',
+    'Podpíšte záznam kontroly. Po uložení ho nebude možné upravovať.' =>
+        'Sign the inspection record. After saving it cannot be edited.',
+    'Podpisom potvrdzujete úplné uzavretie subpermitu po podpise dodávateľa.' =>
+        'By signing you confirm the full closure of the subpermit after the contractor\'s signature.',
+    'Podpisom potvrdzujete, že ste oboznámení s podmienkami subpermitu a zaviazali ste sa ich dodržiavať.' =>
+        'By signing you confirm that you are familiar with the subpermit conditions and commit to following them.',
+    'Podpisom potvrdzujete, že subpermit je pripravený a práca môže byť zahájená.' =>
+        'By signing you confirm the subpermit is ready and the work may begin.',
+    'Skontrolujte, že výsledok a poznámky sú správne vyplnené pred podpisom.' =>
+        'Verify that the result and notes are filled in correctly before signing.',
+    'Skontrolujte, že všetky polia sú správne vyplnené pred podpisom.' =>
+        'Verify that all fields are filled in correctly before signing.',
+
+    // Token signer page
+    'Vyžaduje sa Váš podpis pred schválením'  => 'Your signature is required before approval',
+    'Vyžaduje sa váš podpis — subpermit k povoleniu {n}' =>
+        'Your signature is required — subpermit for permit {n}',
+    'Ste požiadaný o podpis'                  => 'Your signature is requested',
+    'Permit čaká na váš podpis'               => 'Permit is waiting for your signature',
+    'Na uzavretie permitu je teraz potrebný váš podpis.' =>
+        'Your signature is now required to close the permit.',
+    'Bez Vášho predpracovného podpisu nebude môcť HSE permit schváliť.' =>
+        'Without your pre-work signature HSE will not be able to approve the permit.',
+    'Elektronický podpis subpermitu'          => 'Electronic signature of the subpermit',
+    'Tento odkaz bol už použitý na podpis.'   => 'This link has already been used to sign.',
+    'Kliknutím na tlačidlo nižšie otvoríte formulár na podpis. Odkaz je platný pre jedno použitie.' =>
+        'Click the button below to open the signing form. The link is valid for a single use.',
+    'Ak tlačidlo nefunguje, skopírujte tento odkaz do prehliadača:' =>
+        'If the button does not work, copy this link into your browser:',
+    'Podpis bol zaznamenaný'                  => 'Signature recorded',
+    'Podpis bol úspešne zaznamenaný'          => 'Signature successfully recorded',
+    'Podpis bol uložený. Permit čaká na podpis HSE.' =>
+        'Signature saved. The permit is awaiting HSE signature.',
+    'Túto záložku môžete zavrieť. Ďakujeme.'  => 'You may close this tab. Thank you.',
+    'Uloženie podpisu zlyhalo. Skúste znova.' => 'Could not save the signature. Please try again.',
+    'Podpis kontrolóra'                       => 'Inspector signature',
+
+    // Predpracovný / uzávierkový signature messages
+    'Predpracovný podpis dodávateľa bol zaznamenaný.' =>
+        'Contractor\'s pre-work signature recorded.',
+    'Predpracovný podpis dodávateľa už bol zaznamenaný.' =>
+        'Contractor\'s pre-work signature has already been recorded.',
+    'Predpracovný podpis vydavateľa bol zaznamenaný.' => 'Issuer\'s pre-work signature recorded.',
+    'Predpracovný podpis vydavateľa už bol zaznamenaný.' =>
+        'Issuer\'s pre-work signature has already been recorded.',
+    'Predpracovný podpis je možný len pred schválením.' =>
+        'Pre-work signature is only possible before approval.',
+    'Predpracovný podpis je možný len pred schválením (stav „čaká na schválenie").' =>
+        'Pre-work signature is only possible before approval (status "pending approval").',
+    'Uzávierkový podpis vydavateľa bol zaznamenaný.' => 'Issuer\'s closure signature recorded.',
+    'Uzávierkový podpis vydavateľa už bol zaznamenaný.' =>
+        'Issuer\'s closure signature has already been recorded.',
+
+    // Inspection / control
+    'Kontrola'                                => 'Inspection',
+    'Kontrola prevádzky'                      => 'Operational inspection',
+    'Kontrola prevádzky (zamestnanec Mondelez)' => 'Operational inspection (Mondelez employee)',
+    'Kontroly prevádzky'                      => 'Operational inspections',
+    'Záznam o kontrole prevádzky'             => 'Operational inspection record',
+    'Kontrolór'                               => 'Inspector',
+    'Meno kontrolóra'                         => 'Inspector name',
+    'Meno kontrolóra je povinné.'             => 'Inspector name is required.',
+    'Dátum a čas kontroly'                    => 'Inspection date and time',
+    'Dátum a čas kontroly je povinný.'        => 'Inspection date and time are required.',
+    'Výsledok'                                => 'Result',
+    'Výsledok kontroly'                       => 'Inspection result',
+    'Vyberte výsledok kontroly.'              => 'Select the inspection result.',
+    'V poriadku'                              => 'OK',
+    'Zistené nedostatky'                      => 'Issues found',
+    'Práce zastavené'                         => 'Work stopped',
+    'Poznámky'                                => 'Notes',
+    'Poznámky / zistenia'                     => 'Notes / findings',
+    'Kontrola bola zaznamenaná.'              => 'Inspection recorded.',
+    'Uloženie kontroly zlyhalo. Skúste znova.' => 'Could not save the inspection. Please try again.',
+    'Predchádzajúce kontroly'                 => 'Previous inspections',
+    'Vykonávať kontroly prevádzky'            => 'Perform operational inspections',
+    'Nemáte oprávnenie na vykonávanie kontrol.' => 'You do not have permission to perform inspections.',
+    'Ste zamestnanec Mondelez a chcete zaznamenať kontrolu prevádzky?' =>
+        'Are you a Mondelez employee and want to record an operational inspection?',
+    'Práce boli zastavené kontrolórom. Kontaktujte okamžite oddelenie HSE.' =>
+        'Work has been stopped by the inspector. Contact the HSE department immediately.',
+    'Práce na základe tohto permitu sú zakázané.' => 'Work under this permit is prohibited.',
+    'V prípade otázok kontaktujte oddelenie HSE.' => 'If you have questions, contact the HSE department.',
+
+    // PDF / generic
+    'PDF nie je k dispozícii.'                => 'PDF is not available.',
+    'PDF súbor nebol nájdený.'                => 'PDF file not found.',
+
+    // Closure / permit lifecycle
+    'Permit nie je v stave čakania na HSE.'   => 'Permit is not in the awaiting-HSE state.',
+    'Permit bol oficiálne uzavretý'           => 'Permit officially closed',
+    'Permit bol zrušený vydavateľom'          => 'Permit cancelled by issuer',
+    'Permit {n} bol uzavretý.'                => 'Permit {n} has been closed.',
+    'Permit expiruje do 24 hodín'             => 'Permit expires within 24 hours',
+    'Finálne uzavretie HSE'                   => 'Final HSE closure',
+    'Uzavrel'                                 => 'Closed by',
+    'Audit'                                   => 'Audit',
+    'Akcia'                                   => 'Action',
+    'Akcie'                                   => 'Actions',
+    'Dátum a čas'                             => 'Date and time',
+    'Dátum / čas'                             => 'Date / time',
+    'Dátum'                                   => 'Date',
+    'Dátum je povinný.'                       => 'Date is required.',
+    'Vyberte aspoň jeden stav po dokončení.'  => 'Select at least one closure status.',
+    'Označte, či sa vyžaduje skúšobná prevádzka.' => 'Mark whether a trial operation is required.',
+    'Zrušenie prác dodávateľom'               => 'Cancellation of work by contractor',
+    'Dokončenie prác dodávateľom'             => 'Contractor work completion',
+
+    // Email — expiry reminders
+    'Upozornenie na expiráciu'                => 'Expiry reminder',
+    'Upozornenie na expiráciu — subpermit'    => 'Expiry reminder — subpermit',
+    'Toto je automatické upozornenie 24 hodín pred koncom platnosti permitu.' =>
+        'This is an automated reminder 24 hours before the permit expires.',
+    'Toto je automatické upozornenie 1 hodinu pred koncom platnosti subpermitu.' =>
+        'This is an automated reminder 1 hour before the subpermit expires.',
+    'Toto je automatická správa zo systému BOZP Permity. Neodpovedajte na tento e-mail.' =>
+        'This is an automated message from the BOZP Permits system. Do not reply to this email.',
+    'Ďakujeme za spoluprácu pri dodržiavaní bezpečnostných predpisov.' =>
+        'Thank you for cooperating in complying with safety regulations.',
+    'Váš permit bol schválený'                => 'Your permit has been approved',
+    'Prístupové údaje k portálu'              => 'Portal access credentials',
+    'Odkaz'                                   => 'Link',
+    'Prípadne naskenujte QR kód mobilným zariadením:' =>
+        'Or scan the QR code with a mobile device:',
+    'Odkaz a heslo platia do dátumu skončenia platnosti permitu. Heslo je jednorazové — nepredávajte ho.' =>
+        'The link and password are valid until the permit expires. The password is single-use — do not share it.',
+    'Použite prosím prístupové údaje z predošlého e-mailu k tomuto permitu.' =>
+        'Please use the access credentials from the previous email for this permit.',
+    'Použite prosím prístupové údaje z predošlého e-mailu k tomuto permitu. Po dokončení prác je potrebné subpermit uzavrieť v portáli.' =>
+        'Please use the access credentials from the previous email for this permit. After completing the work the subpermit must be closed in the portal.',
+    'Požadované prílohy k permitu'            => 'Required permit attachments',
+
+    // ===== Subpermit-specific labels — Hot Work =====
+    'Povolenie na práce so zvýšeným požiarnym rizikom' => 'Permit for work with increased fire risk',
+    'Povolenie na prácu'                      => 'Permit to work',
+    'Povolenie na prácu — subpermit'          => 'Permit to work — subpermit',
+    'Existujú bezpečnejšie spôsoby vykonania tejto práce? Vyhýbajte sa činnostiam so zvýšeným požiarnym rizikom.' =>
+        'Are there safer ways to perform this work? Avoid activities with increased fire risk.',
+    'Povolenie vydal (meno a priezvisko)'     => 'Permit issued by (name and surname)',
+    'Práce so zvýšeným požiarnym rizikom vykonáva' => 'Work with increased fire risk is performed by',
+    'Zamestnanec'                             => 'Employee',
+    'Číslo pracovného príkazu / zmeny'        => 'Job order / shift number',
+    'Časové údaje'                            => 'Timing',
+    'Povolenie platí len 8 hodín / jednu zmenu.' => 'Permit is valid for only 8 hours / one shift.',
+    'Čas začiatku prác'                       => 'Work start time',
+    'Čas ukončenia prác'                      => 'Work completion time',
+    'Dátum a čas expirácie sa nastavia automaticky pri schválení HSE (+ 8 hodín od schválenia).' =>
+        'Expiry date and time are set automatically at HSE approval (+ 8 hours from approval).',
+    'Kontrolný zoznam preventívnych opatrení' => 'Checklist of preventive measures',
+    'Označte stav každej položky: ✓ OK = v poriadku, ✗ NOK = nie v poriadku, — N/A = neuplatňuje sa.' =>
+        'Mark the state of each item: ✓ OK = in order, ✗ NOK = not in order, — N/A = not applicable.',
+    'Sprinklery, hydranty (hadice) a hasiace prístroje sú na mieste a funkčné' =>
+        'Sprinklers, hydrants (hoses) and fire extinguishers are in place and operational',
+    'Pracovné vybavenie je v dobrom stave'    => 'Work equipment is in good condition',
+    'Požiadavky v 11-metrovej pracovnej zóne' => 'Requirements within the 11-metre work zone',
+    'Zariadenia produkujúce horľavý prach alebo vlákna sú vypnuté' =>
+        'Equipment producing combustible dust or lint is shut down',
+    'Dopravníky, vzduchotechnika, dúchadlá a iné zariadenia schopné prenášať iskry alebo horiace materiály sú izolované alebo vypnuté' =>
+        'Conveyors, ducts, blowers and other equipment capable of transporting sparks or burning materials are isolated or shut down',
+    'Horľavé materiály odstránené (prach, vlákna, olej, obalový materiál, horľavé kvapaliny). Inak prikryté nehorľavými plachtami.' =>
+        'Combustible materials removed (dust, lint, oil, packaging, flammable liquids). Otherwise covered with fire-resistant sheets.',
+    'Výbušná atmosféra v oblasti eliminovaná' => 'Explosive atmosphere in the area eliminated',
+    'Podlaha riadne pozametaná'               => 'Floor swept clean',
+    'Horľavá podlaha navlhčená, prikrytá vlhkým pieskom alebo nehorľavými plachtami' =>
+        'Combustible floor wet down, covered with damp sand or fire-resistant sheets',
+    'Všetky otvory v stenách a podlahe sú prekryté' => 'All wall and floor openings covered',
+    'Nehorľavé plachty zavesené pod miestom práce' => 'Fire-resistant tarpaulins suspended beneath the work',
+    'Práce na stenách, stropoch alebo uzavretých zariadeniach' =>
+        'Work on walls, ceilings or enclosed equipment',
+    'Konštrukcia je nehorľavá, bez horľavého obkladu alebo izolácie' =>
+        'Construction is non-combustible, no combustible covering or insulation',
+    'Horľavé materiály na druhej strane stien sú odstránené' =>
+        'Combustibles on the other side of walls are removed',
+    'Uzavreté zariadenie vyčistené od všetkých horľavín' =>
+        'Enclosed equipment cleaned of all combustibles',
+    'Nádoby zbavené horľavých kvapalín a výparov' =>
+        'Containers purged of flammable liquids and vapors',
+    'Požiadavky na požiarnu hliadku / monitoring' => 'Fire patrol / monitoring requirements',
+    'Vedro vody'                              => 'Bucket of water',
+    'Požiarna hliadka má vhodné hasiace prístroje alebo dostatočné množstvo vody alebo iných hasiacich látok' =>
+        'Fire patrol has suitable fire extinguishers or sufficient water or other extinguishing agents',
+    'Počet a typ hasiacich prístrojov'        => 'Number and type of fire extinguishers',
+    'Požiarna hliadka je vyškolená na použitie hasiacich prístrojov a oboznámená s požiarnym poriadkom' =>
+        'Fire patrol is trained in the use of fire extinguishers and familiar with fire alarm rules',
+    'Zahrnutý dodatočný dozor nad priľahlými priestormi (nad, pod)' =>
+        'Additional supervision included for adjacent areas (above, below)',
+    'Hodín po ukončení prác bude pracovisko pravidelne kontrolované a monitorované (min. 2 h)' =>
+        'Hours after work the workplace will be regularly inspected and monitored (min. 2 h)',
+    'Ďalšie bezpečnostné a protipožiarne opatrenia' => 'Other safety and fire-precaution measures',
+    'Povolenia pre uzavreté priestory (CSE) alebo LOTO vydané, ak sa vyžaduje' =>
+        'Confined space (CSE) or LOTO permits issued if required',
+    'Detekcia dymu alebo tepla deaktivovaná, ak je v lokalite prítomná' =>
+        'Smoke or heat detection deactivated if present in the location',
+    'Iné opatrenia'                           => 'Other measures',
+    'Požiarna hliadka a požiarny technik'     => 'Fire patrol and fire-protection technician',
+    'Záznam o kontrole a podpis sa vykonáva v papierovej forme. Pred uzavretím subpermitu je potrebné nahrať skenovaný / fotený dokument ako prílohu.' =>
+        'The inspection record and signature are kept on paper. Before closing the subpermit a scanned / photographed document must be uploaded as an attachment.',
+    '✓ OK'                                    => '✓ OK',
+    '✗ NOK'                                   => '✗ NOK',
+    '— N/A'                                   => '— N/A',
+
+    // ===== Subpermit-specific labels — Heights (additions) =====
+    'Nebezpečenstvo pádu'                     => 'Fall hazard',
+    'Aplikované'                              => 'Applicable',
+    'Kontrola na pracovisku'                  => 'Workplace inspection',
+    'Pri každom riziku označte, či je aplikovateľné, a či bola vykonaná kontrola na pracovisku.' =>
+        'For each hazard, mark whether it is applicable and whether a workplace inspection was performed.',
+    'Ochrana pred pádom'                      => 'Fall protection',
+    'Je možné vyhnúť sa riziku pádu (predĺžené nástroje, práca na úrovni podlahy)?' =>
+        'Is it possible to avoid the fall risk (extended tools, work at floor level)?',
+    'Použitý systém ochrany pred pádom'       => 'Fall-protection system used',
+    'Zábradlový systém (zabraňuje pádom)'     => 'Guardrail system (prevents falls)',
+    'Systém zachytenia pádu — 1 360 kg'       => 'Fall arrest system — 1,360 kg',
+    'Systém zachytenia pádu — 2 260 kg'       => 'Fall arrest system — 2,260 kg',
+    'Záchytná sieť'                           => 'Safety net',
+    'Pracovník je vyškolený, oprávnený a kvalifikovaný na prácu vo výškach?' =>
+        'Is the worker trained, authorised and qualified to work at heights?',
+    'Konštrukčné podmienky sú vhodné pre prácu (dostatočná nosnosť)?' =>
+        'Are construction conditions suitable for the work (sufficient load capacity)?',
+    'Je potrebné ohradiť priestor kvôli pohybu osôb a zariadení?' =>
+        'Is it necessary to fence off the area due to the movement of persons and equipment?',
+    'Bol použitý kotevný bod?'                => 'Was an anchor point used?',
+    'Popis kotevného bodu'                    => 'Anchor point description',
+    'Použité zariadenia'                      => 'Equipment used',
+    'Prenosné rebríky'                        => 'Portable ladders',
+    'Lešenie'                                 => 'Scaffolding',
+    'Mobilné pracovné plošiny'                => 'Mobile work platforms',
+    'Mobilné pracovné plošiny.'               => 'Mobile work platforms.',
+    'Zdvíhacie plošiny'                       => 'Lifting platforms',
+    'Závesné plošiny'                         => 'Suspended platforms',
+    'Použité zariadenie na ochranu pred pádom má platnú kontrolu?' =>
+        'Does the fall-protection equipment have a valid inspection?',
+    'Práca bola skontrolovaná a prerokovaná priamo na pracovisku?' =>
+        'Was the work reviewed and discussed directly at the workplace?',
+    'Vyvýšené prechodové/pracovné plochy 1,2 m alebo viac nad úrovňou podlahy.' =>
+        'Elevated walkways / working surfaces 1.2 m or more above floor level.',
+    'Vyvýšené prechodové/pracovné plochy 1,2 metra alebo viac nad úrovňou podlahy.' =>
+        'Elevated walkways / working surfaces 1.2 metres or more above floor level.',
+    'Práca na strechách, na ktoré pracovníci vstupujú, kde môžu spadnúť cez strešné okno, otvor, práca na okraji hrany pádu, kde hrozí spadnutie.' =>
+        'Work on roofs that workers enter where they could fall through a skylight or opening; work on the edge of a fall edge where falling is possible.',
+    'Práca na strechách, na ktoré pracovníci vstupujú, kde môžu spadnúť cez strešné okno, otvor, práca na okraji hrany pádu.' =>
+        'Work on roofs that workers enter where they could fall through a skylight or opening; work on the edge of a fall edge.',
+    'Stenové otvory (napríklad: okná alebo dvere, cez ktoré by pracovníci mohli spadnúť).' =>
+        'Wall openings (e.g. windows or doors through which workers could fall).',
+    'Výkopy a jamy, ktoré nie sú ľahko viditeľné a pracovníci by mohli do nich spadnúť.' =>
+        'Excavations and pits that are not easily visible and workers could fall into them.',
+    'Vyvýšené priestory, kde boli odstránené zábradlia.' =>
+        'Elevated areas where handrails have been removed.',
+    'Strany/okraje prechodových/pracovných plôch (podlahy, medziposchodia, balkóny, chodníky) 1,2 m alebo viac bez zábradlia.' =>
+        'Sides/edges of walkways/working surfaces (floors, mezzanines, balconies, walkways) 1.2 m or more without handrails.',
+    'Strany/okraje prechodových/pracovných plôch, ako sú podlahy, medziposchodia, balkóny a chodníky, ktoré sú 1,2 m alebo viac nad úrovňou podlahy a nie sú chránené zábradlím.' =>
+        'Sides/edges of walkways/working surfaces such as floors, mezzanines, balconies and walkways that are 1.2 m or more above floor level and not protected by handrails.',
+    'Rampy, prechody a cesty, ktoré nie sú chránené zábradlím.' =>
+        'Ramps, walkways and paths not protected by handrails.',
+    'Studne, podlahové otvory, jamy alebo šachty bez zábradlia/plotov/bariér/krytov.' =>
+        'Wells, floor openings, pits or shafts without handrails/fences/barriers/covers.',
+    'Studne, podlahové otvory, jamy alebo šachty, ktoré nie sú chránené zábradlím, plotmi, bariérami alebo krytmi.' =>
+        'Wells, floor openings, pits or shafts not protected by handrails, fences, barriers or covers.',
+
+    // ===== Subpermit-specific labels — Confined Space =====
+    'EX zóna'                                 => 'EX zone',
+    'EX zóna v danom priestore / zariadení'   => 'EX zone in the area / device',
+    'Stav zabezpečenia pracoviska / priestoru / zariadenia proti výbuchu' =>
+        'Securing state of the workplace / area / device against explosion',
+    'Pracovisko bolo zabezpečené'             => 'Workplace has been secured',
+    'Pracovisko bude zabezpečené'             => 'Workplace will be secured',
+    'Pracovisko nie je možné zabezpečiť'      => 'Workplace cannot be secured',
+    'Spôsob zabezpečenia (ak je zabezpečené)' => 'Securing method (if secured)',
+    'Vyprázdnenie zariadenia / priestoru'     => 'Emptying the device / space',
+    'Zvlhčenie výbušnej látky vodou'          => 'Wetting the explosive substance with water',
+    'Inertizácia plynom'                      => 'Inertization with gas',
+    'Ak pracovisko nie je možné zabezpečiť, je nutné prijať dodatočné opatrenia podľa HSE-7-1 a konzultovať činnosť s HSE koordinátorom alebo požiarnym technikom. Povolenie nie je možné vydať, kým nie sú potvrdené všetky dodatočné opatrenia. Vedúci prác je povinný kontrolovať vykonávanie dodatočných opatrení každú hodinu.' =>
+        'If the workplace cannot be secured, additional measures must be taken in accordance with HSE-7-1 and the activity must be consulted with the HSE coordinator or fire-protection technician. The permit cannot be issued until all additional measures are confirmed. The works manager is required to verify the implementation of additional measures every hour.',
+    'Použitie neiskrivého ručného náradia schváleného pre ATEX prostredie' =>
+        'Use of non-sparking hand tools approved for ATEX environment',
+    'Použitie prenosného elektrického náradia s ATEX certifikáciou pre danú zónu' =>
+        'Use of portable power tools with ATEX certification for the given zone',
+    'Použitie antistatického odevu (vrátane hygienickej čiapky, masky, odevu a obuvi v antistatickom prevedení)' =>
+        'Use of antistatic clothing (including hygienic cap, mask, clothing and shoes in antistatic design)',
+    'Plán a osobné ochranné pracovné prostriedky' => 'Plan and personal protective equipment',
+    'Vypracovaný, prediskutovaný, zavedený a overený plán na obmedzenie nebezpečnej energie' =>
+        'Established, discussed, implemented and verified plan to limit hazardous energy',
+    'Použité OOPP'                            => 'PPE used',
+    'Použité náradie'                         => 'Tools used',
+    'Použité náradie a izolácia pracoviska'   => 'Tools used and workplace isolation',
+    'Izolácia pracoviska'                     => 'Workplace isolation',
+    'Izolácia zdroja energie'                 => 'Energy source isolation',
+    'Lock Out Tag Out (LOTO) musí byť aplikovaný.' => 'Lock Out Tag Out (LOTO) must be applied.',
+    'Čerpadlá / potrubia sú zaslepené, odpojené alebo zablokované' =>
+        'Pumps / pipes are blinded, disconnected or blocked',
+    'Ventilácia'                              => 'Ventilation',
+    'Je potrebná úprava ventilácie?'          => 'Is ventilation modification required?',
+    'Ak nie, popíšte dôvod'                   => 'If not, describe the reason',
+    'Nútené vetranie — začiatok'              => 'Forced ventilation — started',
+    'Nútené vetranie — koniec'                => 'Forced ventilation — stopped',
+    'Kontrola atmosféry (iniciálne meranie)'  => 'Atmosphere check (initial reading)',
+    'Vstup povolený: O₂ 19,5 – 23,5 %, LEL < 10 %, CO a H₂S = 0 PPM. Periodické testy (každých 30 minút) zaznamenajte na papieri a priložte ako prílohu pred uzatvorením subpermitu.' =>
+        'Entry allowed: O₂ 19.5 – 23.5 %, LEL < 10 %, CO and H₂S = 0 PPM. Record periodic tests (every 30 minutes) on paper and attach as an attachment before closing the subpermit.',
+    'Čas merania'                             => 'Measurement time',
+    'Kyslík (O₂) %'                           => 'Oxygen (O₂) %',
+    '% LEL (musí byť < 10 %)'                 => '% LEL (must be < 10 %)',
+    'CO alebo H₂S (PPM)'                      => 'CO or H₂S (PPM)',
+    'Iné (názov, hodnota)'                    => 'Other (name, value)',
+    'Spôsob komunikácie'                      => 'Communication method',
+    'Vstupujúci s dozorujúcim'                => 'Entrant with supervisor',
+    'Dozorujúci s pohotovostnými službami'    => 'Supervisor with emergency services',
+    'Mená členov pohotovostného tímu'         => 'Names of emergency team members',
+    'Časové údaje vstupu'                     => 'Entry timing',
+    'Čas prvého vstupu'                       => 'Time of first entry',
+    'Čas posledného výstupu'                  => 'Time of last exit',
+    'Vstupujúci (entrant)'                    => 'Entrant',
+    'Dozorujúci pri vstupe (supervisor entrant)' => 'Supervisor entrant',
+    'Vedúci vstupu do uzavretého priestoru (supervisor in CSE)' => 'Supervisor in CSE',
+    'Objednávateľ MDLZ (review)'              => 'MDLZ orderant (review)',
+    'HSE oddelenie (review)'                  => 'HSE department (review)',
+    'Každej osobe bude po uložení odoslaný e-mail s odkazom na elektronický podpis. Bez podpisu všetkých osôb nie je možné subpermit schváliť HSE. Všetky e-maily sú povinné.' =>
+        'Each person will receive an email with a link to sign electronically after saving. Without all signatures the subpermit cannot be approved by HSE. All emails are required.',
+    'Každej osobe bude po uložení odoslaný e-mail s odkazom na elektronický podpis. Povinné polia sú označené *.' =>
+        'Each person will receive an email with a link to sign electronically after saving. Required fields are marked with *.',
+    'Ak vyplníte e-mail, danej osobe bude po uložení odoslaný odkaz na elektronický podpis. Polia môžete nechať prázdne, ak schválenie nie je potrebné.' =>
+        'If you fill in an email, that person will receive a link to sign electronically after saving. Fields can be left blank if approval is not required.',
+    'Popis havarijného / záchranného plánu (samostatný dokument)' =>
+        'Description of the emergency / rescue plan (separate document)',
+    'Oprávnená osoba (povolenie)'             => 'Authorized person (permit)',
+
+    // PPE list (ATEX)
+    'Antistatický odev'                       => 'Antistatic clothing',
+    'Bezpečnostný postroj'                    => 'Safety harness',
+    'Bezpečnostné označenie'                  => 'Safety markings',
+    'Ochrana sluchu'                          => 'Hearing protection',
+    'Ochranná obuv'                           => 'Safety shoes',
+    'Ochranné okuliare'                       => 'Safety glasses',
+    'Ochranné rukavice'                       => 'Safety gloves',
+    'Respirátor'                              => 'Respirator',
+    'Prilba'                                  => 'Hard hat',
+    'Ručné náradie'                           => 'Hand tools',
+    'Neiskrivé náradie'                       => 'Non-sparking tools',
+    'Prenosné elektrické náradie'             => 'Portable power tools',
+    'Zvárací stroj'                           => 'Welding machine',
+    'Výstražná páska'                         => 'Warning tape',
+    'Pevné zábrany'                           => 'Fixed barriers',
+    'Vystuženie'                              => 'Reinforcement',
+    'Kryty výkopov'                           => 'Trench covers',
+
+    // ===== Subpermit-specific labels — Lifting =====
+    'Príprava na činnosť — všetky pracovné činnosti' => 'Preparation for activity — all work activities',
+    '(*vyhovujúce zaškrknite)'                => '(*tick if applicable)',
+    'Je možné ohradiť pracovisko a zabrániť tak vstupu nepovolaných osôb (bariéry, výstražná páska, bezpečnostné piktogramy)' =>
+        'It is possible to fence off the workplace to prevent entry by unauthorized persons (barriers, warning tape, safety pictograms)',
+    'Vykonávateľ práce je školený — autorizovaný — spôsobilý na prácu' =>
+        'The work performer is trained — authorised — qualified to work',
+    'Špeciálne náradie, pracovné vybavenie, ktoré bude použité' =>
+        'Special tools and equipment to be used',
+    'Procesné podmienky sú vhodné pre prácu (dostatočná nosnosť)' =>
+        'Process conditions are suitable for the work (sufficient load capacity)',
+    'Vykonáva sa v súčasnosti iná práca, ktorá by mohla ovplyvniť toto povolenie?' =>
+        'Is there any other work currently being carried out that could affect this permit?',
+    'Bezpečnostné požiadavky, ktoré sa majú prijať' => 'Safety requirements to be adopted',
+    'Je žeriav premiestnený do najbezpečnejšej možnej polohy' =>
+        'Is the crane moved to the safest possible position',
+    'Bezpečný prístup na pracovisko je zabezpečený' => 'Safe access to the workplace is ensured',
+    'Je nebezpečná zóna žeriava ohradená'      => 'Is the crane danger zone fenced off',
+    'Sú zamestnanci oboznámení s ohradením pracoviska a zákazom vstupu' =>
+        'Are employees familiar with the workplace fencing and entry ban',
+    'Ovládače žeriava sú umiestnené s dobrým výhľadom na viazača bremena' =>
+        'Crane controls are located with a good view of the load binder',
+    'Je žeriav v dobrom technickom stave'      => 'Is the crane in good technical condition',
+    'Sú v oblasti iné žeriavy, vozidlá, inžinierske siete, osoby alebo iné kolízne riziká' =>
+        'Are there other cranes, vehicles, utilities, persons or other collision risks in the area',
+    'Je skontrolované, či sa v blízkosti pracoviska / pracovnej oblasti nevykonáva iná práca' =>
+        'It is verified that no other work is taking place near the work area',
+    'Sú viazacie prostriedky v dobrom stave a majú platnú revíziu' =>
+        'Are the binding equipment in good condition and has a valid inspection',
+    'Je dohodnutá komunikácia medzi viazačom bremena a obsluhou žeriava' =>
+        'Communication is agreed between the load binder and the crane operator',
+    'Vyžadujú sa počas práce prostriedky ochrany pred pádom' =>
+        'Fall-protection equipment required during work',
+    'Záverečné potvrdenia'                    => 'Final confirmations',
+    'Vypracovaný, prediskutovaný, zavedený a overený plán na vykonávanie zdvíhacích a žeriavových prác' =>
+        'Established, discussed, implemented and verified plan for carrying out lifting and crane work',
+    'Práca / činnosť skontrolovaná a prediskutovaná na mieste' =>
+        'Work / activity reviewed and discussed on site',
+
+    // ===== Subpermit-specific labels — Excavation =====
+    'FÁZA 1 — Vydavateľ povolenia (MDLZ)'     => 'PHASE 1 — Permit issuer (MDLZ)',
+    'FÁZA 2 — Schválenie HSE oddelením'       => 'PHASE 2 — Approval by HSE department',
+    'FÁZA 3 — Schválenie oprávneným orgánom'  => 'PHASE 3 — Approval by authorising body',
+    'Spôsobilosť vykonávateľa'                => 'Performer competency',
+    '(*vyhovujúce zaškrknite, bezpredmetné nechajte voľné pole)' =>
+        '(*tick if applicable, leave irrelevant fields blank)',
+    'Skontroloval som a potvrdil som, že boli splnené tieto bezpečnostné požiadavky.' =>
+        'I have checked and confirmed that the following safety requirements have been met.',
+    'vyžaduje sa izolácia elektrickej energie' => 'electrical isolation required',
+    'vyžadujú sa bariéry (min. 2 m) a výstražné tabule' =>
+        'barriers (min. 2 m) and warning signs required',
+    'izolované zariadenie'                    => 'isolated equipment',
+    'adekvátne osvetlenie'                    => 'adequate lighting',
+    'vyhradený priestor'                      => 'designated area',
+    'zákaz fajčenia alebo otvoreného ohňa'    => 'no smoking or open flame',
+    'umiestnenie výstražných značení'         => 'placement of warning signs',
+    'vyžaduje sa paženie'                     => 'shoring required',
+    'dozor'                                   => 'supervision',
+    'lekárnička'                              => 'first-aid kit',
+    'kontrola výbušnosti'                     => 'explosivity check',
+    'hasiaci prístroj'                        => 'fire extinguisher',
+    'kontrola toxicity'                       => 'toxicity check',
+    'vyžaduje sa záchranné lano s obsluhou'   => 'rescue line with operator required',
+    'kyslík viac ako 19,5 %'                  => 'oxygen above 19.5 %',
+    'bezpečný prístup k výkopom a výstup z nich' => 'safe access to and exit from excavations',
+    'vyžaduje sa samostatný dýchací prístroj' => 'self-contained breathing apparatus required',
+    'potvrdené, že sa na mieste nenachádzajú žiadne inžinierske siete, ako je plyn, vodovodné potrubia, elektrická sieť, telekomunikačné káble' =>
+        'confirmed that there are no utilities on site such as gas, water pipes, electrical network, telecom cables',
+    'vyžadujú sa záznamy o denných kontrolách kvalifikovanou osobou' =>
+        'daily inspections by a qualified person are required',
+    'vyžaduje sa podpera (viac ako 1,5 m)'    => 'support required (more than 1.5 m)',
+    'Plánovaná činnosť'                       => 'Planned activity',
+    'Stretnutie k plánovanej činnosti dňa'    => 'Meeting on planned activity day',
+    'Barikády / Prechodové lávky'             => 'Barricades / Walkways',
+
+    // ===== Subpermit-specific labels — ATEX =====
+    // (additional, beyond confined-space overlap)
+    // ===== Subpermit-specific labels — Command B =====
+    'Pozor'                                   => 'Attention',
+    'Hodnotenie rizík (RA) musí byť spracované krok po kroku — nesmie to byť všeobecné RA.' =>
+        'The risk assessment (RA) must be prepared step by step — it must not be a general RA.',
+    'Identifikácia Príkazu „B"'               => 'Order "B" identification',
+    'Príkaz „B" (číslo príkazu)'              => 'Order "B" (order number)',
+    'Pre vedúceho prác'                       => 'For the works supervisor',
+    'S pracovnou skupinou (počet pracovníkov)' => 'With work group (number of workers)',
+    'Pre dozor'                               => 'For supervision',
+    'Termín a rozsah prác'                    => 'Schedule and scope of work',
+    'Dňa'                                     => 'On day',
+    'Od (čas)'                                => 'From (time)',
+    'Do (čas)'                                => 'Until (time)',
+    'Práca sa vykonáva'                       => 'Work is performed',
+    'na elektrickom zariadení'                => 'on electrical equipment',
+    'v blízkosti elektrického zariadenia'     => 'near electrical equipment',
+    'Stav napätia'                            => 'Voltage state',
+    'bez elektrického napätia'                => 'without electrical voltage',
+    's elektrickým napätím'                   => 'with electrical voltage',
+    'Zabezpečenie pracoviska'                 => 'Workplace securing',
+    'Na zabezpečenie pracoviska je vypnuté a zabezpečené' =>
+        'To secure the workplace the following is turned off and secured',
+    'Pod napätím zostáva'                     => 'Remains under voltage',
+    'Doručenie Príkazu „B"'                   => 'Delivery of Order "B"',
+    'Príkaz „B" bol doručený'                 => 'Order "B" was delivered',
+    'osobne'                                  => 'in person',
+    'iná osoba'                               => 'other person',
+    'e-mailom'                                => 'by email',
+    'Mená a časy nižšie sú evidenčné. Samotné podpisy sa zachytávajú v štandardnom toku podpisov subpermitu.' =>
+        'Names and times below are for record only. The signatures themselves are captured by the standard subpermit signature flow.',
+    'Vydal alebo nahlásil'                    => 'Issued or reported by',
+    'Prijal'                                  => 'Received by',
+    'Evidencia v knihe príkazov „B"'          => 'Entry in Order "B" book',
+    'Zapísaný v knihe príkazov „B" č.'        => 'Entered in Order "B" book no.',
+    'Číslo príkazu'                           => 'Order number',
+    'Opatrenia na zabezpečenie pracoviska'    => 'Workplace securing measures',
+    'Vyplní alebo určí osoba vydávajúca príkaz „B". Stĺpec „Vykonané / nahlásené" doplní vykonávateľ.' =>
+        'Filled in or determined by the person issuing the Order "B". The "Performed / reported" column is completed by the executor.',
+    'Vypnúť'                                  => 'Turn off',
+    'Odpojené'                                => 'Disconnected',
+    'Ďalšie opatrenia'                        => 'Other measures',
+    'Ako overiť, že inštalácia je bez napätia' => 'How to verify the installation is de-energized',
+    'Uzemnenie a skratovanie'                 => 'Grounding and shorting',
+    'Spôsob označenia pracoviska'             => 'Workplace marking method',
+    'Vymedzenie pracoviska'                   => 'Workplace definition',
+    'Doplnkové bezpečnostné opatrenia'        => 'Additional safety precautions',
+    'Miesto'                                  => 'Location',
+    'Úkon'                                    => 'Action',
+    'Por. č.'                                 => 'Seq. no.',
+    'Poradové č.'                             => 'Sequence no.',
+    'Zodpovedný'                              => 'Responsible',
+    'Okolie pracoviska'                       => 'Workplace surroundings',
+    'Najbližšie časti elektrickej inštalácie (alebo iných elektrických inštalácií) pod napätím' =>
+        'Nearest parts of the electrical installation (or other electrical installations) under voltage',
+    'Atmosférické podmienky'                  => 'Atmospheric conditions',
+
+    // ===== Subpermit-specific labels — Electrical =====
+    '1. Povolenie na prácu'                   => '1. Permit to work',
+    '2. Analýza rizík'                        => '2. Risk analysis',
+    '5. Bezpečný systém práce — SSoW'         => '5. Safe System of Work — SSoW',
+    '6. Prehľad elektrických prác pod napätím > 750 VAC' =>
+        '6. Overview of live electrical work > 750 VAC',
+    'Vypĺňa žiadateľ — kvalifikovaná MDLZ osoba ktorá vykonáva prácu definovanú v tomto povolení. Ak je práca vykonávaná treťou stranou, žiadateľ naďalej zostáva kvalifikovaná MDLZ osoba a vydáva toto povolenie v kooperácii s treťou stranou pod jeho dohľadom. Každý relevantný riadok označte „Áno".' =>
+        'Filled in by the applicant — a qualified MDLZ person who performs the work defined in this permit. If the work is performed by a third party, the applicant still remains the qualified MDLZ person and issues this permit in cooperation with the third party under their supervision. Mark each relevant row "Yes".',
+    'Potvrdenia kvalifikácie'                 => 'Qualification confirmations',
+    'Áno, MDLZ žiadateľ je kvalifikovaný elektrikár (§21/22/23)' =>
+        'Yes, the MDLZ applicant is a qualified electrician (§21/22/23)',
+    'Áno, MDLZ žiadateľ je školený na vydanie povolenia (povinné)' =>
+        'Yes, the MDLZ applicant is trained to issue the permit (mandatory)',
+    'Áno, MDLZ žiadateľ bude vykonávať prácu' => 'Yes, the MDLZ applicant will perform the work',
+    'Áno, požiadavka vydaná MDLZ žiadateľom pre tretiu stranu' =>
+        'Yes, request issued by the MDLZ applicant for a third party',
+    'Kto bude vykonávať prácu'                => 'Who will perform the work',
+    'Interne MDLZ osobou'                     => 'Internally by a MDLZ person',
+    'Interne MDLZ viacerími osobami'          => 'Internally by multiple MDLZ persons',
+    'Treťou stranou'                          => 'By third party',
+    'Napätie rozvádzača'                      => 'Switchboard voltage',
+    'Menej ako 50 VAC (pokračujte s QRP)'     => 'Less than 50 VAC (proceed with QRP)',
+    'Medzi 50 VAC a 750 VAC (pokračujte s povolením)' => 'Between 50 VAC and 750 VAC (proceed with permit)',
+    'Viac ako 750 VAC — Špec. povolenie nutné!' => 'More than 750 VAC — Special permit required!',
+    'Konštrukcia rozvádzača'                  => 'Switchboard construction',
+    'IP2X COMP.'                              => 'IP2X COMP.',
+    'IP2X NON COMP.'                          => 'IP2X NON COMP.',
+    'Bezpečný systém práce (SSoW)'            => 'Safe System of Work (SSoW)',
+    'SSoW je priložený ako príloha k povoleniu (inak vyplňte bod 5 nižšie)' =>
+        'SSoW is attached to the permit (otherwise fill in section 5 below)',
+    'Pracovná požiadavka / SAP zákazka'       => 'Work request / SAP order',
+    'Plánovaný štart (dátum / čas)'           => 'Planned start (date / time)',
+    'Plánovaný koniec (dátum / čas)'          => 'Planned end (date / time)',
+    'Dôvod práce na živom zariadení (prečo nemôže byť práca vykonaná na vypnutom zariadení)' =>
+        'Reason for live work (why the work cannot be performed with the equipment de-energized)',
+    'Vypĺňa kvalifikovaná MDLZ osoba.'        => 'Filled in by a qualified MDLZ person.',
+    'Analýza výboja / Prístupné hranice'      => 'Arc flash analysis / Access boundaries',
+    'Arc Flash hranica rizika (m)'            => 'Arc Flash hazard boundary (m)',
+    'Arc Flash hranica rizika (cm)'           => 'Arc Flash hazard boundary (cm)',
+    'Hranica obmedzeného prístupu (m)'        => 'Limited approach boundary (m)',
+    'Hranica obmedzeného prístupu (cm)'       => 'Limited approach boundary (cm)',
+    'Hranica zakázaného prístupu (m)'         => 'Prohibited approach boundary (m)',
+    'Hranica zakázaného prístupu (cm)'        => 'Prohibited approach boundary (cm)',
+    'Je rozvádzač vybavený ARC FLASH nálepkou (práca bude vykonávaná v týchto hraniciach)?' =>
+        'Is the switchboard fitted with an ARC FLASH sticker (work will be performed within those boundaries)?',
+    'Ak Arc flash nie je dostupný, obmedzené hranice' =>
+        'If Arc Flash is not available, restricted boundaries',
+    '3 m (vždy > 750 VAC)'                    => '3 m (always > 750 VAC)',
+    '< 3 m, priestor obmedzený a proof safe (1 m min!)' =>
+        '< 3 m, restricted area and proof safe (1 m min!)',
+    '*proof safe znamená že všetky vodiče sú uchytené a nie sú pohyblivé odhalené časti.' =>
+        '*proof safe means all conductors are secured and there are no movable exposed parts.',
+    'Nasadené prvky proti vniku nekvalifikovaných osôb' =>
+        'Measures against entry by unqualified persons',
+    'Značky'                                  => 'Signs',
+    'Oplotenie'                               => 'Fencing',
+    'Obsluha'                                 => 'Operator',
+    'Bezpečnosť pracoviska'                   => 'Workplace safety',
+    'Pre pokračovanie musia byť všetky odpovede „Áno".' => 'To proceed, all answers must be "Yes".',
+    'Všetky horľavé riziká odstránené (nebezpečné materiály), hasiaci prístroj v dosahu' =>
+        'All flammable hazards removed (hazardous materials), fire extinguisher within reach',
+    'Dostatočné osvetlenie'                   => 'Adequate lighting',
+    'Všetky pohyblivé dvere zabezpečené proti samovoľnému pohybu' =>
+        'All movable doors secured against unintended movement',
+    'Núdzový východ je voľný'                 => 'Emergency exit is clear',
+    'Rozvádzač neobsahuje cudzí objekt'       => 'Switchboard contains no foreign objects',
+    'Za správne vypracovanie SSoW je zodpovedná MDLZ osoba alebo tretia strana vykonávajúca prácu. Ak sa SSoW nedá bezpečne zadefinovať, práca sa nemôže začať.' =>
+        'The MDLZ person or the third party performing the work is responsible for the correct preparation of the SSoW. If the SSoW cannot be defined safely, the work cannot start.',
+    'Popis práce ako sa bude bezpečne vykonávať' => 'Description of how the work will be performed safely',
+    'Definujte izoláciu živých častí, prevenciu pádu náradia do rozvádzača, chránený priestor, spôsob komunikácie pred vstupom, kto bude dohliadať na prácu, ochranu pred neočakávaným zatvorením dverí, odstránením ochrany a barikády. Adresujte mimoriadne riziká pre špecifickú prácu.' =>
+        'Define isolation of live parts, prevention of tools falling into the switchboard, protected area, way of communication before entry, who will supervise the work, protection from unexpected door closure, removal of guards and barricades. Address extraordinary risks specific to the work.',
+    'Plán núdzovej situácie'                  => 'Emergency plan',
+    'Plán musí byť pripravený inou osobou ako tou, ktorá vykonáva prácu (oblastný dozor alebo člen skupiny prvej pomoci). Túto osobu zaregistrujte ako podpisovateľa v sekcii Signatári (Kvalifikovaná osoba MDLZ — havarijný plán).' =>
+        'The plan must be prepared by a person other than the one performing the work (area supervisor or first-aid responder). Register that person as a signatory in the Signatories section (MDLZ qualified person — emergency plan).',
+    'AED sa nachádza v oblasti (povinné)'     => 'AED is in the area (required)',
+    'KPR školený'                             => 'CPR trained',
+    'AED školený'                             => 'AED trained',
+    'Vyplňte len ak sa pracuje na viac ako 750 VAC alebo ak je vydaných viac PTW v rovnakom čase v rovnakej oblasti / línii. Podpisy „Druhý technik (dohľad)", „Zástupca pre bezpečnosť" a „Vedúci údržby" sa zachytávajú cez systém signatárov nižšie — pri vyplnení ich e-mailov dostanú odkaz na elektronický podpis.' =>
+        'Fill in only if work is over 750 VAC or if multiple PTWs are issued at the same time in the same area / line. The signatures "Second technician (supervisor)", "Safety representative" and "Maintenance manager" are captured via the signatory system below — entering their emails sends them a link to sign electronically.',
+    'Kvalifikovaná osoba MDLZ — havarijný plán' => 'MDLZ qualified person — emergency plan',
+    'Vedúci pracoviska'                       => 'Area supervisor',
+    'Kvalifikovaná osoba MDLZ — schválenie SSoW' => 'MDLZ qualified person — SSoW approval',
+    'Dodávateľ (tretia strana)'               => 'Contractor (third party)',
+    'Druhý technik (>750 VAC)'                => 'Second technician (>750 VAC)',
+    'Zástupca pre bezpečnosť (>750 VAC)'      => 'Safety representative (>750 VAC)',
+    'Vedúci údržby (>750 VAC)'                => 'Maintenance manager (>750 VAC)',
+
+    // ===== Subpermit signing flow header =====
+    'Vyžaduje sa Váš podpis pred schválením'  => 'Your signature is required before approval',
 ];

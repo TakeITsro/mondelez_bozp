@@ -235,7 +235,7 @@
                     {% set preworkComplete = issuerPreworkSig and contractorPreworkSig %}
                     {% set spData = sp.data is string ? sp.data|json_decode : (sp.data ?? {}) %}
 
-                    <article class="bozp-subpermit-card">
+                    <div class="bozp-subpermit-card">
                         <header class="bozp-subpermit-card__head">
                             <div class="bozp-subpermit-card__title-block">
                                 <span class="bozp-subpermit-card__appendix">
@@ -245,9 +245,9 @@
                                 {% if spData.placeOfWork ?? '' %}
                                     <span class="bozp-subpermit-card__place">— {{ spData.placeOfWork }}</span>
                                 {% endif %}
-                                <span class="bozp-status bozp-status--{{ sp.status }}">
-                                    {{ sp.status|t('bozp') }}
-                                </span>
+                            </div>
+                            <div class="bozp-status bozp-status--{{ sp.status }}">
+                                {{ sp.status|t('bozp') }}
                             </div>
                             <div class="bozp-subpermit-card__meta">
                                 <span>{{ 'Platnosť do'|t('bozp') }}:
@@ -255,14 +255,14 @@
                                 </span>
                                 <a href="{{ url('bozp/c/' ~ token ~ '/subpermits/' ~ sp.id ~ '/pdf') }}"
                                    target="_blank" rel="noopener"
-                                   class="bozp-subpermit-card__pdf-link">
+                                   class="bozp-btn bozp-btn--primary">
                                     ⬇ PDF
                                 </a>
                             </div>
                         </header>
 
                         {% if spData.workDescription ?? '' %}
-                            <p class="bozp-subpermit-card__description">{{ spData.workDescription }}</p>
+                            <p class="bozp-subpermit-card__description">{{ "Práca"|t('bozp') }}: {{ spData.workDescription }}</p>
                         {% endif %}
 
                         <div class="bozp-subpermit-card__signatures">
@@ -270,23 +270,24 @@
                             {# ─── Pre-work signatures ────────────────────────── #}
                             <h3 class="bozp-detail-section__subtitle">{{ 'Pred začatím prác'|t('bozp') }}</h3>
 
-                            {# Issuer pre-work #}
-                            <div class="bozp-subpermit-card__sig-row">
-                                {% if issuerPreworkSig %}
-                                    {% set ipAsset = craft.assets().id(issuerPreworkSig.signatureAssetId).one() %}
-                                    <span class="bozp-yn bozp-yn--yes">✓ {{ 'Vydavateľ podpísal pred prácou'|t('bozp') }}:</span>
-                                    {{ issuerPreworkSig.signerName }}
-                                    {% if ipAsset %}
-                                        <img src="{{ ipAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
-                                             class="bozp-signature__image">
+                            <div class="bozp-subpermit-card__signatures_box">
+                                {# Issuer pre-work #}
+                                <div class="bozp-subpermit-card__sig-row">
+                                    {% if issuerPreworkSig %}
+                                        {% set ipAsset = craft.assets().id(issuerPreworkSig.signatureAssetId).one() %}
+                                        <span class="bozp-yn bozp-yn--yes">✓ {{ 'Vydavateľ podpísal pred prácou'|t('bozp') }}:</span>
+                                        {{ issuerPreworkSig.signerName }}
+                                        {% if ipAsset %}
+                                            <img src="{{ ipAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                                 class="bozp-signature__image">
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="bozp-empty">{{ 'Vydavateľ ešte nepodpísal pred prácou.'|t('bozp') }}</span>
                                     {% endif %}
-                                {% else %}
-                                    <span class="bozp-empty">{{ 'Vydavateľ ešte nepodpísal pred prácou.'|t('bozp') }}</span>
-                                {% endif %}
-                            </div>
+                                </div>
 
-                            {# Contractor pre-work #}
-                            <div class="bozp-subpermit-card__sig-row">
+                                {# Contractor pre-work #}
+                                <div class="bozp-subpermit-card__sig-row">
                                 {% if contractorPreworkSig %}
                                     {% set cpAsset = craft.assets().id(contractorPreworkSig.signatureAssetId).one() %}
                                     <span class="bozp-yn bozp-yn--yes">✓ {{ 'Dodávateľ podpísal pred prácou'|t('bozp') }}:</span>
@@ -323,27 +324,29 @@
                                     <span class="bozp-empty">{{ 'Po podpise vydavateľa budete môcť podpísať aj vy.'|t('bozp') }}</span>
                                 {% endif %}
                             </div>
+                            </div>
 
                             {# ─── Completion / cancel signatures (gated) ────── #}
                             <h3 class="bozp-detail-section__subtitle">{{ 'Pri dokončení / zrušení prác'|t('bozp') }}</h3>
 
-                            {# Issuer completion #}
-                            <div class="bozp-subpermit-card__sig-row">
-                                {% if issuerSig %}
-                                    {% set iAsset = craft.assets().id(issuerSig.signatureAssetId).one() %}
-                                    <span class="bozp-yn bozp-yn--yes">✓ {{ 'Vydavateľ podpísal'|t('bozp') }}:</span>
-                                    {{ issuerSig.signerName }}
-                                    {% if iAsset %}
-                                        <img src="{{ iAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
-                                             class="bozp-signature__image">
+                            <div class="bozp-subpermit-card__signatures_box">
+                                {# Issuer completion #}
+                                <div class="bozp-subpermit-card__sig-row">
+                                    {% if issuerSig %}
+                                        {% set iAsset = craft.assets().id(issuerSig.signatureAssetId).one() %}
+                                        <span class="bozp-yn bozp-yn--yes">✓ {{ 'Vydavateľ podpísal'|t('bozp') }}:</span>
+                                        {{ issuerSig.signerName }}
+                                        {% if iAsset %}
+                                            <img src="{{ iAsset.url }}" alt="{{ 'Podpis'|t('bozp') }}"
+                                                 class="bozp-signature__image">
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="bozp-empty">{{ 'Vydavateľ ešte nepodpísal.'|t('bozp') }}</span>
                                     {% endif %}
-                                {% else %}
-                                    <span class="bozp-empty">{{ 'Vydavateľ ešte nepodpísal.'|t('bozp') }}</span>
-                                {% endif %}
-                            </div>
+                                </div>
 
-                            {# Contractor completion — gated on prework complete #}
-                            <div class="bozp-subpermit-card__sig-row">
+                                {# Contractor completion — gated on prework complete #}
+                                <div class="bozp-subpermit-card__sig-row">
                                 {% if contractorSig %}
                                     {% set cAsset = craft.assets().id(contractorSig.signatureAssetId).one() %}
                                     <span class="bozp-yn bozp-yn--yes">✓ {{ 'Dodávateľ podpísal'|t('bozp') }}:</span>
@@ -384,68 +387,74 @@
                                     <span class="bozp-empty">{{ 'Najprv musia byť obidva podpisy pred začatím prác.'|t('bozp') }}</span>
                                 {% endif %}
                             </div>
+                            </div>
                         </div>
-                    </article>
+                    </div>
                 {% endfor %}
 
-                {# ---- Shared signature dialog for subpermit contractor signing ---- #}
-                <dialog id="bozp-sp-sign-dialog" class="bozp-dialog">
-                    <form class="bozp-form bozp-form--sign" method="dialog">
+                {# ---- Shared signature dialog for subpermit contractor signing ----
+                   Markup mirrors the employee-side dialog from subpermits/form.twig
+                   so both look identical. JS hooks (IDs / data attrs) preserved. #}
+                <dialog id="bozp-sp-sign-dialog"
+                        style="border:none;padding:0;border-radius:8px;max-width:560px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+                    <div class="bozp-form bozp-form--sign" style="margin:0;padding:24px;">
 
                         {# Stage 1 — warning #}
-                        <fieldset class="bozp-form-section bozp-dialog__stage" data-stage="warning">
-                            <legend class="bozp-form-section__title" id="bozp-sp-dlg-title">{{ 'Podpis dodávateľa'|t('bozp') }}</legend>
-                            <p class="bozp-form-section__hint">{{ 'Podpíšte subpermit ako dodávateľ pred začatím prác.'|t('bozp') }}</p>
-                            <p class="bozp-form-section__hint bozp-form-section__hint--warning">
+                        <div class="bozp-dialog__stage" data-stage="warning">
+                            <h3 style="margin-top:0;" id="bozp-sp-dlg-title">{{ 'Podpis dodávateľa'|t('bozp') }}</h3>
+                            <p>{{ 'Podpíšte subpermit ako dodávateľ pred začatím prác.'|t('bozp') }}</p>
+                            <p class="bozp-warning"
+                               style="background:#fff4e0;border-left:4px solid #d97706;padding:10px 14px;margin:16px 0;color:#7a3e00;">
                                 <strong>{{ 'Upozornenie'|t('bozp') }}:</strong>
                                 {{ 'Podpisom potvrdzujete, že ste oboznámení s podmienkami subpermitu a zaviazali ste sa ich dodržiavať.'|t('bozp') }}
                             </p>
-                            <div class="bozp-form__actions">
-                                <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="cancel">
+                            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+                                <button type="button" class="bozp-btn bozp-btn--cancel" data-bozp-action="cancel">
                                     {{ 'Zrušiť'|t('bozp') }}
                                 </button>
-                                <button type="button" class="bozp-btn bozp-btn--primary" data-bozp-action="proceed">
+                                <button type="button" class="bozp-btn bozp-btn--approve" data-bozp-action="proceed">
                                     {{ 'Pokračovať k podpisu'|t('bozp') }}
                                 </button>
                             </div>
-                        </fieldset>
+                        </div>
 
                         {# Stage 2 — signature fields #}
-                        <fieldset class="bozp-form-section bozp-dialog__stage" data-stage="form" hidden>
-                            <legend class="bozp-form-section__title">{{ 'Podpis dodávateľa'|t('bozp') }}</legend>
+                        <div class="bozp-dialog__stage" data-stage="form" hidden>
+                            <h3 style="margin-top:0;">{{ 'Podpis dodávateľa'|t('bozp') }}</h3>
 
                             <div class="bozp-form-row">
-                                <label class="bozp-form-row__label">{{ 'Meno a priezvisko'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+                                <label>{{ 'Meno a priezvisko'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                                 <input type="text" id="bozp-sp-dlg-name"
                                        value="{{ permit.contractorPersonName ?? '' }}" required>
                             </div>
 
                             <div class="bozp-form-row">
-                                <label class="bozp-form-row__label">{{ 'Firma'|t('bozp') }}</label>
+                                <label>{{ 'Firma'|t('bozp') }}</label>
                                 <input type="text" id="bozp-sp-dlg-employer"
                                        value="{{ permit.contractorCompany ?? '' }}">
                             </div>
 
                             <div class="bozp-form-row">
-                                <label class="bozp-form-row__label">{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+                                <label>{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                                 <input type="date" id="bozp-sp-dlg-date"
                                        value="{{ 'now'|date('Y-m-d') }}" required>
                             </div>
 
                             <div class="bozp-form-row">
-                                <label class="bozp-form-row__label">{{ 'Podpis'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
-                                <div class="bozp-sigpad">
-                                    <canvas id="bozp-sp-dlg-canvas" width="520" height="180"></canvas>
+                                <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+                                <div class="bozp-sigpad" style="border:1px solid #ccc;background:#fff;width:100%;">
+                                    <canvas id="bozp-sp-dlg-canvas" width="520" height="180"
+                                            style="display:block;width:100%;height:180px;touch-action:none;"></canvas>
                                 </div>
-                                <div class="bozp-form__actions bozp-form__actions--inline">
-                                    <button type="button" class="bozp-btn bozp-btn--secondary" id="bozp-sp-dlg-clear">
+                                <div style="margin-top:8px;">
+                                    <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-sp-dlg-clear">
                                         {{ 'Vyčistiť'|t('bozp') }}
                                     </button>
                                 </div>
                             </div>
 
                             {# Completion-only fields: closure status + trial-operation #}
-                            <div id="bozp-sp-dlg-closure-block" class="bozp-form-section__group">
+                            <div id="bozp-sp-dlg-closure-block">
                                 <div class="bozp-form-row">
                                     <span class="bozp-form-row__label">{{ 'Stav po dokončení'|t('bozp') }} <span class="bozp-form-row__req">*</span></span>
                                     {% set closureLabels = {
@@ -483,16 +492,16 @@
                                 </div>
                             </div>
 
-                            <div class="bozp-form__actions bozp-form__actions--split">
-                                <button type="button" class="bozp-btn bozp-btn--secondary" data-bozp-action="back">
+                            <div style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;">
+                                <button type="button" class="bozp-btn bozp-btn--cancel" data-bozp-action="back">
                                     {{ 'Späť'|t('bozp') }}
                                 </button>
-                                <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-sp-dlg-submit">
+                                <button type="button" class="bozp-btn bozp-btn--approve" id="bozp-sp-dlg-submit">
                                     {{ 'Podpísať a odoslať'|t('bozp') }}
                                 </button>
                             </div>
-                        </fieldset>
-                    </form>
+                        </div>
+                    </div>
                 </dialog>
 
                 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js"></script>
@@ -873,6 +882,7 @@
                             <th>{{ 'Dátum a čas'|t('bozp') }}</th>
                             <th>{{ 'Kontrolór'|t('bozp') }}</th>
                             <th>{{ 'Výsledok'|t('bozp') }}</th>
+                            <th>{{ 'Poznámka'|t('bozp') }}</th>
                             <th>{{ 'Podpis'|t('bozp') }}</th>
                         </tr>
                     </thead>
@@ -885,6 +895,8 @@
                                     <span class="bozp-status bozp-status--{{ c.result }}">
                                         {{ resultLabels[c.result] ?? c.result }}
                                     </span>
+                                </td>
+                                <td>
                                     {% if c.notes %}
                                         <p class="bozp-detail-table__note">{{ c.notes }}</p>
                                     {% endif %}
