@@ -46,6 +46,6 @@ abstract class BaseSiteController extends Controller
             $userService->setReturnUrl($request->getAbsoluteUrl());
         }
 
-        return $this->redirect(UrlHelper::siteUrl('bozp/login'));
+        return $this->redirect(UrlHelper::siteUrl('login'));
     }
 }

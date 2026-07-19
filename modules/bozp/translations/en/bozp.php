@@ -1281,4 +1281,45 @@ return [
 
     // ===== Subpermit signing flow header =====
     'Vyžaduje sa Váš podpis pred schválením'  => 'Your signature is required before approval',
+
+    // ===== Subpermit issuer attachment (hot work / confined space / atex) =====
+    'Prílohy subpermitu'                      => 'Subpermit attachments',
+    'Pre práce s otvoreným ohňom je potrebné nahrať fotodokumentáciu / dokument o stave pracoviska pred uzavretím subpermitu.'
+        => 'For hot work, upload a photo/document of the work area before closing the subpermit.',
+    'Pre prácu v uzavretom priestore je potrebné nahrať záznam o meraní plynov / fotodokumentáciu pred uzavretím subpermitu.'
+        => 'For confined-space work, upload a gas-measurement record / photo before closing the subpermit.',
+    'Pre prácu v ATEX zóne je potrebné nahrať záznam o hodinovom overovaní (doplnkové opatrenia) pred uzavretím subpermitu.'
+        => 'For ATEX work, upload the hourly verification record (additional measures) before closing the subpermit.',
+    'Zatiaľ neboli nahrané žiadne prílohy.'   => 'No attachments uploaded yet.',
+    'Nahrať prílohu'                          => 'Upload attachment',
+    '(súbor nedostupný)'                      => '(file unavailable)',
+    'Subpermit je uzamknutý — ďalšie prílohy už nie je možné pridávať.'
+        => 'Subpermit is locked — no further attachments can be added.',
+    'Pred uzavretím tohto subpermitu je potrebné nahrať aspoň jednu prílohu.'
+        => 'At least one attachment is required before closing this subpermit.',
+    'Subpermit bol schválený.'                => 'Subpermit has been approved.',
+    'Kontaktná osoba je povinná.'             => 'Contact person is required.',
+    'Zóna je povinná.'                        => 'Zone is required.',
+
+    // Legal acknowledgment (signature dialogs)
+    'Podpisom potvrdzujem, že som sa oboznámil/a s {privacy} a {gdpr}.'
+        => 'By signing I acknowledge I have read the {privacy} and {gdpr} notice.',
+    'Ochrana osobných údajov' => 'Privacy Policy',
+    'Spracovanie osobných údajov' => 'Personal Data Processing',
+
+    // HSE notification opt-in permission
+    'Dostávať HSE notifikačné e-maily' => 'Receive HSE notification e-mails',
+
+    // 403 page
+    'Prístup zamietnutý' => 'Access denied',
+    'Pre vstup do BOZP aplikácie použite hlavnú stránku.' => 'To enter the BOZP application use the main page.',
+    'Späť na BOZP' => 'Back to BOZP',
+
+    // Subpermit signing modal
+    'Podpis subpermitu' => 'Subpermit signature',
+    'Elektronický podpis je právne záväzný. Uistite sa, že vypĺňate správne údaje.'
+        => 'Electronic signature is legally binding. Please verify your details before signing.',
+
+    // CP edit save
+    'Zmeny boli uložené.' => 'Changes have been saved.',
 ];

@@ -251,7 +251,7 @@ class SubpermitSigningService extends Component
         SubpermitRecord $subpermit,
         PermitRecord $permit,
     ): void {
-        $signingUrl       = UrlHelper::siteUrl('bozp/sp-sign/' . $request->token);
+        $signingUrl       = UrlHelper::siteUrl('sign/' . $request->token);
         $language         = Craft::$app->getSites()->getPrimarySite()->language;
         $previousLanguage = Craft::$app->language;
         $view             = Craft::$app->getView();

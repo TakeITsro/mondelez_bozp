@@ -24,7 +24,7 @@
 
     <header class="bozp-page__header">
         <p class="bozp-page__back">
-            <a href="{{ url('bozp/c/' ~ token) }}">← {{ 'Späť na permit'|t('bozp') }}</a>
+            <a href="{{ url('contractor/' ~ token) }}">← {{ 'Späť na permit'|t('bozp') }}</a>
         </p>
         <h1>{{ 'Kontrola prevádzky'|t('bozp') }}</h1>
         <p class="bozp-page__lede">
@@ -44,7 +44,7 @@
     {% endif %}
 
     {# ---- Control form ---- #}
-    <form method="post" action="{{ url('bozp/c/' ~ token ~ '/control') }}"
+    <form method="post" action="{{ url('contractor/' ~ token ~ '/control') }}"
           class="bozp-form" novalidate>
         {{ csrfInput() }}
         <input type="hidden" name="action" value="bozp/contractor/save-control">
@@ -118,7 +118,7 @@
         {% endif %}
 
         <div class="bozp-form__actions">
-            <a href="{{ url('bozp/c/' ~ token) }}" class="bozp-btn bozp-btn--cancel">
+            <a href="{{ url('contractor/' ~ token) }}" class="bozp-btn bozp-btn--cancel">
                 {{ 'Zrušiť'|t('bozp') }}
             </a>
             <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-ctrl-open-sign">
@@ -128,7 +128,7 @@
     </form>
 
     {# ---- Past controls list ---- #}
-    {% if controls is defined and controls|length > 0 %}
+    {% if (controls ?? [])|length > 0 %}
         <section class="bozp-detail-section" style="margin-top:40px;">
             <h2>{{ 'Predchádzajúce kontroly'|t('bozp') }}</h2>
             <table class="bozp-table" style="width:100%;border-collapse:collapse;">
@@ -142,7 +142,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for c in controls %}
+                    {% for c in (controls ?? []) %}
                         <tr style="border-bottom:1px solid #f0f0f0;">
                             <td style="padding:8px 10px;vertical-align:top;">{{ c.controlledAt|date('d.m.Y H:i') }}</td>
                             <td style="padding:8px 10px;vertical-align:top;">{{ c.controllerName }}</td>

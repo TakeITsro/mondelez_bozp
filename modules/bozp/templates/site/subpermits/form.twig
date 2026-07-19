@@ -36,7 +36,7 @@
     <section class="bozp-page bozp-page--subpermit-form">
         <header class="bozp-page__header">
             <p class="bozp-page__back">
-                <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/new') }}">← {{ 'Výber typu'|t('bozp') }}</a>
+                <a href="{{ url('permits/' ~ permit.id ~ '/subpermits/new') }}">← {{ 'Výber typu'|t('bozp') }}</a>
             </p>
             <h1>
                 {{ 'Príloha č. {n}'|t('bozp', {n: subpermitType.appendixNumber()}) }}
@@ -48,7 +48,7 @@
             </p>
         </header>
 
-        <form method="post" action="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/save') }}"
+        <form method="post" action="{{ url('permits/' ~ permit.id ~ '/subpermits/save') }}"
               class="bozp-form" enctype="multipart/form-data" novalidate>
             {{ csrfInput() }}
             <input type="hidden" name="action" value="bozp/subpermits/save">
@@ -127,7 +127,7 @@
             {% endif %}
 
             <div class="bozp-form__actions">
-                <a href="{{ url('bozp/permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--cancel">
+                <a href="{{ url('permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--cancel">
                     {{ 'Zrušiť'|t('bozp') }}
                 </a>
                 <button type="button" class="bozp-btn bozp-btn--primary" id="bozp-open-sign-dialog">

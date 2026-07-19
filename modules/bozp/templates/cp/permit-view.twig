@@ -17,8 +17,8 @@
 {% endblock %}
 
 {% set crumbs = [
-    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
-    { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) }
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('permits') },
+    { label: permit.permitNumber, url: cpUrl('permits/' ~ permit.id) }
 ] %}
 
 {% set statusLabels = {
@@ -65,7 +65,7 @@
             </div>
 
             <div>
-                <a href="{{ url('bozp/permit/' ~ permit.id ~ '/pdf') }}"
+                <a href="{{ url('permits/' ~ permit.id ~ '/pdf') }}"
                    target="_blank" rel="noopener"
                    class="btn small">⬇ {{ 'Zobraziť PDF'|t('bozp') }}</a>
                 {% if permit.submittedAt %}
@@ -256,7 +256,7 @@
                                 </td>
                                 <td>{{ (sp.status == 'approved' and sp.expiresAt) ? sp.expiresAt|date('d.m.Y H:i') : '—' }}</td>
                                 <td>
-                                    <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ sp.id) }}" class="btn small">
+                                    <a href="{{ cpUrl('permits/' ~ permit.id ~ '/subpermit/' ~ sp.id) }}" class="btn small">
                                         {{ 'Detail'|t('bozp') }}
                                     </a>
                                 </td>
@@ -506,13 +506,13 @@
         <div class="flex" style="gap:12px;flex-wrap:wrap;">
 
             {# Edit permit — always available to HSE #}
-            <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/edit') }}" class="btn">
+            <a href="{{ cpUrl('permits/' ~ permit.id ~ '/edit') }}" class="btn">
                 {{ 'Upraviť permit'|t('bozp') }}
             </a>
 
             {% if canResend %}
                 <form method="post"
-                      action="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/resend') }}"
+                      action="{{ cpUrl('permits/' ~ permit.id ~ '/resend') }}"
                       accept-charset="UTF-8">
                     {{ csrfInput() }}
                     <button type="submit" class="btn">

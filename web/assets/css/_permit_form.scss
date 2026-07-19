@@ -149,7 +149,7 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 3.125em;
+    gap: 10px 3.125em;
 
     > label, .bozp-form-row__label {
       width: calc(50% - 1.5625em);
@@ -207,6 +207,27 @@
     > .bozp-form__yesno {
       width: calc(50% - 1.5625em);
       min-width: 280px;
+    }
+
+    &.bozp-form-row--error {
+      > input {
+        border: 2px solid red !important;
+      }
+
+      > textarea {
+        border: 2px solid red !important;
+      }
+
+      > select {
+        border: 2px solid red !important;
+      }
+    }
+
+    .bozp-form-row__error {
+      width: 100%;
+      color: red;
+      font-size: 1em;
+      text-align: right;
     }
   }
 
@@ -602,6 +623,12 @@
 
       .bozp-form__file-input {
         display: none;
+      }
+    }
+
+    &.bozp-form-row--error {
+      .bozp-form__file-selected {
+        color: red;
       }
     }
   }

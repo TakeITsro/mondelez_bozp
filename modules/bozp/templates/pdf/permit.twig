@@ -140,7 +140,7 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
     <table>
         <tr>
             <td class="logo-cell">
-                <img src="https://testing.takeitsro.sk/assets/svg/pdf_logo.svg" alt="Logo" width="120">
+                <img src="{{ siteUrl('assets/svg/pdf_logo.svg') }}" alt="Logo" width="120">
             </td>
             <td class="title-cell">
                 <h1>
@@ -445,7 +445,7 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
     <table>
         <tr>
             <td class="logo-cell">
-                <img src="https://testing.takeitsro.sk/assets/svg/pdf_logo.svg" alt="Logo" width="120">
+                <img src="{{ siteUrl('assets/svg/pdf_logo.svg') }}" alt="Logo" width="120">
             </td>
             <td class="title-cell">
                 <h1>
@@ -510,7 +510,7 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
                 {% set row = hazards[cat.value] ?? null %}
                 {% if row %}
                 <tr>
-                    <td><img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon" width="40"></td>
+                    <td><img src="{{ siteUrl('assets/icons/PPE' ~ loop.index ~ '.png') }}" alt="Icon" width="40"></td>
                     <td><strong>{{ cat.label() }}</strong></td>
                     <td>{{ _self.yn(row.exposed) }}</td>
                     <td>{{ row.measure ? row.measure|nl2br : '—' }}</td>
@@ -532,7 +532,7 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
     <table>
         <tr>
             <td class="logo-cell">
-                <img src="https://testing.takeitsro.sk/assets/svg/pdf_logo.svg" alt="Logo" width="120">
+                <img src="{{ siteUrl('assets/svg/pdf_logo.svg') }}" alt="Logo" width="120">
             </td>
             <td class="title-cell">
                 <h1>

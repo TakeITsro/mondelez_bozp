@@ -15,10 +15,10 @@
 {% set selectedSubnavItem = 'queue' %}
 
 {% set crumbs = [
-    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
-    { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) },
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('permits') },
+    { label: permit.permitNumber, url: cpUrl('permits/' ~ permit.id) },
     { label: ('Príloha č. {n}'|t('bozp'))|replace({'{n}': appendixN}),
-      url: cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) },
+      url: cpUrl('permits/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) },
     { label: 'Upraviť'|t('bozp'), url: '' }
 ] %}
 
@@ -61,7 +61,7 @@
                 </span>
             </div>
         </div>
-        <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) }}" class="btn">
+        <a href="{{ cpUrl('permits/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) }}" class="btn">
             ← {{ 'Späť'|t('bozp') }}
         </a>
     </div>
@@ -81,20 +81,27 @@
 
     <form method="post" accept-charset="UTF-8" novalidate>
         {{ csrfInput() }}
-        <input type="hidden" name="action" value="bozp/queue/update-subpermit">
+        <input type="hidden" name="action" value="bozp/subpermits/update">
         <input type="hidden" name="permitId" value="{{ permit.id }}">
         <input type="hidden" name="id" value="{{ subpermit.id }}">
 
         {# ---- Common fields ---- #}
         <h3>{{ 'Základné informácie'|t('bozp') }}</h3>
 
-        {{ forms.dateField({
-            label: 'Dátum'|t('bozp'),
-            name: 'date',
-            value: values.date ?? '',
-            required: true,
-            errors: errors.date is defined ? [errors.date] : [],
-        }) }}
+        {# Plain date input (not forms.dateField): the collector reads a plain
+           string, and dateField's nested array would break the cast (§18). #}
+        <div class="field{% if errors.date is defined %} has-errors{% endif %}">
+            <div class="heading">
+                <label for="sp-date">{{ 'Dátum'|t('bozp') }} <span class="required" aria-hidden="true"></span></label>
+            </div>
+            <div class="input ltr">
+                <input type="date" id="sp-date" name="date" class="text"
+                       value="{{ values.date ?? '' }}" required>
+            </div>
+            {% if errors.date is defined %}
+                <ul class="errors"><li>{{ errors.date }}</li></ul>
+            {% endif %}
+        </div>
 
         {{ forms.textField({
             label: 'Miesto výkonu'|t('bozp'),
@@ -154,7 +161,7 @@
 
         <div class="buttons" style="margin-top:24px;">
             <button type="submit" class="btn submit">{{ 'Uložiť zmeny'|t('bozp') }}</button>
-            <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) }}"
+            <a href="{{ cpUrl('permits/' ~ permit.id ~ '/subpermit/' ~ subpermit.id) }}"
                class="btn">{{ 'Zrušiť'|t('bozp') }}</a>
         </div>
     </form>

@@ -21,7 +21,7 @@
         <header class="bozp-page__header">
             <h1>{{ 'Moje permity'|t('bozp') }}</h1>
             {% if currentUser and currentUser.can('bozp:createPermit') %}
-                <a class="bozp-btn bozp-btn--primary" href="{{ url('bozp/permits/new') }}">
+                <a class="bozp-btn bozp-btn--primary" href="{{ url('permits/new') }}">
                     + {{ 'Nový permit'|t('bozp') }}
                 </a>
             {% endif %}
@@ -45,7 +45,7 @@
                         {% for permit in (myPermits ?? []) %}
                             <tr class="bozp-table__row bozp-table__row--status-{{ permit.status }}">
                                 <td>
-                                    <a href="{{ url('bozp/permits/' ~ permit.id) }}">{{ permit.permitNumber }}</a>
+                                    <a href="{{ url('permits/' ~ permit.id) }}">{{ permit.permitNumber }}</a>
                                 </td>
                                 <td>{{ permit.contractorCompany }}</td>
                                 <td>{{ permit.workLocation }}</td>

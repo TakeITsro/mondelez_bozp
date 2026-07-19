@@ -71,8 +71,56 @@ class Module extends BaseModule
         $this->registerSiteUrlRules();
         $this->registerCpNavItem();
         $this->registerUserPermissions();
+        $this->registerCpAccessGuard();
 
         Craft::info('BOZP module loaded.', __METHOD__);
+    }
+
+    /**
+     * Intercept any CP request from a user without `accessCp` and redirect
+     * to the friendly /403 page. Login + logout + Craft asset paths
+     * are allowed through so HSE officers can still authenticate.
+     */
+    private function registerCpAccessGuard(): void
+    {
+        Event::on(
+            \yii\base\Application::class,
+            \yii\base\Application::EVENT_BEFORE_REQUEST,
+            static function (): void {
+                $app     = Craft::$app;
+                $request = $app->getRequest();
+
+                if ($request->getIsConsoleRequest() || !$request->getIsCpRequest()) {
+                    return;
+                }
+
+                // Path inside cpTrigger (e.g. 'login', 'permits/12').
+                $path = $request->getPathInfo();
+
+                // Always-allowed CP paths so login + asset loading still work.
+                if (
+                    $path === ''
+                    || $path === 'login'
+                    || $path === 'logout'
+                    || str_starts_with($path, 'resources/')
+                    || str_starts_with($path, 'cpresources/')
+                    || str_starts_with($path, 'actions/users/')
+                ) {
+                    return;
+                }
+
+                $userComponent = $app->getUser();
+                $identity      = $userComponent->getIdentity();
+
+                if ($identity !== null && $userComponent->checkPermission('accessCp')) {
+                    return;
+                }
+
+                $response = $app->getResponse();
+                $response->redirect(\craft\helpers\UrlHelper::siteUrl('403'))->send();
+                $app->end();
+            }
+        );
     }
 
     private function registerTranslations(): void
@@ -113,26 +161,27 @@ class Module extends BaseModule
             UrlManager::class,
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
             static function (RegisterUrlRulesEvent $event): void {
-                $event->rules['bozp'] = 'bozp/queue/index';
-                $event->rules['bozp/queue'] = 'bozp/queue/index';
-                $event->rules['bozp/all'] = 'bozp/queue/all';
-                $event->rules['bozp/permit/<id:\d+>'] = 'bozp/queue/view';
-                $event->rules['bozp/permit/<permitId:\d+>/edit'] = 'bozp/queue/edit-permit';
-                $event->rules['POST bozp/permit/<id:\d+>/resend'] = 'bozp/queue/resend';
-                $event->rules['POST bozp/permit/<id:\d+>/hse-close'] = 'bozp/queue/hse-close';
-                $event->rules['POST bozp/permit/<id:\d+>/delete'] = 'bozp/queue/delete';
-                $event->rules['POST bozp/permit/<permitId:\d+>/subpermits/<id:\d+>/approve'] = 'bozp/queue/approve-subpermit';
-                $event->rules['POST bozp/permit/<permitId:\d+>/subpermits/<id:\d+>/reject'] = 'bozp/queue/reject-subpermit';
-                $event->rules['bozp/permit/<permitId:\d+>/subpermit/<id:\d+>'] = 'bozp/queue/subpermit-view';
-                $event->rules['bozp/permit/<permitId:\d+>/subpermit/<id:\d+>/edit'] = 'bozp/queue/edit-subpermit';
+                // CP paths are relative to the cpTrigger (e.g. /hse/permits).
+                // Targets keep the internal module handle (bozp/<controller>/<action>).
+                $event->rules['permits'] = 'bozp/queue/index';
+                $event->rules['permits/all'] = 'bozp/queue/all';
+                $event->rules['permits/<id:\d+>'] = 'bozp/queue/view';
+                $event->rules['permits/<permitId:\d+>/edit'] = 'bozp/queue/edit-permit';
+                $event->rules['POST permits/<id:\d+>/resend'] = 'bozp/queue/resend';
+                $event->rules['POST permits/<id:\d+>/hse-close'] = 'bozp/queue/hse-close';
+                $event->rules['POST permits/<id:\d+>/delete'] = 'bozp/queue/delete';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/approve'] = 'bozp/queue/approve-subpermit';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/reject'] = 'bozp/queue/reject-subpermit';
+                $event->rules['permits/<permitId:\d+>/subpermit/<id:\d+>'] = 'bozp/queue/subpermit-view';
+                $event->rules['permits/<permitId:\d+>/subpermit/<id:\d+>/edit'] = 'bozp/queue/edit-subpermit';
 
                 // CP PDF download
-                $event->rules['bozp/permit/<id:\d+>/pdf'] = 'bozp/queue/permit-pdf';
-                $event->rules['bozp/permit/<permitId:\d+>/subpermit/<id:\d+>/pdf'] = 'bozp/queue/subpermit-pdf';
+                $event->rules['permits/<id:\d+>/pdf'] = 'bozp/queue/permit-pdf';
+                $event->rules['permits/<permitId:\d+>/subpermit/<id:\d+>/pdf'] = 'bozp/queue/subpermit-pdf';
 
                 // Bug report → ClickUp
-                $event->rules['bozp/bug-report']      = 'bozp/bug-report/index';
-                $event->rules['POST bozp/bug-report'] = 'bozp/bug-report/submit';
+                $event->rules['bug-report']      = 'bozp/bug-report/index';
+                $event->rules['POST bug-report'] = 'bozp/bug-report/submit';
             }
         );
     }
@@ -151,71 +200,79 @@ class Module extends BaseModule
                 $event->rules['apple-touch-icon.png']            = 'bozp/pwa/apple-touch-icon';
                 $event->rules['apple-touch-icon-precomposed.png']= 'bozp/pwa/apple-touch-icon';
 
-                // Auth
-                $event->rules['bozp/login'] = 'bozp/auth/login';
-                $event->rules['POST bozp/login'] = 'bozp/auth/login';
-                $event->rules['POST bozp/logout'] = 'bozp/auth/logout';
+                // Root → dashboard (DashboardController bounces anonymous
+                // visitors to /login via requireBozpLogin).
+                $event->rules[''] = 'bozp/dashboard/index';
 
-                // Permits
-                $event->rules['bozp'] = 'bozp/dashboard/index';
-                $event->rules['bozp/permits'] = 'bozp/dashboard/index';
-                $event->rules['bozp/permits/new'] = 'bozp/permits/new';
-                $event->rules['POST bozp/permits/save'] = 'bozp/permits/save';
-                $event->rules['bozp/permits/<id:\d+>'] = 'bozp/permits/view';
+                // Auth
+                $event->rules['login'] = 'bozp/auth/login';
+                $event->rules['POST login'] = 'bozp/auth/login';
+                $event->rules['POST logout'] = 'bozp/auth/logout';
+
+                // Friendly 403 page for users without CP access
+                $event->rules['403'] = 'bozp/auth/forbidden';
+
+                // Permits (issuer)
+                $event->rules['dashboard'] = 'bozp/dashboard/index';
+                $event->rules['permits'] = 'bozp/dashboard/index';
+                $event->rules['permits/new'] = 'bozp/permits/new';
+                $event->rules['POST permits/save'] = 'bozp/permits/save';
+                $event->rules['permits/<id:\d+>'] = 'bozp/permits/view';
 
                 // Facility map
-                $event->rules['bozp/map'] = 'bozp/map/index';
-                $event->rules['bozp/map/zone/<id:\d+>'] = 'bozp/map/zone';
+                $event->rules['map'] = 'bozp/map/index';
+                $event->rules['map/zone/<id:\d+>'] = 'bozp/map/zone';
 
-                // Contractor (token-gated, password-protected)
-                $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>'] = 'bozp/contractor/view';
-                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/auth'] = 'bozp/contractor/auth';
-                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/upload'] = 'bozp/contractor/upload';
-                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/close'] = 'bozp/contractor/close';
-                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/cancel'] = 'bozp/contractor/cancel';
-                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/sign'] = 'bozp/contractor/sign-subpermit';
-                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/sign-prework'] = 'bozp/contractor/sign-subpermit-prework';
+                // Contractor portal (token-gated, password-protected)
+                $event->rules['contractor/<token:[A-Za-z0-9_\-]+>'] = 'bozp/contractor/view';
+                $event->rules['POST contractor/<token:[A-Za-z0-9_\-]+>/auth'] = 'bozp/contractor/auth';
+                $event->rules['POST contractor/<token:[A-Za-z0-9_\-]+>/upload'] = 'bozp/contractor/upload';
+                $event->rules['POST contractor/<token:[A-Za-z0-9_\-]+>/close'] = 'bozp/contractor/close';
+                $event->rules['POST contractor/<token:[A-Za-z0-9_\-]+>/cancel'] = 'bozp/contractor/cancel';
+                $event->rules['POST contractor/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/sign'] = 'bozp/contractor/sign-subpermit';
+                $event->rules['POST contractor/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/sign-prework'] = 'bozp/contractor/sign-subpermit-prework';
 
                 // Control visits (Mondelez employee, logged-in with Craft account)
-                $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/control'] = 'bozp/contractor/control-view';
-                $event->rules['POST bozp/c/<token:[A-Za-z0-9_\-]+>/control'] = 'bozp/contractor/save-control';
+                $event->rules['contractor/<token:[A-Za-z0-9_\-]+>/control'] = 'bozp/contractor/control-view';
+                $event->rules['POST contractor/<token:[A-Za-z0-9_\-]+>/control'] = 'bozp/contractor/save-control';
 
                 // Issuer cancel / close (front-end issuer detail page)
-                $event->rules['POST bozp/permits/<id:\d+>/cancel'] = 'bozp/permits/cancel';
-                $event->rules['POST bozp/permits/<id:\d+>/close'] = 'bozp/permits/close';
+                $event->rules['POST permits/<id:\d+>/cancel'] = 'bozp/permits/cancel';
+                $event->rules['POST permits/<id:\d+>/close'] = 'bozp/permits/close';
 
                 // Issuer attachment upload
-                $event->rules['POST bozp/permits/<id:\d+>/upload'] = 'bozp/permits/upload-attachment';
+                $event->rules['POST permits/<id:\d+>/upload'] = 'bozp/permits/upload-attachment';
 
                 // Subpermit multi-signer token signing
-                $event->rules['bozp/sp-sign/<token:[A-Za-z0-9]+>']     = 'bozp/subpermit-signing/view';
-                $event->rules['bozp/sp-sign/<token:[A-Za-z0-9]+>/pdf'] = 'bozp/subpermit-signing/pdf';
-                $event->rules['POST bozp/sp-sign/sign']                = 'bozp/subpermit-signing/sign';
+                $event->rules['sign/<token:[A-Za-z0-9]+>']     = 'bozp/subpermit-signing/view';
+                $event->rules['sign/<token:[A-Za-z0-9]+>/pdf'] = 'bozp/subpermit-signing/pdf';
+                $event->rules['POST sign/submit']              = 'bozp/subpermit-signing/sign';
 
                 // Subpermits (high-risk, attached to a general permit)
-                $event->rules['bozp/permits/<permitId:\d+>/subpermits/new'] = 'bozp/subpermits/new';
-                $event->rules['bozp/permits/<permitId:\d+>/subpermits/new/<type:[a-z_]+>'] = 'bozp/subpermits/form';
-                $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/save'] = 'bozp/subpermits/save';
-                $event->rules['bozp/permits/<permitId:\d+>/subpermits/<id:\d+>'] = 'bozp/subpermits/view';
-                $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/cancel'] = 'bozp/subpermits/cancel';
-                $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/sign-prework'] = 'bozp/subpermits/sign-prework';
-                $event->rules['POST bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/sign-closure'] = 'bozp/subpermits/sign-closure';
+                $event->rules['permits/<permitId:\d+>/subpermits/new'] = 'bozp/subpermits/new';
+                $event->rules['permits/<permitId:\d+>/subpermits/new/<type:[a-z_]+>'] = 'bozp/subpermits/form';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/save'] = 'bozp/subpermits/save';
+                $event->rules['permits/<permitId:\d+>/subpermits/<id:\d+>'] = 'bozp/subpermits/view';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/cancel'] = 'bozp/subpermits/cancel';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/sign-prework'] = 'bozp/subpermits/sign-prework';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/sign-closure'] = 'bozp/subpermits/sign-closure';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/upload']      = 'bozp/subpermits/upload-attachment';
 
                 // PDF download (issuer side)
-                $event->rules['bozp/permits/<id:\d+>/pdf'] = 'bozp/permits/pdf';
-                $event->rules['bozp/permits/<permitId:\d+>/subpermits/<id:\d+>/pdf'] = 'bozp/subpermits/pdf';
+                $event->rules['permits/<id:\d+>/pdf'] = 'bozp/permits/pdf';
+                $event->rules['permits/<permitId:\d+>/subpermits/<id:\d+>/pdf'] = 'bozp/subpermits/pdf';
 
                 // PDF download (contractor portal — password-gated)
-                $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/pdf'] = 'bozp/contractor/permit-pdf';
-                $event->rules['bozp/c/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/pdf'] = 'bozp/contractor/subpermit-pdf';
+                $event->rules['contractor/<token:[A-Za-z0-9_\-]+>/pdf'] = 'bozp/contractor/permit-pdf';
+                $event->rules['contractor/<token:[A-Za-z0-9_\-]+>/subpermits/<id:\d+>/pdf'] = 'bozp/contractor/subpermit-pdf';
 
                 // Dev-only PDF preview routes (no auth, no asset write — for CSS iteration)
                 if (Craft::$app->getConfig()->getGeneral()->devMode) {
-                    $event->rules['bozp/debug']                          = 'bozp/debug/index';
-                    $event->rules['bozp/debug/permit/<id:\d+>']          = 'bozp/debug/permit';
-                    $event->rules['bozp/debug/permit/<id:\d+>/pdf']      = 'bozp/debug/permit-pdf';
-                    $event->rules['bozp/debug/subpermit/<id:\d+>']       = 'bozp/debug/subpermit';
-                    $event->rules['bozp/debug/subpermit/<id:\d+>/pdf']   = 'bozp/debug/subpermit-pdf';
+                    $event->rules['debug']                          = 'bozp/debug/index';
+                    $event->rules['debug/permit/<id:\d+>']          = 'bozp/debug/permit';
+                    $event->rules['debug/permit/<id:\d+>/pdf']      = 'bozp/debug/permit-pdf';
+                    $event->rules['debug/subpermit/<id:\d+>']       = 'bozp/debug/subpermit';
+                    $event->rules['debug/subpermit/<id:\d+>/pdf']   = 'bozp/debug/subpermit-pdf';
                 }
             }
         );
@@ -244,24 +301,24 @@ class Module extends BaseModule
                 if ($canViewQueue) {
                     $subnav['queue'] = [
                         'label' => Craft::t('bozp', 'Schvaľovacia fronta'),
-                        'url' => 'bozp/queue',
+                        'url' => 'permits',
                     ];
                 }
                 if ($canViewAll) {
                     $subnav['all'] = [
                         'label' => Craft::t('bozp', 'Všetky permity'),
-                        'url' => 'bozp/all',
+                        'url' => 'permits/all',
                     ];
                 }
                 if ($canReportBug) {
                     $subnav['bug-report'] = [
                         'label' => Craft::t('bozp', 'Nahlásiť chybu'),
-                        'url' => 'bozp/bug-report',
+                        'url' => 'bug-report',
                     ];
                 }
 
                 // Default landing URL = first available subnav target.
-                $defaultUrl = $canViewQueue ? 'bozp' : 'bozp/bug-report';
+                $defaultUrl = $canViewQueue ? 'permits' : 'bug-report';
 
                 $event->navItems[] = [
                     'url' => $defaultUrl,
@@ -308,6 +365,9 @@ class Module extends BaseModule
                         ],
                         'bozp:reportBug' => [
                             'label' => Craft::t('bozp', 'Nahlásiť chybu (vytvorí úlohu v ClickUp)'),
+                        ],
+                        'bozp:receiveHseEmails' => [
+                            'label' => Craft::t('bozp', 'Dostávať HSE notifikačné e-maily'),
                         ],
                     ],
                 ];

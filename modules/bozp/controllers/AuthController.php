@@ -20,18 +20,32 @@ use yii\web\Response;
  * see the Craft back-office chrome.
  *
  * Routes (registered in Module.php):
- *   GET  bozp/login   → actionLogin    (render form)
- *   POST bozp/login   → actionLogin    (validate + authenticate)
- *   POST bozp/logout  → actionLogout
+ *   GET  login    → actionLogin    (render form)
+ *   POST login    → actionLogin    (validate + authenticate)
+ *   POST logout   → actionLogout
  *
  * Recommended site config:
- *   config/general.php → 'loginPath' => 'bozp/login'
+ *   config/general.php → 'loginPath' => 'login'
  * so that any $this->requireLogin() call in DashboardController /
  * PermitsController lands the user here with a proper returnUrl.
  */
 class AuthController extends Controller
 {
-    public array|bool|int $allowAnonymous = ['login'];
+    public array|bool|int $allowAnonymous = ['login', 'forbidden'];
+
+    /**
+     * Friendly 403 page shown when a non-CP user lands on a CP URL.
+     * Renders the site template `bozp/site/errors/403.twig` with HTTP 403.
+     */
+    public function actionForbidden(): Response
+    {
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+
+        $response = $this->renderTemplate('bozp/site/errors/403');
+        $response->setStatusCode(403);
+        return $response;
+    }
+
 
     public function actionLogin(): ?Response
     {
@@ -145,7 +159,7 @@ class AuthController extends Controller
             Craft::t('bozp', 'Boli ste odhlásení.')
         );
 
-        return $this->redirect(UrlHelper::siteUrl('bozp/login'));
+        return $this->redirect(UrlHelper::siteUrl('login'));
     }
 
     /**
@@ -156,11 +170,11 @@ class AuthController extends Controller
     private function postLoginUrl(): string
     {
         $userService = Craft::$app->getUser();
-        $fallback = UrlHelper::siteUrl('bozp');
+        $fallback = UrlHelper::siteUrl('dashboard');
         $returnUrl = $userService->getReturnUrl($fallback);
 
         // Guard against getReturnUrl() echoing our own login URL (would loop).
-        if (str_contains((string) $returnUrl, 'bozp/login')) {
+        if (str_contains((string) $returnUrl, '/login')) {
             return $fallback;
         }
 

@@ -21,4 +21,89 @@
 
   }
 
+  .bozp-map {
+    .bozp-map__svg {
+      .map_area {
+        path, polygon {
+          fill: #FAF4FF;
+          transition: fill 0.3s ease;
+        }
+
+        &.active {
+          path, polygon {
+            fill: #F1E0FF
+          }
+        }
+
+        &:hover {
+          path, polygon {
+            fill: #dbafff
+          }
+        }
+      }
+    }
+  }
+
+  .bozp-map__zones_mobile {
+    display: none;
+    //display: flex;
+    flex-direction: column;
+    gap: 1.25em;
+
+    .bozp-map__zone {
+      display: flex;
+      align-items: center;
+      gap: 1.25em;
+
+      .bozp-map__zone-name {
+        color: var(--main-color);
+        font-size: 2em;
+        font-weight: 400;
+        line-height: 1.2em;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+
+      .bozp-map__zone-count {
+        color: var(--main-color);
+        font-size: 2em;
+        font-weight: 400;
+        line-height: 1.2em;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+
+      &.bozp-map__zone--has-active {
+        .bozp-map__zone-name {
+          opacity: 1;
+        }
+
+        .bozp-map__zone-count {
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 1200px) {
+    padding: 5em 2.5em;
+  }
+
+  @media (max-width: 600px) {
+    gap: 2.5em;
+    padding: 2.5em 10px 5em 10px;
+
+    .bozp-map {
+      display: none;
+    }
+
+    .bozp-map__legend {
+      display: none;
+    }
+
+    .bozp-map__zones_mobile {
+      display: flex;
+    }
+  }
+
 }

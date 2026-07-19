@@ -16,7 +16,7 @@
     <section class="bozp-page bozp-page--subpermit-view">
         <header class="bozp-page__header">
             <p class="bozp-page__back">
-                <a href="{{ url('bozp/permits/' ~ permit.id) }}">← {{ permit.permitNumber }}</a>
+                <a href="{{ url('permits/' ~ permit.id) }}">← {{ permit.permitNumber }}</a>
             </p>
             <h1>{{ 'Príloha č. {n}'|t('bozp', {n: appendixN}) }} — {{ typeLabel }}</h1>
             <div class="bozp-page__meta" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -32,7 +32,7 @@
                 <span class="bozp-page__created">
                     {{ 'Vytvorené'|t('bozp') }}: {{ subpermit.dateCreated|date('d.m.Y H:i') }}
                 </span>
-                <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/' ~ subpermit.id ~ '/pdf') }}"
+                <a href="{{ url('permits/' ~ permit.id ~ '/subpermits/' ~ subpermit.id ~ '/pdf') }}"
                    target="_blank" rel="noopener"
                    class="bozp-btn bozp-btn--primary bozp-btn--sm"
                    style="font-size:12px;padding:4px 12px;">
@@ -273,6 +273,69 @@
         {% set contractorClosure = signatures['contractor'] ?? null %}
         {% set issuerClosure     = signatures['issuer_closure'] ?? null %}
         {% set canIssuerSignClosure = isIssuer and contractorClosure and not issuerClosure %}
+
+        {# --- Issuer subpermit attachments (hot_work / confined_space / atex) --- #}
+        {% if attachmentRequired %}
+            <div class="bozp-detail-section bozp-detail-section--attachments">
+                <h2 class="bozp-detail-section__title">{{ 'Kontroly a prílohy subpermitu'|t('bozp') }}</h2>
+                <p class="bozp-detail-section__subtitle" style="margin:4px 0 12px;color:#555;">
+                    {% if subpermit.type == 'hot_work' %}
+                        {{ 'Pre práce s otvoreným ohňom je potrebné nahrať fotodokumentáciu / dokument o stave pracoviska pred uzavretím subpermitu.'|t('bozp') }}
+                    {% elseif subpermit.type == 'confined_space' %}
+                        {{ 'Pre prácu v uzavretom priestore je potrebné nahrať záznam o meraní plynov / fotodokumentáciu pred uzavretím subpermitu.'|t('bozp') }}
+                    {% elseif subpermit.type == 'atex' %}
+                        {{ 'Pre prácu v ATEX zóne je potrebné nahrať záznam o hodinovom overovaní (doplnkové opatrenia) pred uzavretím subpermitu.'|t('bozp') }}
+                    {% endif %}
+                </p>
+
+                {% if (attachments ?? [])|length > 0 %}
+                    <ul class="bozp-attachments-list" style="list-style:none;padding:0;margin:0 0 16px;">
+                        {% for att in (attachments ?? []) %}
+                            {% set assetEl = craft.assets().id(att.assetId).one() %}
+                            <li style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eee;">
+                                <span style="flex:1;">
+                                    {% if assetEl %}
+                                        <a href="{{ assetEl.url }}" target="_blank" rel="noopener">{{ assetEl.filename }}</a>
+                                    {% else %}
+                                        <em class="bozp-empty">{{ '(súbor nedostupný)'|t('bozp') }}</em>
+                                    {% endif %}
+                                </span>
+                                <span style="font-size:12px;color:#777;">
+                                    {{ att.uploadedByName ?: '—' }} · {{ att.dateCreated|date('d.m.Y H:i') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="bozp-empty" style="margin:0 0 12px;">{{ 'Zatiaľ neboli nahrané žiadne prílohy.'|t('bozp') }}</p>
+                {% endif %}
+
+                {% if isIssuer and not issuerClosure %}
+                    <form method="post" action="" enctype="multipart/form-data"
+                          class="bozp-form bozp-form--upload" novalidate>
+                        {{ csrfInput() }}
+                        <input type="hidden" name="action"   value="bozp/subpermits/upload-attachment">
+                        <input type="hidden" name="permitId" value="{{ permit.id }}">
+                        <input type="hidden" name="id"       value="{{ subpermit.id }}">
+
+                        {% include 'bozp/site/_file-picker.twig' with {
+                            name:     'attachment',
+                            id:       'bozp-sp-att-file',
+                            required: true,
+                            hint:     'Nahrať prílohu (PDF, DOCX, JPG, PNG, max 10 MB)'|t('bozp'),
+                            accept:   '.pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
+                            errorMsg: null,
+                        } only %}
+
+                        <div class="bozp-form__actions">
+                            <button type="submit" class="bozp-btn bozp-btn--primary">
+                                {{ 'Nahrať prílohu'|t('bozp') }}
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        {% endif %}
         {# Pre-work signature is captured by the issuer on form submission; never via this page. #}
         {% set canIssuerSignPrework = false %}
 
@@ -581,7 +644,7 @@
 
         {# --- Actions --- #}
         <div class="bozp-form__actions">
-            <a href="{{ url('bozp/permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--primary">
+            <a href="{{ url('permits/' ~ permit.id) }}" class="bozp-btn bozp-btn--primary">
                 {{ 'Späť'|t('bozp') }}
             </a>
             {% if canCancel %}
@@ -598,4 +661,8 @@
             {% endif %}
         </div>
     </section>
+
+    {% if attachmentRequired and isIssuer and not issuerClosure %}
+        {% include 'bozp/site/_file-picker-js.twig' %}
+    {% endif %}
 {% endblock %}

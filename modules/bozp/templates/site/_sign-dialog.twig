@@ -8,10 +8,15 @@
      warning      — amber warning text on stage 1
      submitLabel  — label for the submit button on stage 2
      showEmployer — bool: include employer field
+     showJobTitle — bool: include jobTitle field (default false)
+     showDate     — bool: include signatureDate field (default true)
      errors       — assoc array of field → message
      values       — assoc array of field → current value
      extraFields  — pre-rendered HTML inserted at top of stage-2 form (e.g. checkboxes)
 #}
+
+{% set showJobTitle = showJobTitle ?? false %}
+{% set showDate     = showDate ?? true %}
 
 <dialog id="{{ id }}" class="bozp-sign-dialog"
         style="border:none;padding:0;border-radius:8px;max-width:560px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.25);"
@@ -61,13 +66,26 @@
                 </div>
             {% endif %}
 
-            <div class="bozp-form__field{% if errors.signatureDate is defined %} bozp-form__field--error{% endif %}">
-                <label>{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
-                <input type="date" name="signatureDate" value="{{ values.signatureDate ?? '' }}" required>
-                {% if errors.signatureDate is defined %}
-                    <p class="bozp-form__error">{{ errors.signatureDate }}</p>
-                {% endif %}
-            </div>
+            {% if showJobTitle %}
+                <div class="bozp-form__field{% if errors.jobTitle is defined %} bozp-form__field--error{% endif %}">
+                    <label>{{ 'Funkcia / pracovné zaradenie'|t('bozp') }}</label>
+                    <input type="text" name="jobTitle" value="{{ values.jobTitle ?? '' }}"
+                           maxlength="255" autocomplete="organization-title">
+                    {% if errors.jobTitle is defined %}
+                        <p class="bozp-form__error">{{ errors.jobTitle }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if showDate %}
+                <div class="bozp-form__field{% if errors.signatureDate is defined %} bozp-form__field--error{% endif %}">
+                    <label>{{ 'Dátum podpisu'|t('bozp') }} <span class="bozp-form__req">*</span></label>
+                    <input type="date" name="signatureDate" value="{{ values.signatureDate ?? '' }}" required>
+                    {% if errors.signatureDate is defined %}
+                        <p class="bozp-form__error">{{ errors.signatureDate }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
 
             <div class="bozp-form__field{% if errors.signatureData is defined %} bozp-form__field--error{% endif %}">
                 <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>
@@ -85,6 +103,8 @@
                     <p class="bozp-form__error">{{ errors.signatureData }}</p>
                 {% endif %}
             </div>
+
+            {% include 'bozp/site/_legal-ack.twig' %}
 
             <div class="bozp-dialog__actions"
                  style="display:flex;gap:8px;justify-content:space-between;margin-top:20px;">

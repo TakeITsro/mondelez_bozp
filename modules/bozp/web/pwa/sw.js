@@ -5,7 +5,7 @@
  * Strategy:
  *   - Precache: manifest + icon.
  *   - Static assets (css/js/fonts/img): cache-first.
- *   - Contractor portal (/bozp/c/*): network-only (no cache — never serve
+ *   - Contractor portal (/contractor/*): network-only (no cache — never serve
  *     stale signature state).
  *   - Other GET requests: network-first with cache fallback (offline page).
  *   - POST / non-GET: pass through, never cached.
@@ -13,7 +13,7 @@
  * Bump CACHE_VERSION whenever cache shape changes — old caches purge on activate.
  */
 
-const CACHE_VERSION = 'bozp-v1';
+const CACHE_VERSION = 'bozp-v2';
 const STATIC_CACHE  = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -51,7 +51,7 @@ self.addEventListener('fetch', function (event) {
     if (url.origin !== self.location.origin) return;
 
     // Contractor portal — never cache. Always network.
-    if (url.pathname.indexOf('/bozp/c/') === 0) return;
+    if (url.pathname.indexOf('/contractor/') === 0) return;
 
     // Static assets — cache-first.
     if (/\.(?:css|js|woff2?|ttf|svg|png|jpe?g|webp|ico|gif)$/i.test(url.pathname)) {

@@ -14,6 +14,7 @@
 #}
 
 {% set subpermitTypeLabel = subpermit.type|capitalize %}
+{% set dialogId = 'bozp-sp-sign-dialog' %}
 
 {% block title %}
     {% if alreadySigned %}
@@ -39,7 +40,7 @@
         {% endif %}
 
         {# PDF preview — gives the signer the full subpermit document before they sign. #}
-        <a href="{{ url('bozp/sp-sign/' ~ request.token ~ '/pdf') }}"
+        <a href="{{ url('sign/' ~ request.token ~ '/pdf') }}"
            target="_blank"
            rel="noopener"
            class="bozp-btn bozp-btn--primary bozp-btn--sm bozp-btn--pdf">
@@ -68,7 +69,7 @@
             {{ 'Túto záložku môžete zavrieť. Ďakujeme.'|t('bozp') }}
         </p>
 
-    {# ── Signing form ──────────────────────────────────────────────────── #}
+    {# ── Signing form (opens as modal) ─────────────────────────────────── #}
     {% else %}
 
         {# Role badge #}
@@ -130,84 +131,91 @@
             </table>
         </div>
 
-        {# Signing form #}
-        <form method="post" action="{{ url('bozp/sp-sign/sign') }}" class="bozp-form" novalidate>
-            {{ csrfInput() }}
-            <input type="hidden" name="action" value="bozp/subpermit-signing/sign">
-            <input type="hidden" name="token" value="{{ request.token }}">
-            <input type="hidden" name="signatureData" id="bozp-sig-data">
+        {# Trigger button — opens the shared signature modal. #}
+        <div class="bozp-form__actions">
+            <button type="button"
+                    class="bozp-btn bozp-btn--primary"
+                    data-bozp-open-dialog="{{ dialogId }}">
+                {{ 'Podpísať'|t('bozp') }}
+            </button>
+        </div>
 
-            <div class="bozp-form__field{% if errors.signerName is defined %} bozp-form__field--error{% endif %}">
-                <label for="signerName">
-                    {{ 'Vaše meno a priezvisko'|t('bozp') }}
-                    <span class="bozp-form__req">*</span>
-                </label>
-                <input type="text" id="signerName" name="signerName"
-                       value="{{ values.signerName ?? '' }}"
-                       maxlength="255"
-                       autocomplete="name"
-                       {% if errors.signerName is defined %}aria-invalid="true"{% endif %}>
-                {% if errors.signerName is defined %}
-                    <p class="bozp-form__error">{{ errors.signerName }}</p>
-                {% endif %}
-            </div>
+        {# Shared signature modal — includes legal acknowledgment. #}
+        {% set roleLabel = role ? role.label() : subpermit.type %}
+        {% set introText = 'Podpisom potvrdzujete, že ste si preštudovali podmienky subpermitu a súhlasíte s nimi v roli <strong>{role}</strong>.'|t('bozp', {role: roleLabel}) %}
+        {% set warningText = 'Elektronický podpis je právne záväzný. Uistite sa, že vypĺňate správne údaje.'|t('bozp') %}
 
-            <div class="bozp-form__field">
-                <label for="jobTitle">
-                    {{ 'Funkcia / pracovné zaradenie'|t('bozp') }}
-                </label>
-                <input type="text" id="jobTitle" name="jobTitle"
-                       value="{{ values.jobTitle ?? '' }}"
-                       maxlength="255"
-                       autocomplete="organization-title">
-            </div>
-
-            {# Signature pad #}
-            <div class="bozp-form__field{% if errors.signatureData is defined %} bozp-form__field--error{% endif %}">
-                <label>{{ 'Podpis'|t('bozp') }} <span class="bozp-form__req">*</span></label>
-                <div style="border:2px solid {% if errors.signatureData is defined %}#dc2626{% else %}#4F2170{% endif %};
-                            border-radius:4px;background:#fff;touch-action:none;cursor:crosshair;">
-                    <canvas id="bozp-sig-canvas"
-                            width="600" height="180"
-                            style="display:block;width:100%;height:180px;touch-action:none;">
-                    </canvas>
-                </div>
-                {% if errors.signatureData is defined %}
-                    <p class="bozp-form__error">{{ errors.signatureData }}</p>
-                {% endif %}
-                <button type="button" id="bozp-sig-clear"
-                        style="margin-top:6px;font-size:12px;background:none;border:none;
-                               cursor:pointer;color:#4F2170;text-decoration:underline;padding:0;">
-                    {{ 'Vymazať podpis'|t('bozp') }}
-                </button>
-            </div>
-
-            <p style="font-size:13px;color:#555;margin:0 0 20px;padding:10px 14px;
-                      background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;">
-                {{ 'Podpisom potvrdzujete, že ste si preštudovali podmienky subpermitu a súhlasíte s nimi v roli <strong>{role}</strong>.'|t('bozp', {
-                    role: role ? role.label() : subpermit.type
-                })|raw }}
-            </p>
-
-            <div class="bozp-form__actions">
-                <button type="submit" class="bozp-btn bozp-btn--primary" id="bozp-submit-btn">
-                    {{ 'Podpísať'|t('bozp') }}
-                </button>
-            </div>
-        </form>
+        {% include 'bozp/site/_sign-dialog.twig' with {
+            id:           dialogId,
+            action:       url('sign/submit'),
+            openOnLoad:   errors is not empty,
+            title:        'Podpis subpermitu'|t('bozp'),
+            intro:        introText,
+            warning:      warningText,
+            submitLabel:  'Podpísať'|t('bozp'),
+            showEmployer: false,
+            showJobTitle: true,
+            showDate:     false,
+            errors:       errors ?? {},
+            values:       values ?? {},
+            extraFields:  '<input type="hidden" name="action" value="bozp/subpermit-signing/sign"><input type="hidden" name="token" value="' ~ request.token ~ '">',
+        } only %}
     {% endif %}
 
 </section>
 
-{# ── Signature pad JS ──────────────────────────────────────────────────────── #}
+{# ── Dialog + signature-pad JS ─────────────────────────────────────────── #}
 {% if not alreadySigned %}
 <script>
 (function () {
-    const canvas  = document.getElementById('bozp-sig-canvas');
-    const dataIn  = document.getElementById('bozp-sig-data');
-    const clearBtn = document.getElementById('bozp-sig-clear');
-    if (!canvas) return;
+    const dialog = document.getElementById('{{ dialogId }}');
+    if (!dialog) return;
 
+    const openBtns  = document.querySelectorAll('[data-bozp-open-dialog="{{ dialogId }}"]');
+    const stages    = dialog.querySelectorAll('[data-stage]');
+    const proceedBt = dialog.querySelector('[data-bozp-action="proceed"]');
+    const cancelBt  = dialog.querySelector('[data-bozp-action="cancel"]');
+    const backBt    = dialog.querySelector('[data-bozp-action="back"]');
+    const canvas    = dialog.querySelector('[data-bozp-sigpad]');
+    const clearBt   = dialog.querySelector('[data-bozp-sigpad-clear]');
+    const sigInput  = dialog.querySelector('input[name="signatureData"]');
+    const form      = dialog.querySelector('form');
+
+    function showStage(name) {
+        stages.forEach(function (s) {
+            s.hidden = s.getAttribute('data-stage') !== name;
+        });
+    }
+
+    function open(stage) {
+        if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+        } else {
+            dialog.setAttribute('open', '');
+        }
+        showStage(stage || 'warning');
+    }
+
+    function close() {
+        if (typeof dialog.close === 'function') {
+            dialog.close();
+        } else {
+            dialog.removeAttribute('open');
+        }
+    }
+
+    openBtns.forEach(function (b) { b.addEventListener('click', function () { open('warning'); }); });
+    if (proceedBt) proceedBt.addEventListener('click', function () { showStage('form'); });
+    if (backBt)    backBt.addEventListener('click', function () { showStage('warning'); });
+    if (cancelBt)  cancelBt.addEventListener('click', function () { close(); });
+
+    // Auto-open on validation re-render.
+    if (dialog.hasAttribute('data-open-on-load')) {
+        open(dialog.getAttribute('data-open-on-load') || 'form');
+    }
+
+    // ── Signature pad ───────────────────────────────────────────────
+    if (!canvas || !sigInput) return;
     const ctx = canvas.getContext('2d');
     let drawing = false;
     let hasMark = false;
@@ -240,11 +248,11 @@
         ctx.stroke();
         hasMark = true;
     }
-    function stop(e) {
+    function stop() {
         if (!drawing) return;
         drawing = false;
         if (hasMark) {
-            dataIn.value = canvas.toDataURL('image/png');
+            sigInput.value = canvas.toDataURL('image/png');
         }
     }
 
@@ -256,21 +264,23 @@
     canvas.addEventListener('touchmove',  move,  { passive: false });
     canvas.addEventListener('touchend',   stop);
 
-    clearBtn.addEventListener('click', function () {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        dataIn.value = '';
-        hasMark = false;
-    });
+    if (clearBt) {
+        clearBt.addEventListener('click', function () {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            sigInput.value = '';
+            hasMark = false;
+        });
+    }
 
-    // Prevent form submit if no signature drawn
-    document.getElementById('bozp-submit-btn').addEventListener('click', function (e) {
-        if (!hasMark || !dataIn.value) {
-            e.preventDefault();
-            dataIn.value = '';
-            canvas.style.borderColor = '#000000';
-            alert('{{ "Prosím, podpíšte sa pred odoslaním."|t("bozp") }}');
-        }
-    });
+    // Block submit if no signature drawn.
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            if (!hasMark || !sigInput.value) {
+                e.preventDefault();
+                alert('{{ "Prosím, podpíšte sa pred odoslaním."|t("bozp") }}');
+            }
+        });
+    }
 })();
 </script>
 {% endif %}

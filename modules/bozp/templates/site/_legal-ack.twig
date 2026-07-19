@@ -1,0 +1,27 @@
+{#
+  Legal acknowledgment line for signature flows.
+  Fetches privacy + GDPR entries from the `universal` section by slug
+  and renders an acknowledgment paragraph. Falls back to plain labels
+  when an entry is not (yet) published.
+#}
+
+{% set privacyEntry = craft.entries().section('universal').slug('privacy').one() %}
+{% set gdprEntry    = craft.entries().section('universal').slug('gdpr').one() %}
+
+{% set privacyLabel = ('Ochrana osobných údajov'|t('bozp'))|e %}
+{% set gdprLabel    = ('Spracovanie osobných údajov'|t('bozp'))|e %}
+
+{% set privacyLink = privacyEntry
+    ? '<a href="' ~ privacyEntry.url ~ '" target="_blank" rel="noopener">' ~ (privacyEntry.title|e) ~ '</a>'
+    : privacyLabel %}
+{% set gdprLink = gdprEntry
+    ? '<a href="' ~ gdprEntry.url ~ '" target="_blank" rel="noopener">' ~ (gdprEntry.title|e) ~ '</a>'
+    : gdprLabel %}
+
+<p class="bozp-legal-ack"
+   style="font-size:11px;color:#666;line-height:1.45;margin:12px 0 8px;">
+    {{ 'Podpisom potvrdzujem, že som sa oboznámil/a s {privacy} a {gdpr}.'|t('bozp', {
+        privacy: privacyLink,
+        gdpr:    gdprLink,
+    })|raw }}
+</p>

@@ -5,9 +5,9 @@
 {% set selectedSubnavItem = 'queue' %}
 
 {% set crumbs = [
-    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
-    { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) },
-    { label: 'Upraviť'|t('bozp'), url: cpUrl('bozp/permit/' ~ permit.id ~ '/edit') }
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('permits') },
+    { label: permit.permitNumber, url: cpUrl('permits/' ~ permit.id) },
+    { label: 'Upraviť'|t('bozp'), url: cpUrl('permits/' ~ permit.id ~ '/edit') }
 ] %}
 
 {% set values = values ?? permit %}
@@ -37,7 +37,7 @@
                 </span>
             </div>
         </div>
-        <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn">← {{ 'Späť'|t('bozp') }}</a>
+        <a href="{{ cpUrl('permits/' ~ permit.id) }}" class="btn">← {{ 'Späť'|t('bozp') }}</a>
     </div>
 
     {% if errors|length > 0 %}
@@ -181,7 +181,7 @@
 
         <div class="buttons" style="margin-top:24px;">
             <button type="submit" class="btn submit">{{ 'Uložiť zmeny'|t('bozp') }}</button>
-            <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn">{{ 'Zrušiť'|t('bozp') }}</a>
+            <a href="{{ cpUrl('permits/' ~ permit.id) }}" class="btn">{{ 'Zrušiť'|t('bozp') }}</a>
         </div>
     </form>
 

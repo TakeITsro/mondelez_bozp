@@ -9,6 +9,7 @@ use craft\db\ActiveRecord;
 /**
  * @property int $id
  * @property int $permitId
+ * @property int|null $subpermitId
  * @property string $attachmentType
  * @property int $assetId
  * @property int|null $uploadedById

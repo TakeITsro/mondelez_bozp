@@ -123,14 +123,16 @@
                     {{ _self.field_error(errors, 'contractorCompany') }}
                 </div>
 
-                <div class="bozp-form-row">
+                <div class="bozp-form-row{% if errors.contractorPersonName is defined %} bozp-form-row--error{% endif %}">
                     <label for="contractorPersonName">{{ 'Kontaktná osoba'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
                     <input type="text"
                            id="contractorPersonName"
                            name="contractorPersonName"
                            value="{{ values.contractorPersonName ?? '' }}"
                            maxlength="255"
-                           required>
+                           required
+                           {% if errors.contractorPersonName is defined %}aria-invalid="true" aria-describedby="err-contractorPersonName"{% endif %}>
+                    {{ _self.field_error(errors, 'contractorPersonName') }}
                 </div>
 
                 <div class="bozp-form-row{% if errors.contractorEmail is defined %} bozp-form-row--error{% endif %}">
@@ -146,22 +148,24 @@
                 </div>
             </fieldset>
 
-            {% if zones|length > 0 %}
+            {% if (zones ?? [])|length > 0 %}
                 <fieldset class="bozp-form-section">
                     <legend class="bozp-form-section__title">{{ 'Zóna'|t('bozp') }}</legend>
                     <p class="bozp-form-section__hint">{{ 'Vyberte zónu, v ktorej sa práca vykonáva.'|t('bozp') }}</p>
 
-                    <div class="bozp-form-row">
+                    <div class="bozp-form-row{% if errors.zoneId is defined %} bozp-form-row--error{% endif %}">
                         <label for="zoneId">{{ 'Zóna'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
-                        <select name="zoneId" id="zoneId" required>
+                        <select name="zoneId" id="zoneId" required
+                                {% if errors.zoneId is defined %}aria-invalid="true" aria-describedby="err-zoneId"{% endif %}>
                             <option value="">{{ '— Vyberte zónu —'|t('bozp') }}</option>
-                            {% for zone in zones %}
+                            {% for zone in (zones ?? []) %}
                                 <option value="{{ zone.id }}"
                                         {% if (values.zoneId ?? null) == zone.id %}selected{% endif %}>
                                     {{ zone.name }}{% if zone.code %} ({{ zone.code }}){% endif %}
                                 </option>
                             {% endfor %}
                         </select>
+                        {{ _self.field_error(errors, 'zoneId') }}
                     </div>
                 </fieldset>
             {% endif %}
@@ -252,7 +256,7 @@
                                     <tr class="bozp-hazards__row">
                                         <th scope="row" class="bozp-hazards__label">
                                             <div class="label_wrapper">
-                                                <img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
+                                                <img src="/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
                                                 {{ cat.label()|t('bozp') }}
                                             </div>
                                         </th>
@@ -347,7 +351,7 @@
                 </p>
 
                 <div class="bozp-form__highrisk-types">
-                    {% for type in subpermitTypes %}
+                    {% for type in (subpermitTypes ?? []) %}
                         <label class="bozp-form__highrisk-opt">
                             <input type="checkbox"
                                    name="requiresHighRisk[]"
@@ -380,7 +384,7 @@
             </fieldset>
 
             <div class="bozp-form__actions">
-                <a href="{{ url('bozp') }}" class="bozp-btn bozp-btn--cancel">{{ 'Zrušiť'|t('bozp') }}</a>
+                <a href="{{ url('dashboard') }}" class="bozp-btn bozp-btn--cancel">{{ 'Zrušiť'|t('bozp') }}</a>
                 <button type="submit" name="intent" value="save" class="bozp-btn bozp-btn--primary">
                     {{ 'Uložiť ako koncept'|t('bozp') }}
                 </button>

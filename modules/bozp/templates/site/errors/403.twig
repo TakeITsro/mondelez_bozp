@@ -1,0 +1,24 @@
+{% extends 'bozp/site/_layout.twig' %}
+
+{% block title %}
+    {{ '403 — Prístup zamietnutý'|t('bozp') }}
+{% endblock %}
+
+{% block content %}
+<section class="bozp-page bozp-page--error bozp-page--403">
+
+    {# Designed later — placeholder body. #}
+    <h1>403<br>{{ 'Prístup zamietnutý'|t('bozp') }}</h1>
+
+    <p>
+        {{ 'Pre vstup do BOZP aplikácie použite hlavnú stránku.'|t('bozp') }}
+    </p>
+
+    <p>
+        <a href="{{ siteUrl('dashboard') }}" class="bozp-btn bozp-btn--primary">
+            {{ 'Späť na BOZP'|t('bozp') }}
+        </a>
+    </p>
+
+</section>
+{% endblock %}

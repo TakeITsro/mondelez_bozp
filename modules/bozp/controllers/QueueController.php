@@ -6,6 +6,7 @@ namespace modules\bozp\controllers;
 
 use Craft;
 use craft\elements\User;
+use craft\helpers\DateTimeHelper;
 use craft\web\Controller;
 use craft\web\View;
 use modules\bozp\enums\HazardCategory;
@@ -273,12 +274,11 @@ class QueueController extends Controller
         $this->requirePermission('bozp:approve');
 
         $permit = $this->findPermit($permitId);
-        $zones  = $this->loadZonesFor((int) $permit->id);
 
         $allZones = ZoneRecord::find()->orderBy(['sortOrder' => SORT_ASC, 'name' => SORT_ASC])->all();
 
-        $rawRequired = $permit->requiresHighRisk;
-        $selectedZoneIds = array_map(static fn(ZoneRecord $z) => (int) $z->id, $zones);
+        // Single zone lives on the permit row (the M2M table is legacy).
+        $selectedZoneIds = $permit->zoneId ? [(int) $permit->zoneId] : [];
 
         $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
@@ -287,8 +287,189 @@ class QueueController extends Controller
             'zones'           => $allZones,
             'selectedZoneIds' => $selectedZoneIds,
             'errors'          => [],
+            'values'          => $this->permitToValues($permit),
             'subpermitTypes'  => SubpermitType::cases(),
         ]);
+    }
+
+    /**
+     * POST bozp/permit/<id>/edit save target (HSE edits an existing permit).
+     * Writes via updateAll to avoid Yii AR re-binding the JSON column
+     * (requiresHighRisk) — see HANDOUT §18.
+     */
+    public function actionUpdatePermit(): ?Response
+    {
+        $this->requirePostRequest();
+        $this->requireLogin();
+        $this->requirePermission('bozp:approve');
+
+        $request = Craft::$app->getRequest();
+        $id = (int) $request->getRequiredBodyParam('id');
+        $permit = $this->findPermit($id);
+
+        $prep = $this->normalizePreparation((array) $request->getBodyParam('preparation', []));
+
+        $values = [
+            'contractorCompany'    => trim((string) $request->getBodyParam('contractorCompany', '')),
+            'contractorPersonName' => trim((string) $request->getBodyParam('contractorPersonName', '')),
+            'contractorEmail'      => trim((string) $request->getBodyParam('contractorEmail', '')),
+            'workLocation'         => trim((string) $request->getBodyParam('workLocation', '')),
+            'workOverview'         => trim((string) $request->getBodyParam('workOverview', '')),
+            'zoneId'               => (int) $request->getBodyParam('zoneId', 0) ?: null,
+            'approvalComment'      => trim((string) $request->getBodyParam('approvalComment', '')),
+            'requiresHighRisk'     => $this->normalizeRequiresHighRisk((array) $request->getBodyParam('requiresHighRisk', [])),
+        ];
+
+        // Craft forms.dateField / dateTimeField post nested arrays — read via
+        // DateTimeHelper, never a (string) cast (HANDOUT §18).
+        $validFrom = $this->readPostedDate($request->getBodyParam('validFrom'), 'Y-m-d');
+        $validTo   = $this->readPostedDate($request->getBodyParam('validTo'), 'Y-m-d H:i:s');
+
+        $errors = [];
+        if ($values['contractorCompany'] === '') {
+            $errors['contractorCompany'] = (string) Craft::t('bozp', 'Názov dodávateľa je povinný.');
+        }
+        if ($values['workLocation'] === '') {
+            $errors['workLocation'] = (string) Craft::t('bozp', 'Miesto výkonu je povinné.');
+        }
+        if ($values['workOverview'] === '') {
+            $errors['workOverview'] = (string) Craft::t('bozp', 'Popis prác je povinný.');
+        }
+        if ($values['contractorEmail'] !== '' && !filter_var($values['contractorEmail'], FILTER_VALIDATE_EMAIL)) {
+            $errors['contractorEmail'] = (string) Craft::t('bozp', 'Neplatná e-mailová adresa.');
+        }
+
+        if ($errors !== []) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Skontrolujte chyby vo formulári.'));
+            $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
+            return $this->renderTemplate('bozp/cp/permit-edit', [
+                'permit'          => $permit,
+                'zones'           => ZoneRecord::find()->orderBy(['sortOrder' => SORT_ASC, 'name' => SORT_ASC])->all(),
+                'selectedZoneIds' => $values['zoneId'] !== null ? [$values['zoneId']] : [],
+                'errors'          => $errors,
+                'values'          => $values + $prep + ['validFrom' => $validFrom, 'validTo' => $validTo],
+                'subpermitTypes'  => SubpermitType::cases(),
+            ]);
+        }
+
+        PermitRecord::updateAll(
+            [
+                'contractorCompany'         => $values['contractorCompany'] !== '' ? $values['contractorCompany'] : null,
+                'contractorPersonName'      => $values['contractorPersonName'] !== '' ? $values['contractorPersonName'] : null,
+                'contractorEmail'           => $values['contractorEmail'] !== '' ? $values['contractorEmail'] : null,
+                'workLocation'              => $values['workLocation'],
+                'workOverview'              => $values['workOverview'],
+                'validFrom'                 => $validFrom,
+                'validTo'                   => $validTo,
+                'conditionsSuitable'        => $this->ynToBool($prep['conditionsSuitable']),
+                'toolsInGoodCondition'      => $this->ynToBool($prep['toolsInGoodCondition']),
+                'hasStopConditions'         => $this->ynToBool($prep['hasStopConditions']),
+                'stopConditionsDescription' => $prep['stopConditionsDescription'] !== '' ? $prep['stopConditionsDescription'] : null,
+                'lotoImplemented'           => $this->ynToBool($prep['lotoImplemented']),
+                'emergencyPlan'             => $prep['emergencyPlan'] !== '' ? $prep['emergencyPlan'] : null,
+                'requiresHighRisk'          => $values['requiresHighRisk'] !== [] ? json_encode($values['requiresHighRisk']) : null,
+                'zoneId'                    => $values['zoneId'],
+                'approvalComment'           => $values['approvalComment'] !== '' ? $values['approvalComment'] : null,
+            ],
+            ['id' => $permit->id],
+        );
+
+        // Regenerate the PDF so it reflects the edited data.
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+        $fresh = PermitRecord::findOne(['id' => $permit->id]) ?? $permit;
+        try {
+            $module->permitPdfService->generateForPermit($fresh);
+        } catch (Throwable $e) {
+            Craft::error('Permit PDF regen after edit failed: ' . $e->getMessage(), __METHOD__);
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Zmeny boli uložené.'));
+        return $this->redirect("permits/{$permit->id}");
+    }
+
+    /**
+     * Build the template `values` array from a permit record so the CP
+     * edit form pre-populates.
+     *
+     * @return array<string, mixed>
+     */
+    private function permitToValues(PermitRecord $permit): array
+    {
+        return [
+            'contractorCompany'         => $permit->contractorCompany,
+            'contractorPersonName'      => $permit->contractorPersonName,
+            'contractorEmail'           => $permit->contractorEmail,
+            'workLocation'              => $permit->workLocation,
+            'workOverview'              => $permit->workOverview,
+            'validFrom'                 => $permit->validFrom,
+            'validTo'                   => $permit->validTo,
+            'conditionsSuitable'        => $permit->conditionsSuitable,
+            'toolsInGoodCondition'      => $permit->toolsInGoodCondition,
+            'hasStopConditions'         => $permit->hasStopConditions,
+            'stopConditionsDescription' => $permit->stopConditionsDescription,
+            'lotoImplemented'           => $permit->lotoImplemented,
+            'emergencyPlan'             => $permit->emergencyPlan,
+            'approvalComment'           => $permit->approvalComment,
+        ];
+    }
+
+    /**
+     * Read a Craft dateField / dateTimeField posted value (which may be a
+     * nested array) into a formatted string, or null. Never casts an array
+     * to string (HANDOUT §18).
+     */
+    private function readPostedDate(mixed $raw, string $format): ?string
+    {
+        if ($raw === null || $raw === '' || $raw === []) {
+            return null;
+        }
+        try {
+            $dt = DateTimeHelper::toDateTime($raw);
+        } catch (Throwable) {
+            return null;
+        }
+        return $dt ? $dt->format($format) : null;
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     * @return array<string, string>
+     */
+    private function normalizePreparation(array $raw): array
+    {
+        $yn = static function ($v): string {
+            $v = is_string($v) ? strtolower(trim($v)) : '';
+            return in_array($v, ['yes', 'no'], true) ? $v : '';
+        };
+
+        return [
+            'conditionsSuitable'        => $yn($raw['conditionsSuitable'] ?? ''),
+            'toolsInGoodCondition'      => $yn($raw['toolsInGoodCondition'] ?? ''),
+            'hasStopConditions'         => $yn($raw['hasStopConditions'] ?? ''),
+            'stopConditionsDescription' => trim((string) ($raw['stopConditionsDescription'] ?? '')),
+            'lotoImplemented'           => $yn($raw['lotoImplemented'] ?? ''),
+            'emergencyPlan'             => trim((string) ($raw['emergencyPlan'] ?? '')),
+        ];
+    }
+
+    /**
+     * @param array<mixed> $raw
+     * @return string[]
+     */
+    private function normalizeRequiresHighRisk(array $raw): array
+    {
+        $valid = array_map(fn(SubpermitType $t) => $t->value, SubpermitType::cases());
+        return array_values(array_intersect(array_map('strval', $raw), $valid));
+    }
+
+    private function ynToBool(string $v): ?bool
+    {
+        return match ($v) {
+            'yes' => true,
+            'no' => false,
+            default => null,
+        };
     }
 
     public function actionApproveSubpermit(): ?Response
@@ -306,7 +487,7 @@ class QueueController extends Controller
 
         if ($subpermit->status !== SubpermitStatus::Pending->value) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit nie je v stave na schválenie.'));
-            return $this->redirect("bozp/permit/{$permitId}");
+            return $this->redirect("permits/{$permitId}");
         }
 
         /** @var Module $module */
@@ -315,11 +496,24 @@ class QueueController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Pred schválením musia byť podpísané obidva predpracovné podpisy (vydavateľ + dodávateľ).')
             );
-            return $this->redirect("bozp/permit/{$permitId}");
+            return $this->redirect("permits/{$permitId}");
         }
 
         $now = date('Y-m-d H:i:s');
-        $expiresAt = date('Y-m-d H:i:s', strtotime('+8 hours'));
+
+        // Subpermit validity now anchors to the issuer-entered work date
+        // (data.date, Y-m-d). The window ends at end-of-day on that date.
+        // Fallback to "+8h from now" if the form value is missing or
+        // malformed so the subpermit still gets a defined expiry.
+        $rawData = is_string($subpermit->data)
+            ? (json_decode($subpermit->data, true) ?? [])
+            : (is_array($subpermit->data) ? $subpermit->data : []);
+        $workDate = (string) ($rawData['date'] ?? '');
+        if ($workDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $workDate)) {
+            $expiresAt = $workDate . ' 23:59:59';
+        } else {
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+8 hours'));
+        }
 
         $subpermit->status = SubpermitStatus::Approved->value;
         $subpermit->approverId = Craft::$app->getUser()->getId();
@@ -329,7 +523,7 @@ class QueueController extends Controller
         if (!$subpermit->save()) {
             Craft::error('Subpermit approve failed: ' . print_r($subpermit->getErrors(), true), __METHOD__);
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit sa nepodarilo schváliť.'));
-            return $this->redirect("bozp/permit/{$permitId}");
+            return $this->redirect("permits/{$permitId}");
         }
 
         // Generate subpermit PDF
@@ -345,8 +539,8 @@ class QueueController extends Controller
             );
         }
 
-        Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol schválený. Platnosť 8 hodín.'));
-        return $this->redirect("bozp/permit/{$permitId}");
+        Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol schválený.'));
+        return $this->redirect("permits/{$permitId}");
     }
 
     public function actionRejectSubpermit(): ?Response
@@ -362,7 +556,7 @@ class QueueController extends Controller
 
         if ($note === '') {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Pri zamietnutí je dôvod povinný.'));
-            return $this->redirect("bozp/permit/{$permitId}");
+            return $this->redirect("permits/{$permitId}");
         }
 
         $permit = $this->findPermit($permitId);
@@ -370,7 +564,7 @@ class QueueController extends Controller
 
         if ($subpermit->status !== SubpermitStatus::Pending->value) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit nie je v stave na zamietnutie.'));
-            return $this->redirect("bozp/permit/{$permitId}");
+            return $this->redirect("permits/{$permitId}");
         }
 
         $subpermit->status = SubpermitStatus::Rejected->value;
@@ -381,7 +575,7 @@ class QueueController extends Controller
         if (!$subpermit->save()) {
             Craft::error('Subpermit reject failed: ' . print_r($subpermit->getErrors(), true), __METHOD__);
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Subpermit sa nepodarilo zamietnuť.'));
-            return $this->redirect("bozp/permit/{$permitId}");
+            return $this->redirect("permits/{$permitId}");
         }
 
         // Generate subpermit PDF
@@ -390,7 +584,7 @@ class QueueController extends Controller
         $module->permitPdfService->generateForSubpermit($subpermit, $permit);
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol zamietnutý.'));
-        return $this->redirect("bozp/permit/{$permitId}");
+        return $this->redirect("permits/{$permitId}");
     }
 
     private function findSubpermit(int $id, int $permitId): SubpermitRecord
@@ -439,7 +633,7 @@ class QueueController extends Controller
 
         if ($permit->status !== PermitStatus::Submitted->value) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Permit nie je v stave na schválenie.'));
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         $comment = trim((string) Craft::$app->getRequest()->getBodyParam('comment', ''));
@@ -463,14 +657,14 @@ class QueueController extends Controller
                 $message .= ' [dev] ' . $e->getMessage();
             }
             Craft::$app->getSession()->setError($message);
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         // Generate PDF after transaction commit (silently on failure)
         $module->permitPdfService->generateForPermit($permit);
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Permit {n} bol schválený.', ['n' => $permit->permitNumber]));
-        return $this->redirect('bozp');
+        return $this->redirect('permits');
     }
 
     public function actionReject(): ?Response
@@ -484,14 +678,14 @@ class QueueController extends Controller
 
         if ($permit->status !== PermitStatus::Submitted->value) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Permit nie je v stave na zamietnutie.'));
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         $comment = trim((string) Craft::$app->getRequest()->getBodyParam('comment', ''));
 
         if ($comment === '') {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Pri zamietnutí je komentár povinný.'));
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         $userId = Craft::$app->getUser()->getId();
@@ -514,14 +708,14 @@ class QueueController extends Controller
                 $message .= ' [dev] ' . $e->getMessage();
             }
             Craft::$app->getSession()->setError($message);
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         // Generate PDF after transaction commit
         $module->permitPdfService->generateForPermit($permit);
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Permit {n} bol zamietnutý.', ['n' => $permit->permitNumber]));
-        return $this->redirect('bozp');
+        return $this->redirect('permits');
     }
 
     /**
@@ -543,7 +737,7 @@ class QueueController extends Controller
 
         if ($permit->status !== PermitStatus::AwaitingHseClosure->value) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Permit nie je v stave čakania na HSE.'));
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         $signerName = trim((string) $request->getBodyParam('signerName', ''));
@@ -562,7 +756,7 @@ class QueueController extends Controller
         }
         if ($errors !== []) {
             Craft::$app->getSession()->setError(implode(' ', $errors));
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         $userId = Craft::$app->getUser()->getId();
@@ -596,10 +790,10 @@ class QueueController extends Controller
                 $msg .= ' [debug: ' . $e->getMessage() . ']';
             }
             Craft::$app->getSession()->setError($msg);
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
-        return $this->redirect('bozp');
+        return $this->redirect('permits');
     }
 
     /**
@@ -638,7 +832,7 @@ class QueueController extends Controller
                 Craft::$app->getSession()->setError(
                     Craft::t('bozp', 'Notifikáciu možno znova odoslať len pre schválené alebo zamietnuté permity.')
                 );
-                return $this->redirect("bozp/permit/{$permit->id}");
+                return $this->redirect("permits/{$permit->id}");
             }
         } catch (Throwable $e) {
             Craft::error('Permit resend failed: ' . $e->getMessage(), __METHOD__);
@@ -647,11 +841,11 @@ class QueueController extends Controller
                 $error .= ' [dev] ' . $e->getMessage();
             }
             Craft::$app->getSession()->setError($error);
-            return $this->redirect("bozp/permit/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         Craft::$app->getSession()->setNotice($msg);
-        return $this->redirect("bozp/permit/{$permit->id}");
+        return $this->redirect("permits/{$permit->id}");
     }
 
     /**
@@ -680,13 +874,13 @@ class QueueController extends Controller
                 $msg .= ' [dev] ' . $e->getMessage();
             }
             Craft::$app->getSession()->setError($msg);
-            return $this->redirect("bozp/permit/{$id}");
+            return $this->redirect("permits/{$id}");
         }
 
         Craft::$app->getSession()->setNotice(
             Craft::t('bozp', 'Permit {n} bol zmazaný.', ['n' => $number])
         );
-        return $this->redirect('bozp/all');
+        return $this->redirect('permits/all');
     }
 
     /**

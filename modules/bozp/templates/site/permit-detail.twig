@@ -72,14 +72,14 @@
     <section class="bozp-page bozp-page--permit-detail">
         <header class="bozp-page__header">
             <p class="bozp-page__back ">
-                <a href="{{ url('bozp') }}">← {{ 'Moje permity'|t('bozp') }}</a>
+                <a href="{{ url('dashboard') }}">← {{ 'Moje permity'|t('bozp') }}</a>
             </p>
             <h1>{{ permit.permitNumber }}</h1>
             <div class="bozp-status__wrapper">
                 <span class="bozp-status bozp-status--{{ permit.status }}">
                     {{ statusLabels[permit.status] ?? permit.status }}
                 </span>
-                <a href="{{ url('bozp/permits/' ~ permit.id ~ '/pdf') }}"
+                <a href="{{ url('permits/' ~ permit.id ~ '/pdf') }}"
                    target="_blank"
                    rel="noopener"
                    class="bozp-btn bozp-btn--primary">
@@ -162,8 +162,8 @@
             <div class="bozp-detail-row">
                 <div class="bozp-detail-row__label">{{ 'Zóny'|t('bozp') }}</div>
                 <div class="bozp-detail-row__value">
-                    {%- if zones|length > 0 -%}
-                        {% for zone in zones %}
+                    {%- if (zones ?? [])|length > 0 -%}
+                        {% for zone in (zones ?? []) %}
                             <span class="bozp-tag">{{ zone.name }}{% if zone.code %} ({{ zone.code }}){% endif %}</span>
                         {% endfor %}
                     {%- else -%}—{%- endif -%}
@@ -223,7 +223,7 @@
         {# ---- Hazards matrix ---- #}
         <section class="bozp-detail-section bozp-detail-section--hazards">
             <h2>{{ 'Riziká a OOPP'|t('bozp') }}</h2>
-            {% set hasHazards = hazards is defined and hazards|length > 0 %}
+            {% set hasHazards = hazards is defined and (hazards ?? [])|length > 0 %}
             {% if not hasHazards %}
                 <p class="bozp-empty">{{ 'Neboli uvedené žiadne riziká.'|t('bozp') }}</p>
             {% else %}
@@ -238,13 +238,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for cat in hazardCategories %}
+                            {% for cat in (hazardCategories ?? []) %}
                                 {% set row = hazards[cat.value] ?? null %}
                                 {% if row %}
                                     <tr>
                                         <th scope="row">
                                             <div class="label_wrapper">
-                                                <img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
+                                                <img src="/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
                                                 {{ cat.label()|t('bozp') }}
                                             </div>
                                         </th>
@@ -271,8 +271,8 @@
         {# Build lookup maps from the SubpermitType enum cases passed by the controller #}
         {% set spLabelMap = {} %}
         {% set spAppendixMap = {} %}
-        {% if subpermitTypes is defined %}
-            {% for t in subpermitTypes %}
+        {% if (subpermitTypes ?? [])|length > 0 %}
+            {% for t in (subpermitTypes ?? []) %}
                 {% set spLabelMap = spLabelMap|merge({(t.value): t.label()}) %}
                 {% set spAppendixMap = spAppendixMap|merge({(t.value): t.appendixNumber()}) %}
             {% endfor %}
@@ -296,7 +296,7 @@
                                 + {{ 'Pridať subpermit'|t('bozp') }}
                             </button>
                         {% else %}
-                            <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/new') }}"
+                            <a href="{{ url('permits/' ~ permit.id ~ '/subpermits/new') }}"
                                class="bozp-btn bozp-btn--primary bozp-btn--sm">
                                 + {{ 'Pridať subpermit'|t('bozp') }}
                             </a>
@@ -304,7 +304,7 @@
                     {% endif %}
                 </div>
 
-                {% if subpermits|length == 0 %}
+                {% if (subpermits ?? [])|length == 0 %}
                     <p class="bozp-empty">{{ 'Zatiaľ neboli pridané žiadne subpermity.'|t('bozp') }}</p>
                 {% else %}
                     <table class="bozp-table bozp-subpermits-table">
@@ -320,7 +320,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for sp in subpermits %}
+                            {% for sp in (subpermits ?? []) %}
                                 {% set spData = sp.data is string ? sp.data|json_decode : (sp.data ?? {}) %}
                                 <tr>
                                     <td>
@@ -351,7 +351,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{{ url('bozp/permits/' ~ permit.id ~ '/subpermits/' ~ sp.id) }}"
+                                        <a href="{{ url('permits/' ~ permit.id ~ '/subpermits/' ~ sp.id) }}"
                                            class="bozp-link">{{ 'Detail'|t('bozp') }}</a>
                                     </td>
                                 </tr>
@@ -362,9 +362,9 @@
 
                 {# Missing required subpermits warning #}
                 {% set missingTypes = [] %}
-                {% for typeValue in requiredSubpermitTypes %}
+                {% for typeValue in (requiredSubpermitTypes ?? []) %}
                     {% set hasApproved = false %}
-                    {% for sp in subpermits %}
+                    {% for sp in (subpermits ?? []) %}
                         {% if sp.type == typeValue and sp.status == 'approved' %}
                             {% set hasApproved = true %}
                         {% endif %}
@@ -384,14 +384,14 @@
         {# ---- Attachments (list + upload form for issuer) ---- #}
         <section class="bozp-detail-section bozp-detail-section--attachments">
             <h2>{{ 'Prílohy'|t('bozp') }}</h2>
-            {% if attachments is not defined or attachments|length == 0 %}
+            {% if (attachments ?? [])|length == 0 %}
                 <div class="bozp-empty">
-                    <img src="https://testing.takeitsro.sk/assets/svg/noFile.svg" alt="No file">
+                    <img src="/assets/svg/noFile.svg" alt="No file">
                     <span>{{ 'Žiadne prílohy.'|t('bozp') }}</span>
                 </div>
             {% else %}
                 <ul class="bozp-attachments">
-                    {% for a in attachments %}
+                    {% for a in (attachments ?? []) %}
                         {% set asset = craft.assets().id(a.assetId).one() %}
                         <li>
                             {% if asset %}
@@ -409,7 +409,7 @@
 
             {% if isIssuer is defined and isIssuer %}
                 <form method="post"
-                      action="{{ url('bozp/permits/' ~ permit.id ~ '/upload') }}"
+                      action="{{ url('permits/' ~ permit.id ~ '/upload') }}"
                       enctype="multipart/form-data"
                       class="bozp-form bozp-form--upload"
                       novalidate>
@@ -520,7 +520,7 @@
 
                         {% include 'bozp/site/_sign-dialog.twig' with {
                             id: 'bozp-dialog-issuer-cancel',
-                            action: url('bozp/permits/' ~ permit.id ~ '/cancel'),
+                            action: url('permits/' ~ permit.id ~ '/cancel'),
                             openOnLoad: ce|length > 0,
                             title: 'Zrušenie permitu'|t('bozp'),
                             intro: 'Permit bude označený ako zrušený. Práca, na ktorú sa vzťahuje, je zrušená alebo pozastavená a zariadenie zostáva izolované.'|t('bozp'),
@@ -554,7 +554,7 @@
 
                         {% include 'bozp/site/_sign-dialog.twig' with {
                             id: 'bozp-dialog-issuer-close',
-                            action: url('bozp/permits/' ~ permit.id ~ '/close'),
+                            action: url('permits/' ~ permit.id ~ '/close'),
                             openOnLoad: xe|length > 0,
                             title: 'Uzavretie permitu'|t('bozp'),
                             intro: 'Práce, na ktoré sa vzťahuje toto povolenie, sú dokončené. Všetky LOTO zámky a štítky, izolácie atď. boli odstránené a zariadenie je vhodné na návrat do prevádzky.'|t('bozp'),
@@ -687,7 +687,7 @@
         {% endif %}
 
         {# ---- Control visits ---- #}
-        {% if controls is defined and controls|length > 0 %}
+        {% if (controls ?? [])|length > 0 %}
             {% set resultLabels = {
                 'ok':      'V poriadku'|t('bozp'),
                 'issues':  'Zistené nedostatky'|t('bozp'),
@@ -707,7 +707,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for c in controls %}
+                        {% for c in (controls ?? []) %}
                             <tr style="border-bottom:1px solid #f0f0f0;">
                                 <td style="padding:8px 10px;vertical-align:top;">{{ c.controlledAt|date('d.m.Y H:i') }}</td>
                                 <td style="padding:8px 10px;vertical-align:top;">{{ c.controllerName }}</td>
@@ -740,11 +740,11 @@
         {% endif %}
 
         {# ---- Audit trail ---- #}
-        {% if auditEntries|length > 0 %}
+        {% if (auditEntries ?? [])|length > 0 %}
             <section class="bozp-audit">
                 <h2>{{ 'História'|t('bozp') }}</h2>
                 <ol class="bozp-audit__list">
-                    {% for entry in auditEntries %}
+                    {% for entry in (auditEntries ?? []) %}
                         <li class="bozp-audit__entry">
                             <time>{{ entry.dateCreated|date('d.m.Y H:i') }}</time>
                             <code>{{ entry.action }}</code>

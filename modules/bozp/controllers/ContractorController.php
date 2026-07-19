@@ -102,7 +102,7 @@ class ContractorController extends Controller
         }
 
         $this->markAuthed($token);
-        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
     }
 
     public function actionUpload(string $token): Response
@@ -125,7 +125,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Permit je uzamknutý — ďalšie prílohy už nie je možné pridávať.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         $uploaded = UploadedFile::getInstanceByName('attachment');
@@ -134,7 +134,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Nepodarilo sa nahrať súbor. Skúste znova.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         // Type + size validation.
@@ -142,7 +142,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Súbor je príliš veľký. Maximálna veľkosť je 10 MB.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         $ext = strtolower((string) pathinfo($uploaded->name, PATHINFO_EXTENSION));
@@ -152,7 +152,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Nepodporovaný typ súboru. Povolené: PDF, DOCX, JPG, PNG.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         // Resolve volume + create asset.
@@ -162,7 +162,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Úložisko súborov nie je nastavené. Kontaktujte HSE.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         try {
@@ -229,7 +229,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError($msg);
         }
 
-        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
     }
 
     /**
@@ -252,11 +252,11 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Permit nie je v stave, v ktorom je možné dokončiť.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
         if ($this->signatures()->findSignature((int) $permit->id, SignatureRole::RecipientClosure)) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Dokončenie už bolo podpísané.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         $request = Craft::$app->getRequest();
@@ -303,7 +303,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError($msg);
         }
 
-        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
     }
 
     /**
@@ -327,11 +327,11 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Permit nie je v stave, v ktorom je možné zrušiť.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
         if ($this->signatures()->findSignature((int) $permit->id, SignatureRole::RecipientClosure)) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Dokončenie už bolo podpísané.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         $request = Craft::$app->getRequest();
@@ -372,7 +372,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError($msg);
         }
 
-        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
     }
 
     /**
@@ -399,13 +399,13 @@ class ContractorController extends Controller
 
         if (empty($permit->pdfAssetId)) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'PDF nie je k dispozícii.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         $asset = Craft::$app->getAssets()->getAssetById((int) $permit->pdfAssetId);
         if (!$asset || !$asset->url) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'PDF súbor nebol nájdený.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         return $this->redirect($asset->url);
@@ -444,13 +444,13 @@ class ContractorController extends Controller
 
         if (empty($subpermit->pdfAssetId)) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'PDF nie je k dispozícii.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         $asset = Craft::$app->getAssets()->getAssetById((int) $subpermit->pdfAssetId);
         if (!$asset || !$asset->url) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'PDF súbor nebol nájdený.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         return $this->redirect($asset->url);
@@ -607,7 +607,7 @@ class ContractorController extends Controller
             );
         }
 
-        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token . '/control'));
+        return $this->redirect(UrlHelper::siteUrl('contractor/' . $token . '/control'));
     }
 
     /**
@@ -620,7 +620,7 @@ class ContractorController extends Controller
 
         if ($userService->getIsGuest()) {
             $userService->setReturnUrl(Craft::$app->getRequest()->getAbsoluteUrl());
-            return $this->redirect(UrlHelper::siteUrl('bozp/login'));
+            return $this->redirect(UrlHelper::siteUrl('login'));
         }
 
         if (!$userService->checkPermission('bozp:control')) {
@@ -765,7 +765,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Subpermit musí byť schválený pred podpísom.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         /** @var Module $module */
@@ -776,7 +776,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Najprv musia byť podpísané obidva podpisy pred začatím prác.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         // Check not already signed by contractor
@@ -784,7 +784,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Subpermit bol už podpísaný dodávateľom.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         $signatureData = trim((string) $request->getBodyParam('signatureData', ''));
@@ -813,37 +813,26 @@ class ContractorController extends Controller
 
         if ($signatureData === '' || !str_starts_with($signatureData, 'data:image/png;base64,')) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis dodávateľa je povinný.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
         if ($signerName === '') {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Meno podpisujúceho je povinné.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
         if (count($closureStatus) === 0) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Vyberte aspoň jeden stav po dokončení.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
         if ($requiresTestRun === null) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Označte, či sa vyžaduje skúšobná prevádzka.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
-        // Hot work, confined space, and ATEX require at least one contractor
-        // attachment on the parent permit before closure can be signed.
-        //   - hot_work / confined_space: photo/document evidence of work area.
-        //   - atex: hourly-measure verification record (the "Additional
-        //     measures" sheet, signed off every hour by the works manager).
-        if (in_array($subpermit->type, ['hot_work', 'confined_space', 'atex'], true)) {
-            $attachmentCount = (int) PermitAttachmentRecord::find()
-                ->where(['permitId' => $permit->id, 'attachmentType' => 'contractor_upload'])
-                ->count();
-            if ($attachmentCount < 1) {
-                Craft::$app->getSession()->setError(
-                    Craft::t('bozp', 'Pred uzavretím tohto subpermitu je potrebné nahrať aspoň jednu prílohu.')
-                );
-                return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
-            }
-        }
+        // Attachment requirement (hot_work / confined_space / atex) is now
+        // enforced at the issuer-closure step in SubpermitsController, so
+        // the contractor can sign their closure without depending on a
+        // parent-permit attachment. The issuer uploads the required
+        // evidence on the subpermit detail page before signing closure.
 
         try {
             $module->subpermitSignatureService->capture(
@@ -871,11 +860,11 @@ class ContractorController extends Controller
         } catch (Throwable $e) {
             Craft::error('Subpermit contractor sign failed: ' . $e->getMessage(), __METHOD__);
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis sa nepodarilo uložiť. Skúste znova.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol podpísaný.'));
-        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
     }
 
     // ------------------------------------------------------------------
@@ -908,7 +897,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Predpracovný podpis je možný len pred schválením.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         /** @var Module $module */
@@ -923,7 +912,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Vydavateľ musí najprv podpísať pred začatím prác.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         // Already signed?
@@ -931,7 +920,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setNotice(
                 Craft::t('bozp', 'Predpracovný podpis dodávateľa už bol zaznamenaný.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         $signatureData  = trim((string) $request->getBodyParam('signatureData', ''));
@@ -943,7 +932,7 @@ class ContractorController extends Controller
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Podpis a meno sú povinné.')
             );
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         try {
@@ -959,13 +948,13 @@ class ContractorController extends Controller
         } catch (Throwable $e) {
             Craft::error('Subpermit prework sign failed: ' . $e->getMessage(), __METHOD__);
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis sa nepodarilo uložiť. Skúste znova.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
         Craft::$app->getSession()->setNotice(
             Craft::t('bozp', 'Predpracovný podpis dodávateľa bol zaznamenaný.')
         );
-        return $this->redirect(UrlHelper::siteUrl('bozp/c/' . $token));
+        return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
     }
 
     /**

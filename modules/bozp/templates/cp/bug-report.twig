@@ -5,7 +5,7 @@
 {% set selectedSubnavItem = 'bug-report' %}
 
 {% set crumbs = [
-    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('permits') },
     { label: title, url: '' }
 ] %}
 
@@ -59,7 +59,7 @@
 
         <div class="buttons" style="margin-top:20px;">
             <button type="submit" class="btn submit">{{ 'Odoslať'|t('bozp') }}</button>
-            <a href="{{ cpUrl('bozp') }}" class="btn">{{ 'Zrušiť'|t('bozp') }}</a>
+            <a href="{{ cpUrl('permits') }}" class="btn">{{ 'Zrušiť'|t('bozp') }}</a>
         </div>
     </form>
 </div>

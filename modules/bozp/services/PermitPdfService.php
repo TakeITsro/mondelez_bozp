@@ -221,7 +221,7 @@ class PermitPdfService extends Component
 
         // Contractor portal QR (no password — used by employees with accounts).
         $contractorUrl = !empty($permit->accessToken)
-            ? UrlHelper::siteUrl('bozp/c/' . $permit->accessToken)
+            ? UrlHelper::siteUrl('contractor/' . $permit->accessToken)
             : null;
         $contractorQrDataUri = $contractorUrl !== null
             ? $this->buildQrDataUri($contractorUrl)
@@ -296,7 +296,7 @@ class PermitPdfService extends Component
 
         // Contractor portal QR — same accessToken as the parent permit.
         $contractorUrl = !empty($permit->accessToken)
-            ? UrlHelper::siteUrl('bozp/c/' . $permit->accessToken)
+            ? UrlHelper::siteUrl('contractor/' . $permit->accessToken)
             : null;
         $contractorQrDataUri = $contractorUrl !== null
             ? $this->buildQrDataUri($contractorUrl)

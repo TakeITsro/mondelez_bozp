@@ -1,0 +1,17 @@
+{# Filename-swap JS for _file-picker.twig. Include ONCE per page.
+   Mirrors the inline script in permit-detail.twig (which is left untouched). #}
+<script>
+document.querySelectorAll('.bozp-form__file-input').forEach(function (input) {
+    input.addEventListener('change', function () {
+        var row = input.closest('.bozp-form-row--file');
+        if (!row) return;
+        var label = row.querySelector('.bozp-form__file-selected');
+        if (!label) return;
+        if (input.files && input.files.length > 0) {
+            label.textContent = input.files[0].name;
+        } else {
+            label.textContent = label.getAttribute('data-file-empty-label') || '';
+        }
+    });
+});
+</script>

@@ -17,8 +17,8 @@
 {% set selectedSubnavItem = 'queue' %}
 
 {% set crumbs = [
-    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') },
-    { label: permit.permitNumber, url: cpUrl('bozp/permit/' ~ permit.id) },
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('permits') },
+    { label: permit.permitNumber, url: cpUrl('permits/' ~ permit.id) },
     { label: ('Príloha č. {n}'|t('bozp'))|replace({'{n}': appendixN}), url: '' }
 ] %}
 
@@ -60,7 +60,7 @@
                 </span>
                 <span class="light" style="font-size:12px;">
                     {{ 'Permit'|t('bozp') }}:
-                    <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}">{{ permit.permitNumber }}</a>
+                    <a href="{{ cpUrl('permits/' ~ permit.id) }}">{{ permit.permitNumber }}</a>
                 </span>
                 {% if subpermit.status == 'approved' and subpermit.expiresAt %}
                     <span class="light" style="font-size:12px;">
@@ -70,14 +70,14 @@
             </div>
         </div>
         <div class="flex" style="gap:8px;">
-            <a href="{{ url('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/pdf') }}"
+            <a href="{{ url('permits/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/pdf') }}"
                target="_blank" rel="noopener"
                class="btn small">⬇ {{ 'Zobraziť PDF'|t('bozp') }}</a>
             {% if canApprove %}
-                <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/edit') }}"
+                <a href="{{ cpUrl('permits/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/edit') }}"
                    class="btn">{{ 'Upraviť'|t('bozp') }}</a>
             {% endif %}
-            <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn">← {{ 'Späť'|t('bozp') }}</a>
+            <a href="{{ cpUrl('permits/' ~ permit.id) }}" class="btn">← {{ 'Späť'|t('bozp') }}</a>
         </div>
     </div>
 
@@ -341,7 +341,7 @@
     {% if canApprove %}
         <hr style="margin-top:32px;">
         <h3>{{ 'Upraviť subpermit'|t('bozp') }}</h3>
-        <a href="{{ cpUrl('bozp/permit/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/edit') }}"
+        <a href="{{ cpUrl('permits/' ~ permit.id ~ '/subpermit/' ~ subpermit.id ~ '/edit') }}"
            class="btn">{{ 'Upraviť údaje subpermitu'|t('bozp') }}</a>
     {% endif %}
 

@@ -110,7 +110,7 @@ class BugReportController extends Controller
             ]);
         }
 
-        return $this->redirect('bozp/bug-report');
+        return $this->redirect('bug-report');
     }
 
     /**

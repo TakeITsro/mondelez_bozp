@@ -30,31 +30,33 @@ use yii\base\Component;
 class PermitMailer extends Component
 {
     /**
-     * New permit submitted — notify HSE officer.
+     * New permit submitted — notify every HSE officer with
+     * `bozp:receiveHseEmails`.
      */
     public function notifyHseOfSubmission(PermitRecord $permit): void
     {
-        $hseEmail = $this->resolveHseEmail();
-        if (!$hseEmail) {
+        $recipients = $this->findHseRecipients();
+        if ($recipients === []) {
             Craft::warning("BOZP mailer: no HSE recipient resolved for permit #{$permit->id}", __METHOD__);
             return;
         }
 
-        $hseUser = $this->findHseUser();
-        $language = $hseUser?->getPreferredLanguage() ?? Craft::$app->language;
+        $vars = [
+            'permit'     => $permit,
+            'permitUrl'  => UrlHelper::cpUrl('permits/' . $permit->id),
+            'subpermits' => $this->loadSubpermitsForEmail($permit),
+        ];
 
-        $this->send(
-            to: $hseEmail,
-            language: $language,
-            subjectKey: 'Nový permit čaká na schválenie: {n}',
-            subjectParams: ['n' => $permit->permitNumber],
-            template: 'submitted-hse',
-            vars: [
-                'permit'     => $permit,
-                'permitUrl'  => UrlHelper::cpUrl('bozp/permit/' . $permit->id),
-                'subpermits' => $this->loadSubpermitsForEmail($permit),
-            ],
-        );
+        foreach ($recipients as $recipient) {
+            $this->send(
+                to: $recipient['email'],
+                language: $recipient['language'] ?? Craft::$app->language,
+                subjectKey: 'Nový permit čaká na schválenie: {n}',
+                subjectParams: ['n' => $permit->permitNumber],
+                template: 'submitted-hse',
+                vars: $vars,
+            );
+        }
     }
 
     /**
@@ -64,7 +66,7 @@ class PermitMailer extends Component
     public function notifyParticipantsOfApproval(PermitRecord $permit, ?string $contractorPassword = null): void
     {
         $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
-        $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+        $issuerUrl = UrlHelper::siteUrl('permits/' . $permit->id);
         $subpermits = $this->loadSubpermitsForEmail($permit);
 
         if ($issuer && $issuer->email) {
@@ -83,7 +85,7 @@ class PermitMailer extends Component
             && !empty($permit->accessToken)
             && $contractorPassword !== null
         ) {
-            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $contractorUrl = UrlHelper::siteUrl('contractor/' . $permit->accessToken);
             $qrDataUri = $this->buildQrDataUri($contractorUrl);
 
             $this->send(
@@ -109,7 +111,7 @@ class PermitMailer extends Component
     public function notifyPermitExpiringSoon(PermitRecord $permit): void
     {
         $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
-        $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+        $issuerUrl = UrlHelper::siteUrl('permits/' . $permit->id);
 
         if ($issuer && $issuer->email) {
             $this->send(
@@ -127,7 +129,7 @@ class PermitMailer extends Component
         }
 
         if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
-            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $contractorUrl = UrlHelper::siteUrl('contractor/' . $permit->accessToken);
             $this->send(
                 to: $permit->contractorEmail,
                 language: Craft::$app->getSites()->getPrimarySite()->language,
@@ -149,7 +151,7 @@ class PermitMailer extends Component
     public function notifySubpermitExpiringSoon(SubpermitRecord $subpermit, PermitRecord $permit): void
     {
         $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
-        $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id . '/subpermits/' . $subpermit->id);
+        $issuerUrl = UrlHelper::siteUrl('permits/' . $permit->id . '/subpermits/' . $subpermit->id);
         $subpermitTypeLabel = ($spt = SubpermitType::tryFrom($subpermit->type)) ? $spt->label() : $subpermit->type;
 
         if ($issuer && $issuer->email) {
@@ -170,7 +172,7 @@ class PermitMailer extends Component
         }
 
         if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
-            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $contractorUrl = UrlHelper::siteUrl('contractor/' . $permit->accessToken);
             $this->send(
                 to: $permit->contractorEmail,
                 language: Craft::$app->getSites()->getPrimarySite()->language,
@@ -202,7 +204,7 @@ class PermitMailer extends Component
         // Issuer
         $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
         if ($issuer && $issuer->email) {
-            $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id . '/subpermits/' . $subpermit->id);
+            $issuerUrl = UrlHelper::siteUrl('permits/' . $permit->id . '/subpermits/' . $subpermit->id);
             $this->send(
                 to: $issuer->email,
                 language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
@@ -221,7 +223,7 @@ class PermitMailer extends Component
 
         // Contractor
         if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
-            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $contractorUrl = UrlHelper::siteUrl('contractor/' . $permit->accessToken);
             $this->send(
                 to: $permit->contractorEmail,
                 language: Craft::$app->getSites()->getPrimarySite()->language,
@@ -257,7 +259,7 @@ class PermitMailer extends Component
             return;
         }
 
-        $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+        $contractorUrl = UrlHelper::siteUrl('contractor/' . $permit->accessToken);
         $qrDataUri = $this->buildQrDataUri($contractorUrl);
 
         $subpermitTypeLabel = ($spt = SubpermitType::tryFrom($subpermit->type)) ? $spt->label() : $subpermit->type;
@@ -285,7 +287,7 @@ class PermitMailer extends Component
     public function notifyParticipantsOfRejection(PermitRecord $permit, string $reason): void
     {
         $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
-        $permitUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+        $permitUrl = UrlHelper::siteUrl('permits/' . $permit->id);
 
         if ($issuer && $issuer->email) {
             $this->send(
@@ -326,7 +328,7 @@ class PermitMailer extends Component
             return;
         }
 
-        $permitUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+        $permitUrl = UrlHelper::siteUrl('permits/' . $permit->id);
 
         $this->send(
             to: $issuer->email,
@@ -360,7 +362,7 @@ class PermitMailer extends Component
             return;
         }
 
-        $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+        $contractorUrl = UrlHelper::siteUrl('contractor/' . $permit->accessToken);
 
         $this->send(
             to: $permit->contractorEmail,
@@ -385,27 +387,28 @@ class PermitMailer extends Component
      */
     public function notifyHseOfClosurePending(PermitRecord $permit, string $issuerSignerName): void
     {
-        $hseEmail = $this->resolveHseEmail();
-        if (!$hseEmail) {
+        $recipients = $this->findHseRecipients();
+        if ($recipients === []) {
             Craft::warning("BOZP mailer: no HSE recipient for closure of permit #{$permit->id}", __METHOD__);
             return;
         }
 
-        $hseUser = $this->findHseUser();
-        $language = $hseUser?->getPreferredLanguage() ?? Craft::$app->language;
+        $vars = [
+            'permit'     => $permit,
+            'permitUrl'  => UrlHelper::cpUrl('permits/' . $permit->id),
+            'signerName' => $issuerSignerName,
+        ];
 
-        $this->send(
-            to: $hseEmail,
-            language: $language,
-            subjectKey: 'Permit {n} čaká na podpis HSE',
-            subjectParams: ['n' => $permit->permitNumber],
-            template: 'pending-hse-closure',
-            vars: [
-                'permit'     => $permit,
-                'permitUrl'  => UrlHelper::cpUrl('bozp/permit/' . $permit->id),
-                'signerName' => $issuerSignerName,
-            ],
-        );
+        foreach ($recipients as $recipient) {
+            $this->send(
+                to: $recipient['email'],
+                language: $recipient['language'] ?? Craft::$app->language,
+                subjectKey: 'Permit {n} čaká na podpis HSE',
+                subjectParams: ['n' => $permit->permitNumber],
+                template: 'pending-hse-closure',
+                vars: $vars,
+            );
+        }
     }
 
     /**
@@ -436,7 +439,7 @@ class PermitMailer extends Component
                 template: 'closed',
                 vars: [
                     'permit'     => $permit,
-                    'permitUrl'  => UrlHelper::siteUrl('bozp/permits/' . $permit->id),
+                    'permitUrl'  => UrlHelper::siteUrl('permits/' . $permit->id),
                     'signerName' => $signerName,
                     'recipient'  => 'issuer',
                 ],
@@ -454,7 +457,7 @@ class PermitMailer extends Component
                 template: 'closed',
                 vars: [
                     'permit'     => $permit,
-                    'permitUrl'  => UrlHelper::siteUrl('bozp/c/' . $permit->accessToken),
+                    'permitUrl'  => UrlHelper::siteUrl('contractor/' . $permit->accessToken),
                     'signerName' => $signerName,
                     'recipient'  => 'contractor',
                 ],
@@ -471,7 +474,7 @@ class PermitMailer extends Component
         PermitControlRecord $control,
     ): void {
         $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
-        $issuerUrl = UrlHelper::siteUrl('bozp/permits/' . $permit->id);
+        $issuerUrl = UrlHelper::siteUrl('permits/' . $permit->id);
 
         $vars = [
             'permit'          => $permit,
@@ -495,7 +498,7 @@ class PermitMailer extends Component
 
         // Notify contractor
         if (!empty($permit->contractorEmail) && !empty($permit->accessToken)) {
-            $contractorUrl = UrlHelper::siteUrl('bozp/c/' . $permit->accessToken);
+            $contractorUrl = UrlHelper::siteUrl('contractor/' . $permit->accessToken);
             $this->send(
                 to: $permit->contractorEmail,
                 language: Craft::$app->getSites()->getPrimarySite()->language,
@@ -639,18 +642,48 @@ class PermitMailer extends Component
         }
     }
 
-    private function findHseUser(): ?User
+    /**
+     * Resolve all recipients of HSE notification emails.
+     *
+     * Returns every active user that has the `bozp:receiveHseEmails`
+     * permission. If no user has it (fresh installs, missing config),
+     * falls back to a comma-separated env list in `BOZP_HSE_EMAIL`.
+     *
+     * @return array<int, array{email: string, language: ?string}>
+     */
+    private function findHseRecipients(): array
     {
-        return User::find()->can('bozp:approve')->status(null)->one();
-    }
+        $users = User::find()
+            ->can('bozp:receiveHseEmails')
+            ->status(null)
+            ->all();
 
-    private function resolveHseEmail(): ?string
-    {
-        $user = $this->findHseUser();
-        if ($user && $user->email) {
-            return $user->email;
+        $recipients = [];
+        foreach ($users as $user) {
+            if (!$user->email) {
+                continue;
+            }
+            $recipients[] = [
+                'email'    => $user->email,
+                'language' => $user->getPreferredLanguage(),
+            ];
         }
+
+        if ($recipients !== []) {
+            return $recipients;
+        }
+
+        // Fallback: comma-separated env list.
         $envEmail = trim((string) App::env('BOZP_HSE_EMAIL'));
-        return $envEmail !== '' ? $envEmail : null;
+        if ($envEmail === '') {
+            return [];
+        }
+        foreach (preg_split('/\s*,\s*/', $envEmail) as $addr) {
+            if ($addr === '') {
+                continue;
+            }
+            $recipients[] = ['email' => $addr, 'language' => null];
+        }
+        return $recipients;
     }
 }

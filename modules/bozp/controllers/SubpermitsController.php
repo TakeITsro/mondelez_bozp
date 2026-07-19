@@ -8,6 +8,7 @@ use Craft;
 use craft\elements\Asset;
 use craft\helpers\Assets;
 use craft\helpers\FileHelper;
+use craft\helpers\UrlHelper;
 use craft\web\UploadedFile;
 use craft\web\View;
 use modules\bozp\enums\PermitStatus;
@@ -15,6 +16,7 @@ use modules\bozp\enums\SubpermitSigningRole;
 use modules\bozp\enums\SubpermitStatus;
 use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
+use modules\bozp\records\PermitAttachmentRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\SubpermitRecord;
 use modules\bozp\services\SubpermitSignatureService;
@@ -36,6 +38,24 @@ use yii\web\Response;
 class SubpermitsController extends BaseSiteController
 {
     public array|bool|int $allowAnonymous = ['new', 'form', 'save', 'view', 'cancel', 'pdf', 'sign-prework'];
+
+    /**
+     * Subpermit types that require an issuer-uploaded attachment before
+     * closure can be signed. Hot work + confined space need photo/document
+     * evidence; ATEX needs the hourly verification sheet.
+     */
+    private const ATTACHMENT_REQUIRED_TYPES = ['hot_work', 'confined_space', 'atex'];
+
+    private const ISSUER_UPLOAD_TYPE = 'subpermit_issuer_upload';
+
+    private const ATT_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+    private const ATT_ALLOWED_EXT = ['pdf', 'docx', 'jpg', 'jpeg', 'png'];
+    private const ATT_ALLOWED_MIME = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png',
+    ];
 
     // -------------------------------------------------------------------------
     // Type selector
@@ -271,14 +291,14 @@ class SubpermitsController extends BaseSiteController
                 $msg .= ' [debug: ' . $e->getMessage() . ']';
             }
             Craft::$app->getSession()->setError($msg);
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/new/{$typeValue}");
+            return $this->redirect("permits/{$permitId}/subpermits/new/{$typeValue}");
         }
 
         $notice = ($signingRoles !== [])
             ? Craft::t('bozp', 'Subpermit bol uložený. Pozvania na podpis boli odoslané e-mailom.')
             : Craft::t('bozp', 'Subpermit bol uložený a podpísaný.');
         Craft::$app->getSession()->setNotice($notice);
-        return $this->redirect("bozp/permits/{$permitId}");
+        return $this->redirect("permits/{$permitId}");
     }
 
     // -------------------------------------------------------------------------
@@ -312,17 +332,159 @@ class SubpermitsController extends BaseSiteController
         $module = Craft::$app->getModule('bozp');
         $signatures = $module->subpermitSignatureService->findAllForSubpermit((int) $subpermit->id);
 
+        $attachments         = $this->loadSubpermitAttachments((int) $subpermit->id);
+        $attachmentRequired  = in_array($subpermit->type, self::ATTACHMENT_REQUIRED_TYPES, true);
+
         $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
 
         return $this->renderTemplate('bozp/site/subpermits/view', [
-            'permit' => $permit,
-            'subpermit' => $subpermit,
-            'subpermitType' => $subpermitType,
-            'values' => $data,
-            'isIssuer' => $isIssuer,
-            'canCancel' => $canCancel,
-            'signatures' => $signatures,
+            'permit'              => $permit,
+            'subpermit'           => $subpermit,
+            'subpermitType'       => $subpermitType,
+            'values'              => $data,
+            'isIssuer'            => $isIssuer,
+            'canCancel'           => $canCancel,
+            'signatures'          => $signatures,
+            'attachments'         => $attachments,
+            'attachmentRequired'  => $attachmentRequired,
         ]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Issuer subpermit-attachment upload
+    // -------------------------------------------------------------------------
+
+    /**
+     * Issuer uploads an attachment scoped to a single subpermit. Required
+     * for hot_work / confined_space / atex before issuer closure can be
+     * signed.
+     *
+     * Route: POST bozp/permits/<permitId>/subpermits/<id>/upload
+     */
+    public function actionUploadAttachment(): ?Response
+    {
+        $this->requirePostRequest();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $request  = Craft::$app->getRequest();
+        $permitId = (int) $request->getRequiredBodyParam('permitId');
+        $id       = (int) $request->getRequiredBodyParam('id');
+
+        $permit = $this->findPermit($permitId);
+        $this->requireIsIssuer($permit);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        // Block uploads once the subpermit is fully closed.
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+        if ($module->subpermitSignatureService->findSignature(
+            (int) $subpermit->id,
+            SubpermitSignatureService::ROLE_ISSUER_CLOSURE,
+        )) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Subpermit je uzamknutý — ďalšie prílohy už nie je možné pridávať.')
+            );
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
+        }
+
+        $uploaded = UploadedFile::getInstanceByName('attachment');
+        if (!$uploaded || $uploaded->getHasError()) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Nepodarilo sa nahrať súbor. Skúste znova.')
+            );
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
+        }
+
+        if ($uploaded->size > self::ATT_MAX_BYTES) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Súbor je príliš veľký. Maximálna veľkosť je 10 MB.')
+            );
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
+        }
+
+        $ext  = strtolower((string) pathinfo($uploaded->name, PATHINFO_EXTENSION));
+        $mime = (string) FileHelper::getMimeType($uploaded->tempName);
+        if (!in_array($ext, self::ATT_ALLOWED_EXT, true) || !in_array($mime, self::ATT_ALLOWED_MIME, true)) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Nepodporovaný typ súboru. Povolené: PDF, DOCX, JPG, PNG.')
+            );
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
+        }
+
+        try {
+            $volume = Craft::$app->getVolumes()->getVolumeByHandle('bozpAttachments');
+            if (!$volume) {
+                throw new \RuntimeException("Missing asset volume 'bozpAttachments'");
+            }
+            $rootFolder = Craft::$app->getAssets()->getRootFolderByVolumeId($volume->id);
+            if (!$rootFolder) {
+                throw new \RuntimeException('No root folder for bozpAttachments.');
+            }
+
+            $tempPath = $uploaded->saveAsTempFile();
+            if ($tempPath === false) {
+                throw new \RuntimeException('Could not copy uploaded file to temp location.');
+            }
+
+            $asset = new Asset();
+            $asset->tempFilePath           = $tempPath;
+            $asset->filename               = Assets::prepareAssetName($uploaded->name);
+            $asset->newFolderId            = $rootFolder->id;
+            $asset->volumeId               = $volume->id;
+            $asset->avoidFilenameConflicts = true;
+            $asset->setScenario(Asset::SCENARIO_CREATE);
+
+            if (!Craft::$app->getElements()->saveElement($asset)) {
+                throw new \RuntimeException('Asset save failed: ' . print_r($asset->getErrors(), true));
+            }
+
+            $user = Craft::$app->getUser()->getIdentity();
+
+            $att = new PermitAttachmentRecord();
+            $att->permitId       = (int) $permit->id;
+            $att->subpermitId    = (int) $subpermit->id;
+            $att->attachmentType = self::ISSUER_UPLOAD_TYPE;
+            $att->assetId        = (int) $asset->id;
+            $att->uploadedById   = (int) Craft::$app->getUser()->getId();
+            $att->uploadedByName = $user?->getFullName() ?: ($user?->username ?: '');
+            if (!$att->save()) {
+                throw new \RuntimeException('Attachment row save failed: ' . print_r($att->getErrors(), true));
+            }
+
+            $module->auditLogger->log(
+                permitId: (int) $permit->id,
+                userId: (int) Craft::$app->getUser()->getId(),
+                action: 'subpermit_issuer_upload',
+                note: $asset->filename,
+            );
+
+            Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Súbor bol nahraný.'));
+        } catch (Throwable $e) {
+            Craft::error('BOZP subpermit issuer upload failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Nahrávanie súboru zlyhalo. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+        }
+
+        return $this->redirect("permits/{$permitId}/subpermits/{$id}");
+    }
+
+    /**
+     * @return PermitAttachmentRecord[]
+     */
+    private function loadSubpermitAttachments(int $subpermitId): array
+    {
+        return PermitAttachmentRecord::find()
+            ->where([
+                'subpermitId'    => $subpermitId,
+                'attachmentType' => self::ISSUER_UPLOAD_TYPE,
+            ])
+            ->orderBy(['dateCreated' => SORT_DESC])
+            ->all();
     }
 
     // -------------------------------------------------------------------------
@@ -348,7 +510,7 @@ class SubpermitsController extends BaseSiteController
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Schválený subpermit nie je možné zrušiť.')
             );
-            return $this->redirect("bozp/permits/{$permitId}");
+            return $this->redirect("permits/{$permitId}");
         }
 
         try {
@@ -370,7 +532,7 @@ class SubpermitsController extends BaseSiteController
         }
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Subpermit bol zrušený.'));
-        return $this->redirect("bozp/permits/{$permitId}");
+        return $this->redirect("permits/{$permitId}");
     }
 
     // -------------------------------------------------------------------------
@@ -397,7 +559,7 @@ class SubpermitsController extends BaseSiteController
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Predpracovný podpis je možný len pred schválením (stav „čaká na schválenie").')
             );
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
         }
 
         /** @var Module $module */
@@ -411,7 +573,7 @@ class SubpermitsController extends BaseSiteController
             Craft::$app->getSession()->setNotice(
                 Craft::t('bozp', 'Predpracovný podpis vydavateľa už bol zaznamenaný.')
             );
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
         }
 
         $signatureData = trim((string) $request->getBodyParam('signatureData', ''));
@@ -422,7 +584,7 @@ class SubpermitsController extends BaseSiteController
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Podpis a meno sú povinné.')
             );
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
         }
 
         try {
@@ -443,13 +605,13 @@ class SubpermitsController extends BaseSiteController
                 $msg .= ' [debug: ' . $e->getMessage() . ']';
             }
             Craft::$app->getSession()->setError($msg);
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
         }
 
         Craft::$app->getSession()->setNotice(
             Craft::t('bozp', 'Predpracovný podpis vydavateľa bol zaznamenaný.')
         );
-        return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        return $this->redirect("permits/{$permitId}/subpermits/{$id}");
     }
 
     // -------------------------------------------------------------------------
@@ -484,7 +646,27 @@ class SubpermitsController extends BaseSiteController
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Dodávateľ musí najprv podpísať uzavretie.')
             );
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
+        }
+
+        // Hot work, confined space, and ATEX require at least one issuer
+        // attachment on this subpermit before closure can be signed.
+        //   - hot_work / confined_space: photo/document evidence of work area.
+        //   - atex: hourly-measure verification record (the "Additional
+        //     measures" sheet, signed off every hour by the works manager).
+        if (in_array($subpermit->type, self::ATTACHMENT_REQUIRED_TYPES, true)) {
+            $attachmentCount = (int) PermitAttachmentRecord::find()
+                ->where([
+                    'subpermitId'    => (int) $subpermit->id,
+                    'attachmentType' => self::ISSUER_UPLOAD_TYPE,
+                ])
+                ->count();
+            if ($attachmentCount < 1) {
+                Craft::$app->getSession()->setError(
+                    Craft::t('bozp', 'Pred uzavretím tohto subpermitu je potrebné nahrať aspoň jednu prílohu.')
+                );
+                return $this->redirect("permits/{$permitId}/subpermits/{$id}");
+            }
         }
 
         // Already signed?
@@ -495,7 +677,7 @@ class SubpermitsController extends BaseSiteController
             Craft::$app->getSession()->setNotice(
                 Craft::t('bozp', 'Uzávierkový podpis vydavateľa už bol zaznamenaný.')
             );
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
         }
 
         $signatureData = trim((string) $request->getBodyParam('signatureData', ''));
@@ -506,7 +688,7 @@ class SubpermitsController extends BaseSiteController
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Podpis a meno sú povinné.')
             );
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
         }
 
         try {
@@ -526,13 +708,13 @@ class SubpermitsController extends BaseSiteController
                 $msg .= ' [debug: ' . $e->getMessage() . ']';
             }
             Craft::$app->getSession()->setError($msg);
-            return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
         }
 
         Craft::$app->getSession()->setNotice(
             Craft::t('bozp', 'Uzávierkový podpis vydavateľa bol zaznamenaný.')
         );
-        return $this->redirect("bozp/permits/{$permitId}/subpermits/{$id}");
+        return $this->redirect("permits/{$permitId}/subpermits/{$id}");
     }
 
     // -------------------------------------------------------------------------
@@ -577,6 +759,72 @@ class SubpermitsController extends BaseSiteController
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * CP subpermit edit save target (HSE edits an existing subpermit).
+     * Reuses collectValues()/validate() so the per-type normalisation stays
+     * in one place. Gated on bozp:approve OR being the permit issuer.
+     *
+     * POST bozp/subpermits/update  (body: permitId, id, + form fields)
+     */
+    public function actionUpdate(): ?Response
+    {
+        $this->requirePostRequest();
+        $this->requireLogin();
+
+        $request  = Craft::$app->getRequest();
+        $permitId = (int) $request->getRequiredBodyParam('permitId');
+        $id       = (int) $request->getRequiredBodyParam('id');
+
+        $permit    = $this->findPermit($permitId);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        // Permission: HSE approver, or the permit's own issuer.
+        $userId   = (int) Craft::$app->getUser()->getId();
+        $isIssuer = (int) $permit->issuerId === $userId;
+        if (!Craft::$app->getUser()->checkPermission('bozp:approve') && !$isIssuer) {
+            throw new ForbiddenHttpException('Not allowed to edit this subpermit.');
+        }
+
+        $type = SubpermitType::tryFrom($subpermit->type);
+        if ($type === null) {
+            throw new NotFoundHttpException("Unknown subpermit type: {$subpermit->type}");
+        }
+
+        $values = $this->collectValues($type, $request);
+        $errors = $this->validate($values);
+
+        if ($errors !== []) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Skontrolujte chyby vo formulári.'));
+            $this->view->setTemplateMode(View::TEMPLATE_MODE_CP);
+            return $this->renderTemplate('bozp/cp/subpermit-edit', [
+                'permit'        => $permit,
+                'subpermit'     => $subpermit,
+                'subpermitType' => $type,
+                'values'        => $values,
+                'errors'        => $errors,
+                'canApprove'    => true,
+            ]);
+        }
+
+        // Persist via updateAll to avoid AR re-binding the JSON column.
+        SubpermitRecord::updateAll(
+            ['data' => json_encode($values)],
+            ['id' => $subpermit->id],
+        );
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+        $fresh  = SubpermitRecord::findOne(['id' => $subpermit->id]) ?? $subpermit;
+        try {
+            $module->permitPdfService->generateForSubpermit($fresh, $permit);
+        } catch (Throwable $e) {
+            Craft::error('Subpermit PDF regen after edit failed: ' . $e->getMessage(), __METHOD__);
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Zmeny boli uložené.'));
+        return $this->redirect(UrlHelper::cpUrl("permits/{$permitId}/subpermit/{$id}"));
+    }
 
     private function findPermit(int $permitId): PermitRecord
     {

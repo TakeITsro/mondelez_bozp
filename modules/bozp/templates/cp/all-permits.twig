@@ -17,7 +17,7 @@
 {% set selectedSubnavItem = 'all' %}
 
 {% set crumbs = [
-    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('bozp') }
+    { label: 'BOZP Permity'|t('bozp'), url: cpUrl('permits') }
 ] %}
 
 {% set statusLabels = {
@@ -80,7 +80,7 @@
                             <td>{{ permit.workLocation ?: '—' }}</td>
                             <td>{{ permit.dateCreated|date('d.m.Y H:i') }}</td>
                             <td>
-                                <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn small">
+                                <a href="{{ cpUrl('permits/' ~ permit.id) }}" class="btn small">
                                     {{ 'Otvoriť'|t('bozp') }}
                                 </a>
                             </td>

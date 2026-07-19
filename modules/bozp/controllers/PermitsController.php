@@ -177,7 +177,7 @@ class PermitsController extends BaseSiteController
             Craft::$app->getSession()->setError($msg);
         }
 
-        return $this->redirect("bozp/permits/{$permit->id}");
+        return $this->redirect("permits/{$permit->id}");
     }
 
     /**
@@ -203,7 +203,7 @@ class PermitsController extends BaseSiteController
             Craft::$app->getSession()->setError(
                 Craft::t('bozp', 'Permit nie je v stave, v ktorom je možné dokončiť. Dodávateľ ho musí najprv podpísať.')
             );
-            return $this->redirect("bozp/permits/{$permit->id}");
+            return $this->redirect("permits/{$permit->id}");
         }
 
         $request = Craft::$app->getRequest();
@@ -244,7 +244,7 @@ class PermitsController extends BaseSiteController
             Craft::$app->getSession()->setError($msg);
         }
 
-        return $this->redirect("bozp/permits/{$permit->id}");
+        return $this->redirect("permits/{$permit->id}");
     }
 
     /**
@@ -399,12 +399,12 @@ class PermitsController extends BaseSiteController
         $uploaded = UploadedFile::getInstanceByName('attachment');
         if (!$uploaded || $uploaded->getHasError()) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Nepodarilo sa nahrať súbor. Skúste znova.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/permits/' . $id));
+            return $this->redirect(UrlHelper::siteUrl('permits/' . $id));
         }
 
         if ($uploaded->size > 10 * 1024 * 1024) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Súbor je príliš veľký. Maximálna veľkosť je 10 MB.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/permits/' . $id));
+            return $this->redirect(UrlHelper::siteUrl('permits/' . $id));
         }
 
         $allowedExt  = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
@@ -419,7 +419,7 @@ class PermitsController extends BaseSiteController
 
         if (!in_array($ext, $allowedExt, true) || !in_array($mime, $allowedMime, true)) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Nepodporovaný typ súboru. Povolené: PDF, DOCX, JPG, PNG.'));
-            return $this->redirect(UrlHelper::siteUrl('bozp/permits/' . $id));
+            return $this->redirect(UrlHelper::siteUrl('permits/' . $id));
         }
 
         try {
@@ -476,7 +476,7 @@ class PermitsController extends BaseSiteController
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Nahrávanie súboru zlyhalo. Skúste znova.'));
         }
 
-        return $this->redirect(UrlHelper::siteUrl('bozp/permits/' . $id));
+        return $this->redirect(UrlHelper::siteUrl('permits/' . $id));
     }
 
     public function actionNew(): Response
@@ -679,7 +679,7 @@ class PermitsController extends BaseSiteController
                 $message .= ' [dev] ' . $e->getMessage();
             }
             Craft::$app->getSession()->setError($message);
-            return $this->redirect('bozp/permits/new');
+            return $this->redirect('permits/new');
         }
 
         // Notifications and PDF generation fire AFTER the transaction has committed,
@@ -695,7 +695,7 @@ class PermitsController extends BaseSiteController
 
         Craft::$app->getSession()->setNotice($msg);
 
-        return $this->redirect('bozp');
+        return $this->redirect('dashboard');
     }
 
     private const RA_ALLOWED_EXT  = ['pdf', 'docx', 'xlsx'];
@@ -860,11 +860,17 @@ class PermitsController extends BaseSiteController
         if ($values['contractorCompany'] === '') {
             $errors['contractorCompany'] = (string) Craft::t('bozp', 'Názov dodávateľa je povinný.');
         }
+        if ($values['contractorPersonName'] === '') {
+            $errors['contractorPersonName'] = (string) Craft::t('bozp', 'Kontaktná osoba je povinná.');
+        }
         if ($values['workLocation'] === '') {
             $errors['workLocation'] = (string) Craft::t('bozp', 'Miesto výkonu je povinné.');
         }
         if ($values['workOverview'] === '') {
             $errors['workOverview'] = (string) Craft::t('bozp', 'Popis prác je povinný.');
+        }
+        if (empty($values['zoneId'])) {
+            $errors['zoneId'] = (string) Craft::t('bozp', 'Zóna je povinná.');
         }
 
         if ($values['contractorEmail'] !== '' && !filter_var($values['contractorEmail'], FILTER_VALIDATE_EMAIL)) {

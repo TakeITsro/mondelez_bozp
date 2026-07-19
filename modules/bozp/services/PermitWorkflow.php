@@ -62,13 +62,25 @@ class PermitWorkflow extends Component
     /**
      * HSE officer approves a submitted permit.
      * Sets approverId, approvedAt, approvalComment, and stamps validTo =
-     * approvedAt + 7 days (general permits are valid for 7 days from approval).
+     * validFrom + 7 days (general permits are valid for 7 days from the
+     * planned start date the issuer entered at submission). If validFrom
+     * is missing for some reason, falls back to approvedAt + 7 days so
+     * the permit still has a defined window.
      */
     public function approve(PermitRecord $permit, int $actorUserId, ?string $comment = null): void
     {
         $now = new \DateTimeImmutable();
         $approvedAt = $now->format('Y-m-d H:i:s');
-        $validTo = $now->modify('+7 days')->format('Y-m-d H:i:s');
+
+        $validFromRaw = (string) ($permit->validFrom ?? '');
+        try {
+            $validFromBase = $validFromRaw !== ''
+                ? new \DateTimeImmutable($validFromRaw)
+                : $now;
+        } catch (\Throwable) {
+            $validFromBase = $now;
+        }
+        $validTo = $validFromBase->modify('+7 days')->format('Y-m-d H:i:s');
 
         // Generate the contractor's per-permit access credentials. The
         // plaintext password is held in memory just long enough to email

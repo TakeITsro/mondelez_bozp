@@ -26,7 +26,7 @@
                         {% set zone = zones[0] %}
                         {% set count = counts[zone.id] ?? 0 %}
                         {% set name = zone.name %}
-                        <a href="{{ url('bozp/map/zone/' ~ zone.id) }}" id="yard_btn" transform="translate(-321, -22.5)">
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="yard_btn" transform="translate(-321, -22.5)">
                             <path d="M2,972.5 L1244.5,972.5 L1721.13788,719.417938 C1740.74382,709.007706 1753,688.62325 1753,666.424924 L1753,147 L1758.5,147 L1758.5,110 L730,110 L646.36039,26.3603897 C629.482116,9.48211563 606.590263,0 582.720779,0 L50.1029335,0 C22.4485308,0 0.0461665466,22.4484833 0.103039234,50.1028275 L2,972.5 Z" id="yard" stroke="#4F2170" stroke-width="3" fill="#F1E0FF" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8"></path>
                             <path d="M1683,878 L1647,878 L1647,899 C1647,904.522847 1642.52285,909 1637,909 L1596.5,909 L1596.5,945.5 L1637,945.5 C1642.52285,945.5 1647,949.977153 1647,955.5 L1647,965 C1647,970.522847 1651.47715,975 1657,975 L1721.5,975 L1721.5,953.5" id="Path-2" stroke="#4F2170" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8"></path>
                             <path d="M1237.36802,650.376261 L1237.36802,871.000393 C1237.36802,898.898532 1267.00126,916.823484 1291.72294,903.879827 L1679.18914,705.526995 C1691.89116,696.723496 1694.75271,696.775525 1694.75271,681.968459 L1694.75271,681.968459 C1694.75271,674.450269 1688.83975,668.57581 1684.27901,666.860781 C1669.06337,661.140482 1621.37994,650.376261 1621.37994,650.376261 L1237.36802,650.376261 Z" id="yard" stroke="#4F2170" stroke-width="2.73239545" stroke-linecap="round"></path>
@@ -45,7 +45,7 @@
                         {% set zone = zones[1] %}
                         {% set count = counts[zone.id] ?? 0 %}
                         {% set name = zone.name %}
-                        <a href="{{ url('bozp/map/zone/' ~ zone.id) }}" id="btn" transform="translate(0, 140.2291)">
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(0, 140.2291)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" transform="translate(423, 309.3855) scale(1, -1) translate(-423, -309.3855)" points="0 617.770903 845.839157 617.770903 846 1 817.50468 1 817.004776 544 19.6571181 544 19.6571181 389 0.160843049 389"></polygon>
                             <text id="Main-coridor" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
                                 <tspan x="329.463" y="39.7709029">Main coridor</tspan>
@@ -64,7 +64,7 @@
                         {% set zone = zones[13] %}
                         {% set count = counts[zone.id] ?? 0 %}
                         {% set name = zone.name %}
-                        <a href="{{ url('bozp/map/zone/' ~ zone.id) }}" id="btn" transform="translate(297, 434)">
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(297, 434)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 86 320.901774 86 320.901774 0 0 0"></polygon>
                             <text id="BR-Packaging" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
                                 <tspan x="90.995" y="54">{{ name }}</tspan>
@@ -80,7 +80,7 @@
                         {% set zone = zones[10] %}
                         {% set count = counts[zone.id] ?? 0 %}
                         {% set name = zone.name %}
-                        <a href="{{ url('bozp/map/zone/' ~ zone.id) }}" id="btn" transform="translate(487, 215)">
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(487, 215)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 155 329.931047 155 330 0 276.580938 0 276.580938 88.0526274 0 88.0526274"></polygon>
                             <text id="CR1-Packaging" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
                                 <tspan x="90.965" y="133">{{ name }}</tspan>
@@ -92,127 +92,171 @@
                                 </text>
                             </g>
                         </a>
-                        <g id="btn" transform="translate(487, 215)">
+
+                        {% set zone = zones[9] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(487, 215)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 88 277 88 277 0 0 0"></polygon>
                             <text id="CR1-Injection" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="44.989" y="55">CR1 Injection</tspan>
+                                <tspan x="44.989" y="55">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(194.5, 25)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="2" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="16.19" y="28">2</tspan>
+                                    <tspan x="16.19" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(555, 0)">
+                        </a>
+
+                        {% set zone = zones[5] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(555, 0)">
                             <polygon id="btn-" stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 73 277 73 277 0 0 0"></polygon>
                             <text id="Offices" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="77.559" y="48">Offices</tspan>
+                                <tspan x="77.559" y="48">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(165, 16)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="8.23" y="28">125</tspan>
+                                    <tspan x="8.23" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(846, 271)">
+                        </a>
+
+                        {% set zone = zones[3] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(846, 271)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 273 410 273 410 0 0 0"></polygon>
                             <text id="Dambach" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="158.441" y="148">Dambach</tspan>
+                                <tspan x="158.441" y="148">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(183, 154)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="8.23" y="28">125</tspan>
+                                    <tspan x="8.23" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(846, 141)">
+                        </a>
+
+                        {% set zone = zones[2] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(846, 141)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" transform="translate(205, 65) scale(1, -1) translate(-205, -65)" points="0 130 410 130 410 0 0 0"></polygon>
                             <text id="carton-warehouse" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="105.42" y="76">carton warehouse</tspan>
+                                <tspan x="105.42" y="76">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(323, 45)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="8.23" y="28">125</tspan>
+                                    <tspan x="8.23" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(845.5624, 543.876)">
+                        </a>
+
+                        {% set zone = zones[4] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(845.5624, 543.876)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 77 410 77 410 0 0 0"></polygon>
                             <text id="Ares" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="173.270128" y="45.3314625">Ares</tspan>
+                                <tspan x="173.270128" y="45.3314625">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(234.4376, 18.124)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="8.23" y="28">125</tspan>
+                                    <tspan x="8.23" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(420, 758)">
+                        </a>
+
+                        {% set zone = zones[17] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(420, 758)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 145 425 145 425 0 0 0"></polygon>
                             <text id="CR2-Lamination" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="105.997" y="84">CR2 Lamination</tspan>
+                                <tspan x="105.997" y="84">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(279, 52)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="15.81" y="28">0</tspan>
+                                    <tspan x="15.81" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(230.833, 757.8001)">
+                        </a>
+
+                        {% set zone = zones[16] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(230.833, 757.8001)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 88 189 88 189 2.27373675e-13 0 2.27373675e-13"></polygon>
                             <text id="CR2-Injection" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="23.2403466" y="32.8477234">CR2 Injection</tspan>
+                                <tspan x="23.2403466" y="32.8477234">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(74.167, 41.1999)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="52" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="11.41" y="28">52</tspan>
+                                    <tspan x="11.41" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(153, 604)">
+                        </a>
+
+                        {% set zone = zones[15] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(153, 604)">
                             <polygon id="btn-" stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 154 377 154 377 2.27373675e-13 0 2.27373675e-13"></polygon>
                             <text id="CR2-Packaging" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="84.281" y="88">CR2 Packaging</tspan>
+                                <tspan x="84.281" y="88">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(247, 57)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="236" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="6.75" y="28">236</tspan>
+                                    <tspan x="6.75" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(297, 369)">
+                        </a>
+
+                        {% set zone = zones[12] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(297, 369)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 65 520 65 520 0 0 0"></polygon>
                             <text id="BR-Lamination" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="202.541281" y="44.2505211">BR Lamination</tspan>
+                                <tspan x="202.541281" y="44.2505211">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(362, 12)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="15.81" y="28">0</tspan>
+                                    <tspan x="15.81" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(122, 369)">
+                        </a>
+
+                        {% set zone = zones[11] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(122, 369)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 151 175 151 175 0 0 0"></polygon>
                             <text id="BR-Grotte" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="35.285" y="66">BR Grotte</tspan>
+                                <tspan x="35.285" y="66">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(67, 77)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="236" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="6.75" y="28">236</tspan>
+                                    <tspan x="6.75" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(1083, 854)">
+                        </a>
+
+                        {% set zone = zones[18] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(1083, 854)">
                             <rect stroke="#4F2170" stroke-width="3" fill="#FAF4FF" x="280.5" y="1.5" width="74" height="74"></rect>
                             <text id="water-treatment-plan" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
                                 <tspan x="0" y="45">water treatment</tspan>
@@ -221,11 +265,15 @@
                             <g id="permit" transform="translate(298, 18)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="15.81" y="28">0</tspan>
+                                    <tspan x="15.81" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(223.4792, 517)">
+                        </a>
+
+                        {% set zone = zones[7] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(223.4792, 517)">
                             <polygon stroke="#4F2170" stroke-width="2.73239545" fill="#FAF4FF" points="-0.479187773 87.0057414 593.520812 87.0057414 593.520812 3.00574139 -0.479187773 3.00574139"></polygon>
                             <polygon id="stroke-22" stroke="#4F2170" points="0 87.2548086 32.6094771 87.2548086 32.6094771 44.7519379 0 44.7519379"></polygon>
                             <polygon id="stroke-21" stroke="#4F2170" points="32.6094771 87.2548086 51.9598486 87.2548086 51.9598486 44.7519379 32.6094771 44.7519379"></polygon>
@@ -240,47 +288,59 @@
                             <polygon id="stroke-9" stroke="#4F2170" points="502.785821 87.2548086 544.480152 87.2548086 544.480152 30.3630305 502.785821 30.3630305"></polygon>
                             <polygon id="stroke-8" stroke="#4F2170" points="544.480152 87.2548086 594.086381 87.2548086 594.086381 30.3630305 544.480152 30.3630305"></polygon>
                             <text id="Feedstock" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="243.700812" y="27">Feedstock</tspan>
+                                <tspan x="243.700812" y="27">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(276.5208, 36)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="15.81" y="28">0</tspan>
+                                    <tspan x="15.81" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(617.9018, 434)">
+                        </a>
+
+                        {% set zone = zones[14] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(617.9018, 434)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" transform="translate(99.5, 43) scale(-1, 1) translate(-99.5, -43)" points="0 86 199 86 199 0 0 0"></polygon>
                             <polygon id="stroke-13" stroke="#4F2170" points="119.309202 85.2500307 137.635045 85.2500307 137.635045 52.4457499 119.309202 52.4457499"></polygon>
                             <polygon id="stroke-12" stroke="#4F2170" points="137.635045 85.2500307 169.96791 85.2500307 169.96791 52.4457499 137.635045 52.4457499"></polygon>
                             <polygon id="stroke-11" stroke="#4F2170" points="88.1700135 85.2497416 14.5803876 85.2497416 14.5803876 46.969891 48.0958441 46.969891 48.0958441 52.4454609 88.1700135 52.4454609"></polygon>
                             <polygon id="stroke-4" stroke="#4F2170" points="88.1704954 85.2500307 119.309202 85.2500307 119.309202 52.4457499 88.1704954 52.4457499"></polygon>
                             <text id="Crumb" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="66.1172263" y="36">Crumb</tspan>
+                                <tspan x="66.1172263" y="36">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(136.0982, 5)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="0" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="15.81" y="28">0</tspan>
+                                    <tspan x="15.81" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(19.7128, 215.0914)">
+                        </a>
+
+                        {% set zone = zones[8] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(19.7128, 215.0914)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0.287154521 153.908578 467.287155 153.908578 467.287155 -0.0914215832 0.287154521 -0.0914215832"></polygon>
                             <polygon id="stroke-6" stroke="#4F2170" points="0 134.13171 135.906554 134.13171 135.906554 1.13686838e-13 0 1.13686838e-13"></polygon>
                             <polygon id="stroke-5" stroke="#4F2170" points="153.006435 140.451306 320.001577 140.451306 320.001577 70.5175935 153.006435 70.5175935"></polygon>
                             <polygon id="stroke-3" stroke="#4F2170" points="-18.8737193 -17.8623245 826.126281 -17.8623245 826.126281 -74.8623245 -18.8737193 -74.8623245"></polygon>
                             <text id="CR1-Lamination" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="26" font-weight="normal" fill="#4F2170">
-                                <tspan x="154.468155" y="42.9085784">CR1 Lamination</tspan>
+                                <tspan x="154.468155" y="42.9085784">{{ name }}</tspan>
                             </text>
                             <g id="permit" transform="translate(322.2872, 12.9086)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="125" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="8.23" y="28">125</tspan>
+                                    <tspan x="8.23" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
-                        <g id="btn" transform="translate(0, 370)">
+                        </a>
+
+                        {% set zone = zones[6] %}
+                        {% set count = counts[zone.id] ?? 0 %}
+                        {% set name = zone.name %}
+                        <a href="{{ url('map/zone/' ~ zone.id) }}" class="map_area {% if count > 0%}active{% endif %}" id="btn" transform="translate(0, 370)">
                             <polygon stroke="#4F2170" stroke-width="3" fill="#FAF4FF" points="0 533 178 533 178 388.5 153 388.5 153 234.5 223 234 223 150 122 150 122.12121 0 0 0"></polygon>
                             <polygon id="stroke-23" stroke="#4F2170" points="121.960336 233.283512 222.960336 233.283512 222.960336 181.283512 121.960336 181.283512"></polygon>
                             <polygon id="stroke-7" stroke="#4F2170" points="138.162911 434.601122 178.198528 434.601122 178.198528 388.601122 138.162911 388.601122"></polygon>
@@ -290,10 +350,10 @@
                             <g id="permit" transform="translate(41, 80)">
                                 <circle id="Oval" fill="#4F2170" cx="21" cy="21" r="21"></circle>
                                 <text id="6" font-family="MDLZBITETYPE-Regular, MDLZ BITE TYPE" font-size="20" font-weight="normal" fill="#FEFFFD">
-                                    <tspan x="16.12" y="28">6</tspan>
+                                    <tspan x="16.12" y="28">{{ count }}</tspan>
                                 </text>
                             </g>
-                        </g>
+                        </a>
                     </g>
                     <g id="paths" stroke-width="1" fill-rule="evenodd" transform="translate(35.2197, 57.327)" stroke="#4F2170">
                         <polyline id="Stroke-4" stroke-width="16" points="1131.03004 676.836128 1131.03004 595.549496 1548.34344 595.549496 1548.34344 101.478314 278.592052 101.478314 278.592052 182.764945"></polyline>
@@ -315,25 +375,6 @@
                     <path id="Path-4" d="M1791.5,139.5 L1791.5,127.5 L1789.5,127.5 L1789.5,139.5 L1791.5,139.5 Z M1722.5,896.5 C1726.36599,896.5 1729.5,893.365993 1729.5,889.5 C1729.5,885.634007 1726.36599,882.5 1722.5,882.5 C1718.63401,882.5 1715.5,885.634007 1715.5,889.5 C1715.5,893.365993 1718.63401,896.5 1722.5,896.5 Z M1722.5,894.5 C1719.73858,894.5 1717.5,892.261424 1717.5,889.5 C1717.5,886.738576 1719.73858,884.5 1722.5,884.5 C1725.26142,884.5 1727.5,886.738576 1727.5,889.5 C1727.5,892.261424 1725.26142,894.5 1722.5,894.5 Z M1790.5,132.5 L1722.5,132.5 L1721.5,132.5 L1721.5,133.5 L1721.5,883.5 L1723.5,883.5 L1723.5,133.5 L1722.5,134.5 L1790.5,134.5 L1790.5,132.5 Z" fill="#CCB8DC" fill-rule="nonzero"></path>
                 </g>
             </svg>
-
-            {# ── Zone overlays. Each zone has its own slug-based class
-               (e.g. .bozp-map__zone--courtyard) so you can pin it to the
-               correct spot over the SVG via the CSS block at the bottom. #}
-{#            <div class="bozp-map__zones">#}
-{#                {% for zone in zones %}#}
-{#                    {% set count = counts[zone.id] ?? 0 %}#}
-{#                    {% set slug = zone.code ?: ('zone-' ~ zone.id) %}#}
-{#                    <a class="bozp-map__zone bozp-map__zone--{{ slug }} {% if count > 0 %}bozp-map__zone--has-active{% endif %}"#}
-{#                       href="{{ url('bozp/map/zone/' ~ zone.id) }}"#}
-{#                       data-zone-id="{{ zone.id }}"#}
-{#                       data-zone-slug="{{ slug }}">#}
-{#                        <span class="bozp-map__zone-name">{{ zone.name }}</span>#}
-{#                        <span class="bozp-map__zone-count" aria-label="{{ 'Aktívne permity'|t('bozp') }}">#}
-{#                            {{ count }}#}
-{#                        </span>#}
-{#                    </a>#}
-{#                {% endfor %}#}
-{#            </div>#}
         </div>
 
         <ul class="bozp-map__legend">
@@ -346,6 +387,25 @@
                 {{ 'Zóna bez aktívnych permitov'|t('bozp') }}
             </li>
         </ul>
+
+        {# ── Zone overlays. Each zone has its own slug-based class
+               (e.g. .bozp-map__zone--courtyard) so you can pin it to the
+               correct spot over the SVG via the CSS block at the bottom. #}
+        <div class="bozp-map__zones_mobile">
+            {% for zone in (zones ?? []) %}
+                {% set count = counts[zone.id] ?? 0 %}
+                {% set slug = zone.code ?: ('zone-' ~ zone.id) %}
+                <a class="bozp-map__zone bozp-map__zone--{{ slug }} {% if count > 0 %}bozp-map__zone--has-active{% endif %}"
+                   href="{{ url('map/zone/' ~ zone.id) }}"
+                   data-zone-id="{{ zone.id }}"
+                   data-zone-slug="{{ slug }}">
+                    <span class="bozp-map__zone-name">{{ zone.name }}</span>
+                    <span class="bozp-map__zone-count" aria-label="{{ 'Aktívne permity'|t('bozp') }}">
+                            {{ count }}
+                        </span>
+                </a>
+            {% endfor %}
+        </div>
     </section>
 
     <style>

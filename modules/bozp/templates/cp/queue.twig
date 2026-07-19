@@ -5,7 +5,7 @@
 {% set selectedSubnavItem = 'queue' %}
 
 {% set crumbs = [
-    { label: "BOZP Permity"|t('bozp'), url: cpUrl('bozp') }
+    { label: "BOZP Permity"|t('bozp'), url: cpUrl('permits') }
 ] %}
 
 {% css %}
@@ -77,7 +77,7 @@
                                 {%- else -%}—{%- endif -%}
                             </td>
                             <td>
-                                <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn small">{{ "Otvoriť"|t('bozp') }}</a>
+                                <a href="{{ cpUrl('permits/' ~ permit.id) }}" class="btn small">{{ "Otvoriť"|t('bozp') }}</a>
                             </td>
                         </tr>
                     {% endfor %}
@@ -113,7 +113,7 @@
                                 {%- else -%}—{%- endif -%}
                             </td>
                             <td>
-                                <a href="{{ cpUrl('bozp/permit/' ~ permit.id) }}" class="btn small submit">
+                                <a href="{{ cpUrl('permits/' ~ permit.id) }}" class="btn small submit">
                                     {{ "Podpísať a uzavrieť"|t('bozp') }}
                                 </a>
                             </td>

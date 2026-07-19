@@ -70,7 +70,7 @@
                 <span class="bozp-status bozp-status--{{ permit.status }}">
                     {{ permit.status }}
                 </span>
-                <a href="{{ url('bozp/c/' ~ token ~ '/pdf') }}"
+                <a href="{{ url('contractor/' ~ token ~ '/pdf') }}"
                    target="_blank" rel="noopener"
                    class="bozp-btn bozp-btn--primary">
                     ⬇ {{ 'Zobraziť PDF'|t('bozp') }}
@@ -125,11 +125,11 @@
             </section>
         {% endif %}
 
-        {% if zones is not empty %}
+        {% if (zones ?? []) is not empty %}
             <section class="bozp-detail-section">
                 <h2 class="bozp-detail-section__title">{{ 'Zóny'|t('bozp') }}</h2>
                 <ul class="bozp-detail__list">
-                    {% for z in zones %}
+                    {% for z in (zones ?? []) %}
                         <li>{{ z.name }}</li>
                     {% endfor %}
                 </ul>
@@ -182,12 +182,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for cat in hazardCategories %}
+                    {% for cat in (hazardCategories ?? []) %}
                         {% set h = hazards[cat.value] ?? null %}
                         <tr>
                             <th scope="row">
                                 <div class="label_wrapper">
-                                    <img src="https://testing.takeitsro.sk/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
+                                    <img src="/assets/icons/PPE{{ loop.index }}.png" alt="Icon">
                                     {{ cat.label()|t('bozp') }}
                                 </div>
                             </th>
@@ -210,7 +210,7 @@
         </section>
 
         {# ---------- Approved subpermits — contractor must sign each ------- #}
-        {% if subpermits is defined and subpermits|length > 0 %}
+        {% if (subpermits ?? [])|length > 0 %}
             <section class="bozp-detail-section bozp-detail-section--subpermits">
                 <h2 class="bozp-detail-section__title">{{ 'Subpermity zvýšeného rizika'|t('bozp') }}</h2>
                 <p class="bozp-detail-section__hint">
@@ -220,12 +220,12 @@
                 {# Build label/appendix lookup maps from SubpermitType enum cases #}
                 {% set spLabelMap = {} %}
                 {% set spAppendixMap = {} %}
-                {% for t in subpermitTypes %}
+                {% for t in (subpermitTypes ?? []) %}
                     {% set spLabelMap = spLabelMap|merge({(t.value): t.label()}) %}
                     {% set spAppendixMap = spAppendixMap|merge({(t.value): t.appendixNumber()}) %}
                 {% endfor %}
 
-                {% for sp in subpermits %}
+                {% for sp in (subpermits ?? []) %}
                     {% set spSigs = subpermitSignatures[sp.id] ?? {} %}
                     {% set contractorSig = spSigs['contractor'] ?? null %}
                     {# Closure signature: prefer new 'issuer_closure' role, fall back to legacy 'issuer'. #}
@@ -253,7 +253,7 @@
                                 <span>{{ 'Platnosť do'|t('bozp') }}:
                                     <strong>{{ sp.expiresAt ? sp.expiresAt|date('d.m.Y H:i') : '—' }}</strong>
                                 </span>
-                                <a href="{{ url('bozp/c/' ~ token ~ '/subpermits/' ~ sp.id ~ '/pdf') }}"
+                                <a href="{{ url('contractor/' ~ token ~ '/subpermits/' ~ sp.id ~ '/pdf') }}"
                                    target="_blank" rel="noopener"
                                    class="bozp-btn bozp-btn--primary">
                                     ⬇ PDF
@@ -302,7 +302,7 @@
                                     </p>
                                 {% elseif issuerPreworkSig %}
                                     <form method="post" id="bozp-sp-prework-form-{{ sp.id }}"
-                                          action="{{ url('bozp/c/' ~ token ~ '/subpermits/' ~ sp.id ~ '/sign-prework') }}">
+                                          action="{{ url('contractor/' ~ token ~ '/subpermits/' ~ sp.id ~ '/sign-prework') }}">
                                         {{ csrfInput() }}
                                         <input type="hidden" name="action" value="bozp/contractor/sign-subpermit-prework">
                                         <input type="hidden" name="token" value="{{ token }}">
@@ -362,7 +362,7 @@
                                 {% elseif preworkComplete %}
                                     {# Hidden form — populated by the dialog JS before submit #}
                                     <form method="post" id="bozp-sp-sign-form-{{ sp.id }}"
-                                          action="{{ url('bozp/c/' ~ token ~ '/subpermits/' ~ sp.id ~ '/sign') }}">
+                                          action="{{ url('contractor/' ~ token ~ '/subpermits/' ~ sp.id ~ '/sign') }}">
                                         {{ csrfInput() }}
                                         <input type="hidden" name="action" value="bozp/contractor/sign-subpermit">
                                         <input type="hidden" name="token" value="{{ token }}">
@@ -746,7 +746,7 @@
 
                     {% include 'bozp/site/_sign-dialog.twig' with {
                         id: 'bozp-dialog-close',
-                        action: url('bozp/c/' ~ token ~ '/close'),
+                        action: url('contractor/' ~ token ~ '/close'),
                         openOnLoad: ce|length > 0,
                         title: 'Práce dokončené'|t('bozp'),
                         intro: 'Potvrdzujete, že práce na tomto permite boli ukončené. Označte aktuálny stav pracoviska.'|t('bozp'),
@@ -774,7 +774,7 @@
 
                     {% include 'bozp/site/_sign-dialog.twig' with {
                         id: 'bozp-dialog-cancel',
-                        action: url('bozp/c/' ~ token ~ '/cancel'),
+                        action: url('contractor/' ~ token ~ '/cancel'),
                         openOnLoad: xe|length > 0,
                         title: 'Zrušenie prác'|t('bozp'),
                         intro: 'Potvrdzujete, že práce nemôžu byť vykonané za týchto podmienok a permit má byť zrušený.'|t('bozp'),
@@ -868,7 +868,7 @@
         {% endif %}
 
         {# ---------- Control visits list ---------------------------------- #}
-        {% if controls is defined and controls|length > 0 %}
+        {% if (controls ?? [])|length > 0 %}
             {% set resultLabels = {
                 'ok':      'V poriadku'|t('bozp'),
                 'issues':  'Zistené nedostatky'|t('bozp'),
@@ -887,7 +887,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for c in controls %}
+                        {% for c in (controls ?? []) %}
                             <tr>
                                 <td>{{ c.controlledAt|date('d.m.Y H:i') }}</td>
                                 <td>{{ c.controllerName }}</td>
@@ -923,9 +923,9 @@
         <section class="bozp-detail-section bozp-detail-section--attachments">
             <h2 class="bozp-detail-section__title">{{ 'Prílohy dodávateľa'|t('bozp') }}</h2>
 
-            {% if attachments is not empty %}
+            {% if (attachments ?? []) is not empty %}
                 <ul class="bozp-attachments">
-                    {% for a in attachments %}
+                    {% for a in (attachments ?? []) %}
                         {% set asset = craft.assets().id(a.assetId).one() %}
                         <li>
                             {% if asset %}
@@ -951,7 +951,7 @@
                 </p>
             {% else %}
                 <form method="post"
-                      action="{{ url('bozp/c/' ~ token ~ '/upload') }}"
+                      action="{{ url('contractor/' ~ token ~ '/upload') }}"
                       enctype="multipart/form-data"
                       class="bozp-form bozp-form--upload"
                       novalidate>
