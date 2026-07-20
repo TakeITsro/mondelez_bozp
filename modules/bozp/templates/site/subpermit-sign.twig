@@ -131,6 +131,13 @@
             </table>
         </div>
 
+        {% if not (parentApproved ?? true) %}
+            {# General permit not yet HSE-approved — signing locked. #}
+            <div class="bozp-alert bozp-alert--warning"
+                 style="background:#fff4e0;border-left:4px solid #d97706;padding:12px 16px;color:#7a3e00;margin-bottom:16px;">
+                {{ 'Podpis bude možný až po schválení hlavného permitu zo strany HSE. Skúste to prosím neskôr.'|t('bozp') }}
+            </div>
+        {% else %}
         {# Trigger button — opens the shared signature modal. #}
         <div class="bozp-form__actions">
             <button type="button"
@@ -160,6 +167,7 @@
             values:       values ?? {},
             extraFields:  '<input type="hidden" name="action" value="bozp/subpermit-signing/sign"><input type="hidden" name="token" value="' ~ request.token ~ '">',
         } only %}
+        {% endif %}
     {% endif %}
 
 </section>

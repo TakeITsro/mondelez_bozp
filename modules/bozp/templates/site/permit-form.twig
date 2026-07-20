@@ -146,6 +146,37 @@
                            {% if errors.contractorEmail is defined %}aria-invalid="true" aria-describedby="err-contractorEmail"{% endif %}>
                     {{ _self.field_error(errors, 'contractorEmail') }}
                 </div>
+
+                <div class="bozp-form-row{% if errors.contactPersonPhone is defined %} bozp-form-row--error{% endif %}">
+                    <label for="contactPersonPhone">{{ 'Telefón kontaktnej osoby'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+                    <input type="tel"
+                           id="contactPersonPhone"
+                           name="contactPersonPhone"
+                           value="{{ values.contactPersonPhone ?? '' }}"
+                           maxlength="50"
+                           required
+                           {% if errors.contactPersonPhone is defined %}aria-invalid="true" aria-describedby="err-contactPersonPhone"{% endif %}>
+                    {{ _self.field_error(errors, 'contactPersonPhone') }}
+                </div>
+
+                <div class="bozp-form-row{% if errors.contractorPhone is defined %} bozp-form-row--error{% endif %}">
+                    <label for="contractorPhone">{{ 'Telefón dodávateľa'|t('bozp') }} <span class="bozp-form-row__req">*</span></label>
+                    <input type="tel"
+                           id="contractorPhone"
+                           name="contractorPhone"
+                           value="{{ values.contractorPhone ?? '' }}"
+                           maxlength="50"
+                           required
+                           {% if errors.contractorPhone is defined %}aria-invalid="true" aria-describedby="err-contractorPhone"{% endif %}>
+                    {{ _self.field_error(errors, 'contractorPhone') }}
+                </div>
+
+                <div class="bozp-form-row">
+                    <label for="workersNames">{{ 'Mená pracovníkov'|t('bozp') }}</label>
+                    <textarea id="workersNames"
+                              name="workersNames"
+                              rows="3">{{ values.workersNames ?? '' }}</textarea>
+                </div>
             </fieldset>
 
             {% if (zones ?? [])|length > 0 %}

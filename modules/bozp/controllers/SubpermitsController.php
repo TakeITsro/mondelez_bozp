@@ -268,21 +268,24 @@ class SubpermitsController extends BaseSiteController
             // Generate initial subpermit PDF (silently skips on failure)
             $module->permitPdfService->generateForSubpermit($subpermit, $permit);
 
-            // Provision contractor access (token + password) if not already
-            // present, then mail the contractor an invite to come sign their
-            // pre-work. Required before HSE approval under the new flow.
-            try {
-                $freshPassword = $module->permitWorkflow->ensureContractorAccess($permit);
-                $module->permitMailer->notifyContractorOfSubpermitInvite(
-                    $permit,
-                    $subpermit,
-                    $freshPassword,
-                );
-            } catch (Throwable $mailErr) {
-                Craft::error(
-                    'Subpermit contractor invite failed: ' . $mailErr->getMessage(),
-                    __METHOD__,
-                );
+            // Contractor invite only once the parent permit is HSE-approved.
+            // For unapproved permits the approval email (portal link +
+            // password + subpermit list) covers the invite, so nothing is
+            // sent here and no access is provisioned early.
+            if (\modules\bozp\services\SubpermitSigningService::isParentApproved($permit)) {
+                try {
+                    $freshPassword = $module->permitWorkflow->ensureContractorAccess($permit);
+                    $module->permitMailer->notifyContractorOfSubpermitInvite(
+                        $permit,
+                        $subpermit,
+                        $freshPassword,
+                    );
+                } catch (Throwable $mailErr) {
+                    Craft::error(
+                        'Subpermit contractor invite failed: ' . $mailErr->getMessage(),
+                        __METHOD__,
+                    );
+                }
             }
         } catch (Throwable $e) {
             Craft::error('Subpermit save failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
@@ -294,10 +297,22 @@ class SubpermitsController extends BaseSiteController
             return $this->redirect("permits/{$permitId}/subpermits/new/{$typeValue}");
         }
 
-        $notice = ($signingRoles !== [])
-            ? Craft::t('bozp', 'Subpermit bol uložený. Pozvania na podpis boli odoslané e-mailom.')
-            : Craft::t('bozp', 'Subpermit bol uložený a podpísaný.');
+        $parentApproved = \modules\bozp\services\SubpermitSigningService::isParentApproved($permit);
+        if ($signingRoles !== []) {
+            $notice = $parentApproved
+                ? Craft::t('bozp', 'Subpermit bol uložený. Pozvania na podpis boli odoslané e-mailom.')
+                : Craft::t('bozp', 'Subpermit bol uložený. Pozvania na podpis budú odoslané po schválení permitu.');
+        } else {
+            $notice = Craft::t('bozp', 'Subpermit bol uložený a podpísaný.');
+        }
         Craft::$app->getSession()->setNotice($notice);
+
+        // Required types still uncovered → back to the subpermit section so
+        // the issuer can create the remaining ones.
+        if ($module->permitWorkflow->missingRequiredSubpermitTypes($permit) !== []) {
+            return $this->redirect(UrlHelper::siteUrl("permits/{$permitId}") . '#subpermits');
+        }
+
         return $this->redirect("permits/{$permitId}");
     }
 

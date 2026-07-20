@@ -111,6 +111,18 @@
                         {%- else -%}—{%- endif -%}
                     </td>
                 </tr>
+                <tr>
+                    <th>{{ 'Telefón kontaktnej osoby'|t('bozp') }}</th>
+                    <td>{{ permit.contactPersonPhone ?: '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Telefón dodávateľa'|t('bozp') }}</th>
+                    <td>{{ permit.contractorPhone ?: '—' }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Mená pracovníkov'|t('bozp') }}</th>
+                    <td>{{ permit.workersNames ? permit.workersNames|nl2br : '—' }}</td>
+                </tr>
             </tbody>
         </table>
 

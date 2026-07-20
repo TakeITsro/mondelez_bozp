@@ -313,6 +313,9 @@ class QueueController extends Controller
             'contractorCompany'    => trim((string) $request->getBodyParam('contractorCompany', '')),
             'contractorPersonName' => trim((string) $request->getBodyParam('contractorPersonName', '')),
             'contractorEmail'      => trim((string) $request->getBodyParam('contractorEmail', '')),
+            'contactPersonPhone'   => trim((string) $request->getBodyParam('contactPersonPhone', '')),
+            'contractorPhone'      => trim((string) $request->getBodyParam('contractorPhone', '')),
+            'workersNames'         => trim((string) $request->getBodyParam('workersNames', '')),
             'workLocation'         => trim((string) $request->getBodyParam('workLocation', '')),
             'workOverview'         => trim((string) $request->getBodyParam('workOverview', '')),
             'zoneId'               => (int) $request->getBodyParam('zoneId', 0) ?: null,
@@ -357,6 +360,9 @@ class QueueController extends Controller
                 'contractorCompany'         => $values['contractorCompany'] !== '' ? $values['contractorCompany'] : null,
                 'contractorPersonName'      => $values['contractorPersonName'] !== '' ? $values['contractorPersonName'] : null,
                 'contractorEmail'           => $values['contractorEmail'] !== '' ? $values['contractorEmail'] : null,
+                'contactPersonPhone'        => $values['contactPersonPhone'] !== '' ? $values['contactPersonPhone'] : null,
+                'contractorPhone'           => $values['contractorPhone'] !== '' ? $values['contractorPhone'] : null,
+                'workersNames'              => $values['workersNames'] !== '' ? $values['workersNames'] : null,
                 'workLocation'              => $values['workLocation'],
                 'workOverview'              => $values['workOverview'],
                 'validFrom'                 => $validFrom,
@@ -400,6 +406,9 @@ class QueueController extends Controller
             'contractorCompany'         => $permit->contractorCompany,
             'contractorPersonName'      => $permit->contractorPersonName,
             'contractorEmail'           => $permit->contractorEmail,
+            'contactPersonPhone'        => $permit->contactPersonPhone,
+            'contractorPhone'           => $permit->contractorPhone,
+            'workersNames'              => $permit->workersNames,
             'workLocation'              => $permit->workLocation,
             'workOverview'              => $permit->workOverview,
             'validFrom'                 => $permit->validFrom,
@@ -662,6 +671,14 @@ class QueueController extends Controller
 
         // Generate PDF after transaction commit (silently on failure)
         $module->permitPdfService->generateForPermit($permit);
+
+        // Release token-signer invitations that were held while the permit
+        // awaited approval. Mail failure must never block the approval.
+        try {
+            $module->subpermitSigningService->sendPendingInvitationsForPermit($permit);
+        } catch (Throwable $mailErr) {
+            Craft::error('Releasing held signer invitations failed: ' . $mailErr->getMessage(), __METHOD__);
+        }
 
         Craft::$app->getSession()->setNotice(Craft::t('bozp', 'Permit {n} bol schválený.', ['n' => $permit->permitNumber]));
         return $this->redirect('permits');

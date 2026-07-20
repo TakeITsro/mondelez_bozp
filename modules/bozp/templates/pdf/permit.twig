@@ -260,7 +260,25 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
                 <table class="data-table">
                     <tr>
                         <td class="label">{{ "Zúčastnení dodávatelia/osoby:"|t('bozp') }}</td>
-                        <td class="value">{{ permit.contractorCompany ?: '—' }}</td>
+                        <td class="value">{{ permit.contractorCompany ?: '—' }}{% if permit.workersNames %} — {{ permit.workersNames }}{% endif %}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label">{{ "Telefón kontaktnej osoby:"|t('bozp') }}</td>
+                        <td class="value">{{ permit.contactPersonPhone ?: '—' }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table class="data-table">
+                    <tr>
+                        <td class="label">{{ "Telefón dodávateľa:"|t('bozp') }}</td>
+                        <td class="value">{{ permit.contractorPhone ?: '—' }}</td>
                     </tr>
                 </table>
             </td>

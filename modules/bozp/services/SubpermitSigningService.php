@@ -10,6 +10,7 @@ use craft\helpers\Assets;
 use craft\helpers\UrlHelper;
 use craft\web\View;
 use modules\bozp\controllers\ContractorController;
+use modules\bozp\enums\PermitStatus;
 use modules\bozp\enums\SubpermitSigningRole;
 use modules\bozp\enums\SubpermitStatus;
 use modules\bozp\enums\SubpermitType;
@@ -92,10 +93,68 @@ class SubpermitSigningService extends Component
         $subpermit->status = SubpermitStatus::PendingSignatures->value;
         $subpermit->save(false);
 
-        // Send an invitation email to each signer
-        foreach ($created as $item) {
-            $this->sendInvitation($item['record'], $item['role'], $subpermit, $permit);
+        // Invitations go out only once the parent permit is HSE-approved.
+        // Until then the request rows sit with invitationSentAt = NULL and
+        // are released by sendPendingInvitationsForPermit() on approval.
+        if (!self::isParentApproved($permit)) {
+            return;
         }
+
+        foreach ($created as $item) {
+            if ($this->sendInvitation($item['record'], $item['role'], $subpermit, $permit)) {
+                $this->markInvitationSent($item['record']);
+            }
+        }
+    }
+
+    /**
+     * Send all not-yet-sent, not-yet-signed signing invitations for every
+     * subpermit of the given permit. Called when HSE approves the parent
+     * permit. Idempotent via invitationSentAt.
+     */
+    public function sendPendingInvitationsForPermit(PermitRecord $permit): void
+    {
+        $subpermits = SubpermitRecord::find()
+            ->where(['parentPermitId' => $permit->id])
+            ->andWhere(['not', ['status' => SubpermitStatus::Cancelled->value]])
+            ->all();
+
+        foreach ($subpermits as $subpermit) {
+            $requests = SubpermitSigningRequestRecord::find()
+                ->where(['subpermitId' => $subpermit->id, 'signedAt' => null, 'invitationSentAt' => null])
+                ->all();
+
+            foreach ($requests as $request) {
+                $role = SubpermitSigningRole::tryFrom($request->role);
+                if ($role === null) {
+                    continue;
+                }
+                if ($this->sendInvitation($request, $role, $subpermit, $permit)) {
+                    $this->markInvitationSent($request);
+                }
+            }
+        }
+    }
+
+    /**
+     * Parent permit is far enough in its lifecycle for signer-facing
+     * mails + signatures (HSE approved or later active states).
+     */
+    public static function isParentApproved(PermitRecord $permit): bool
+    {
+        return in_array($permit->status, [
+            PermitStatus::Approved->value,
+            PermitStatus::Signed->value,
+            PermitStatus::Active->value,
+        ], true);
+    }
+
+    private function markInvitationSent(SubpermitSigningRequestRecord $request): void
+    {
+        SubpermitSigningRequestRecord::updateAll(
+            ['invitationSentAt' => date('Y-m-d H:i:s')],
+            ['id' => $request->id],
+        );
     }
 
     /**
@@ -243,14 +302,15 @@ class SubpermitSigningService extends Component
     /**
      * Send the signing invitation email to one signer.
      * Failures are logged but never bubble up — a mailer issue must not
-     * prevent the subpermit from being created.
+     * prevent the subpermit from being created. Returns true when the mail
+     * was handed to the mailer successfully (used to stamp invitationSentAt).
      */
     private function sendInvitation(
         SubpermitSigningRequestRecord $request,
         SubpermitSigningRole $role,
         SubpermitRecord $subpermit,
         PermitRecord $permit,
-    ): void {
+    ): bool {
         $signingUrl       = UrlHelper::siteUrl('sign/' . $request->token);
         $language         = Craft::$app->getSites()->getPrimarySite()->language;
         $previousLanguage = Craft::$app->language;
@@ -272,7 +332,7 @@ class SubpermitSigningService extends Component
                 'signingUrl' => $signingUrl,
             ]);
 
-            Craft::$app->getMailer()
+            return Craft::$app->getMailer()
                 ->compose()
                 ->setTo($request->signerEmail)
                 ->setSubject($subject)
@@ -283,6 +343,7 @@ class SubpermitSigningService extends Component
                 "BOZP SubpermitSigning: invitation email to {$request->signerEmail} failed: " . $e->getMessage(),
                 __METHOD__,
             );
+            return false;
         } finally {
             Craft::$app->language = $previousLanguage;
             $view->setTemplateMode($previousMode);

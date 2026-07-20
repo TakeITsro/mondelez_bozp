@@ -557,6 +557,9 @@ class PermitsController extends BaseSiteController
             'contractorCompany'    => trim((string) $request->getBodyParam('contractorCompany', '')),
             'contractorPersonName' => trim((string) $request->getBodyParam('contractorPersonName', '')),
             'contractorEmail'      => trim((string) $request->getBodyParam('contractorEmail', '')),
+            'contactPersonPhone'   => trim((string) $request->getBodyParam('contactPersonPhone', '')),
+            'contractorPhone'      => trim((string) $request->getBodyParam('contractorPhone', '')),
+            'workersNames'         => trim((string) $request->getBodyParam('workersNames', '')),
             'workLocation'         => trim((string) $request->getBodyParam('workLocation', '')),
             'workOverview'         => trim((string) $request->getBodyParam('workOverview', '')),
             'validFrom'            => trim((string) $request->getBodyParam('validFrom', '')),
@@ -615,6 +618,9 @@ class PermitsController extends BaseSiteController
             $permit->contractorCompany = $values['contractorCompany'] !== '' ? $values['contractorCompany'] : null;
             $permit->contractorPersonName = $values['contractorPersonName'] !== '' ? $values['contractorPersonName'] : null;
             $permit->contractorEmail = $values['contractorEmail'] !== '' ? $values['contractorEmail'] : null;
+            $permit->contactPersonPhone = $values['contactPersonPhone'] !== '' ? $values['contactPersonPhone'] : null;
+            $permit->contractorPhone = $values['contractorPhone'] !== '' ? $values['contractorPhone'] : null;
+            $permit->workersNames = $values['workersNames'] !== '' ? $values['workersNames'] : null;
             $permit->workLocation = $values['workLocation'];
             $permit->workOverview = $values['workOverview'];
             $permit->validFrom = $values['validFrom'] !== '' ? $values['validFrom'] : null;
@@ -694,6 +700,13 @@ class PermitsController extends BaseSiteController
             : Craft::t('bozp', 'Permit {n} bol uložený ako koncept.', ['n' => $permit->permitNumber]);
 
         Craft::$app->getSession()->setNotice($msg);
+
+        // Submitted permit with required high-risk types not yet covered by
+        // subpermits → land the issuer on the subpermit section so they can
+        // create them right away.
+        if ($intent === 'submit' && $module->permitWorkflow->missingRequiredSubpermitTypes($permit) !== []) {
+            return $this->redirect(UrlHelper::siteUrl("permits/{$permit->id}") . '#subpermits');
+        }
 
         return $this->redirect('dashboard');
     }
@@ -862,6 +875,12 @@ class PermitsController extends BaseSiteController
         }
         if ($values['contractorPersonName'] === '') {
             $errors['contractorPersonName'] = (string) Craft::t('bozp', 'Kontaktná osoba je povinná.');
+        }
+        if ($values['contactPersonPhone'] === '') {
+            $errors['contactPersonPhone'] = (string) Craft::t('bozp', 'Telefón kontaktnej osoby je povinný.');
+        }
+        if ($values['contractorPhone'] === '') {
+            $errors['contractorPhone'] = (string) Craft::t('bozp', 'Telefón dodávateľa je povinný.');
         }
         if ($values['workLocation'] === '') {
             $errors['workLocation'] = (string) Craft::t('bozp', 'Miesto výkonu je povinné.');

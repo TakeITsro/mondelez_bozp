@@ -58,6 +58,7 @@ class SubpermitSigningController extends Controller
             'role'         => $role,
             'data'         => $data,
             'alreadySigned' => $request->signedAt !== null,
+            'parentApproved' => \modules\bozp\services\SubpermitSigningService::isParentApproved($permit),
             'errors'       => [],
             'values'       => [],
         ]);
@@ -89,8 +90,13 @@ class SubpermitSigningController extends Controller
         $role = SubpermitSigningRole::tryFrom($signingRequest->role);
         $data = $this->decodeSubpermitData($subpermit);
 
+        $parentApproved = \modules\bozp\services\SubpermitSigningService::isParentApproved($permit);
+
         // Client-side validation
         $errors = [];
+        if (!$parentApproved) {
+            $errors['general'] = (string) Craft::t('bozp', 'Podpis je možný až po schválení hlavného permitu.');
+        }
         if ($signingRequest->signedAt !== null) {
             $errors['general'] = (string) Craft::t('bozp', 'Tento odkaz bol už použitý na podpis.');
         }
@@ -110,6 +116,7 @@ class SubpermitSigningController extends Controller
                 'role'         => $role,
                 'data'         => $data,
                 'alreadySigned' => false,
+                'parentApproved' => $parentApproved,
                 'errors'       => $errors,
                 'values'       => ['signerName' => $signerName, 'jobTitle' => $jobTitle],
             ]);
@@ -133,6 +140,7 @@ class SubpermitSigningController extends Controller
                 'role'         => $role,
                 'data'         => $data,
                 'alreadySigned' => false,
+                'parentApproved' => $parentApproved,
                 'errors'       => ['general' => Craft::t('bozp', 'Uloženie podpisu zlyhalo. Skúste znova.')],
                 'values'       => ['signerName' => $signerName, 'jobTitle' => $jobTitle],
             ]);
@@ -147,6 +155,7 @@ class SubpermitSigningController extends Controller
             'role'         => $role,
             'data'         => $data,
             'alreadySigned' => true,
+            'parentApproved' => $parentApproved,
             'errors'       => [],
             'values'       => [],
         ]);

@@ -900,6 +900,15 @@ class ContractorController extends Controller
             return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
         }
 
+        // The general permit must be HSE-approved before any subpermit
+        // work-start signature is allowed.
+        if (!\modules\bozp\services\SubpermitSigningService::isParentApproved($permit)) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Predpracovný podpis je možný až po schválení hlavného permitu.')
+            );
+            return $this->redirect(UrlHelper::siteUrl('contractor/' . $token));
+        }
+
         /** @var Module $module */
         $module = Craft::$app->getModule('bozp');
 

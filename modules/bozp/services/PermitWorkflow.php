@@ -6,8 +6,10 @@ namespace modules\bozp\services;
 
 use Craft;
 use modules\bozp\enums\PermitStatus;
+use modules\bozp\enums\SubpermitStatus;
 use modules\bozp\Module;
 use modules\bozp\records\PermitRecord;
+use modules\bozp\records\SubpermitRecord;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
@@ -43,6 +45,33 @@ class PermitWorkflow extends Component
         'cancelled'             => [],
         'expired'               => [],
     ];
+
+    /**
+     * Required high-risk types (permit.requiresHighRisk) that do not yet
+     * have at least one non-cancelled subpermit. Empty array = coverage
+     * complete (or nothing required).
+     *
+     * @return string[] missing SubpermitType values
+     */
+    public function missingRequiredSubpermitTypes(PermitRecord $permit): array
+    {
+        $raw = $permit->requiresHighRisk;
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+        $required = is_array($raw) ? $raw : [];
+        if ($required === []) {
+            return [];
+        }
+
+        $existing = SubpermitRecord::find()
+            ->select('type')
+            ->where(['parentPermitId' => $permit->id])
+            ->andWhere(['not', ['status' => SubpermitStatus::Cancelled->value]])
+            ->column();
+
+        return array_values(array_diff($required, $existing));
+    }
 
     /**
      * Move a draft permit to "submitted" — i.e. send it to the HSE queue.

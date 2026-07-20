@@ -1322,4 +1322,24 @@ return [
 
     // CP edit save
     'Zmeny boli uložené.' => 'Changes have been saved.',
+
+    // Contractor contact fields (permit)
+    'Telefón kontaktnej osoby' => 'Contact person phone',
+    'Telefón dodávateľa' => 'Contractor phone',
+    'Telefón' => 'Phone',
+    'Mená pracovníkov' => "Workers' names",
+    'Telefón kontaktnej osoby je povinný.' => 'Contact person phone is required.',
+    'Telefón dodávateľa je povinný.' => 'Contractor phone is required.',
+    'Telefón kontaktnej osoby:' => 'Contact person phone:',
+    'Telefón dodávateľa:' => 'Contractor phone:',
+
+    // Parent-permit approval gate (subpermit signing)
+    'Predpracovný podpis je možný až po schválení hlavného permitu.'
+        => 'Pre-work signature is only possible after the general permit is approved.',
+    'Podpis je možný až po schválení hlavného permitu.'
+        => 'Signing is only possible after the general permit is approved.',
+    'Podpis bude možný až po schválení hlavného permitu zo strany HSE. Skúste to prosím neskôr.'
+        => 'Signing will be possible once HSE approves the general permit. Please try again later.',
+    'Subpermit bol uložený. Pozvania na podpis budú odoslané po schválení permitu.'
+        => 'Subpermit has been saved. Signing invitations will be sent after the permit is approved.',
 ];

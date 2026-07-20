@@ -102,6 +102,22 @@
                 </div>
             </div>
 
+            {% if permit.contactPersonPhone or permit.contractorPhone %}
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Telefón'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">
+                        {{ permit.contactPersonPhone ?: '' }}{% if permit.contactPersonPhone and permit.contractorPhone %} · {% endif %}{{ permit.contractorPhone ?: '' }}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if permit.workersNames %}
+                <div class="bozp-detail-row">
+                    <div class="bozp-detail-row__label">{{ 'Mená pracovníkov'|t('bozp') }}</div>
+                    <div class="bozp-detail-row__value">{{ permit.workersNames|nl2br }}</div>
+                </div>
+            {% endif %}
+
             <div class="bozp-detail-row">
                 <div class="bozp-detail-row__label">{{ 'Miesto výkonu'|t('bozp') }}</div>
                 <div class="bozp-detail-row__value">{{ permit.workLocation ?: '—' }}</div>

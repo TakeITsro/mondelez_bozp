@@ -76,6 +76,26 @@
             value: values.contractorEmail ?? '',
             errors: errors.contractorEmail is defined ? [errors.contractorEmail] : [],
         }) }}
+        {{ forms.textField({
+            label: 'Telefón kontaktnej osoby'|t('bozp'),
+            name: 'contactPersonPhone',
+            type: 'tel',
+            value: values.contactPersonPhone ?? '',
+            errors: errors.contactPersonPhone is defined ? [errors.contactPersonPhone] : [],
+        }) }}
+        {{ forms.textField({
+            label: 'Telefón dodávateľa'|t('bozp'),
+            name: 'contractorPhone',
+            type: 'tel',
+            value: values.contractorPhone ?? '',
+            errors: errors.contractorPhone is defined ? [errors.contractorPhone] : [],
+        }) }}
+        {{ forms.textareaField({
+            label: 'Mená pracovníkov'|t('bozp'),
+            name: 'workersNames',
+            value: values.workersNames ?? '',
+            rows: 3,
+        }) }}
 
         {# ---- Work ---- #}
         <h3 style="margin-top:24px;">{{ 'Práca'|t('bozp') }}</h3>
