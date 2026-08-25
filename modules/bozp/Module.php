@@ -102,6 +102,9 @@ class Module extends BaseModule
                     $path === ''
                     || $path === 'login'
                     || $path === 'logout'
+                    || $path === 'set-password'
+                    || $path === 'verify-email'
+                    || $path === 'forgot-password'
                     || str_starts_with($path, 'resources/')
                     || str_starts_with($path, 'cpresources/')
                     || str_starts_with($path, 'actions/users/')
@@ -112,7 +115,14 @@ class Module extends BaseModule
                 $userComponent = $app->getUser();
                 $identity      = $userComponent->getIdentity();
 
-                if ($identity !== null && $userComponent->checkPermission('accessCp')) {
+//                if ($identity !== null && $userComponent->checkPermission('accessCp')) {
+//                    return;
+//                }
+                if ($identity === null) {
+                    return;
+                }
+
+                if ($userComponent->checkPermission('accessCp')) {
                     return;
                 }
 
