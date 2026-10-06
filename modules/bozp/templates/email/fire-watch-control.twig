@@ -1,0 +1,57 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Fire watch check due — sent to the issuer, one mail per hourly check.
+   Variables: permit, subpermit, control, controlCount, controlUrl #}
+
+{% block subject %}{{ 'Požiarna hliadka {i}/{n} — permit {p}'|t('bozp', {i: control.sequence, n: controlCount, p: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Požiarna hliadka po ohňových prácach'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Kontrola {i} zo {n} je splatná'|t('bozp', {i: control.sequence, n: controlCount}) }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
+        {{
+            'Dodávateľ uzavrel subpermit na ohňové práce k permitu <strong>{p}</strong> pre spoločnosť <strong>{company}</strong>. Vykonajte prosím kontrolu pracoviska a zaznamenajte jej výsledok.'|t('bozp', {
+                p: permit.permitNumber,
+                company: permit.contractorCompany ?: '—',
+            })|raw
+        }}
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:14px 18px;">
+                <p style="margin:0 0 6px;font-size:13px;color:#555;">
+                    {{ 'Miesto výkonu'|t('bozp') }}:
+                    <strong style="color:#000000;">{{ permit.workLocation ?: '—' }}</strong>
+                </p>
+                <p style="margin:0 0 6px;font-size:13px;color:#555;">
+                    {{ 'Plánovaný čas kontroly'|t('bozp') }}:
+                    <strong style="color:#000000;">{{ control.dueAt|date('d.m.Y H:i') }}</strong>
+                </p>
+                <p style="margin:0;font-size:13px;color:#555;">
+                    {{ 'Poradie'|t('bozp') }}:
+                    <strong style="color:#000000;">{{ control.sequence }} / {{ controlCount }}</strong>
+                </p>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:0 0 24px;">
+        <a href="{{ controlUrl }}"
+           style="display:inline-block;background:#4F2170;color:#FEFFFD;text-decoration:none;padding:12px 28px;border-radius:40px;font-weight:600;">
+            {{ 'Zaznamenať kontrolu'|t('bozp') }}
+        </a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:#555;">
+        {{ 'Subpermit nie je možné uzavrieť, kým nie sú vykonané všetky kontroly požiarnej hliadky.'|t('bozp') }}
+    </p>
+{% endblock %}

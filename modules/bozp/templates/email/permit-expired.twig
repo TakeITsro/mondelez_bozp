@@ -1,0 +1,64 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Permit lapsed — validTo passed. Sent to the issuer.
+   Variables: permit, permitUrl, expiredSubpermits #}
+
+{% block subject %}{{ 'Permit {n} expiroval'|t('bozp', {n: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Expirácia povolenia'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Platnosť povolenia uplynula'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
+        {{
+            'Permit <strong>{n}</strong> pre spoločnosť <strong>{company}</strong> expiroval <strong>{at}</strong>. Práce na základe tohto povolenia nie je možné vykonávať.'|t('bozp', {
+                n: permit.permitNumber,
+                company: permit.contractorCompany ?: '—',
+                at: permit.validTo ? permit.validTo|date('d.m.Y H:i') : '—',
+            })|raw
+        }}
+    </p>
+
+    {% if expiredSubpermits > 0 %}
+        <p style="margin:0 0 20px;">
+            {{ 'Spolu s povolením expirovali aj otvorené subpermity: {n}.'|t('bozp', {n: expiredSubpermits}) }}
+        </p>
+    {% endif %}
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:14px 18px;">
+                <p style="margin:0 0 6px;font-size:13px;color:#555;">
+                    {{ 'Miesto výkonu'|t('bozp') }}:
+                    <strong style="color:#000000;">{{ permit.workLocation ?: '—' }}</strong>
+                </p>
+                <p style="margin:0;font-size:13px;color:#555;">
+                    {{ 'Platnosť do'|t('bozp') }}:
+                    <strong style="color:#000000;">{{ permit.validTo ? permit.validTo|date('d.m.Y H:i') : '—' }}</strong>
+                </p>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:0 0 24px;">
+        {{ 'Expirované povolenie už nie je možné uzavrieť bežným postupom. Uzavretie vykoná HSE oddelenie.'|t('bozp') }}
+    </p>
+
+    <p style="margin:0 0 24px;">
+        <a href="{{ permitUrl }}"
+           style="display:inline-block;background:#4F2170;color:#FEFFFD;text-decoration:none;padding:12px 28px;border-radius:40px;font-weight:600;">
+            {{ 'Zobraziť permit'|t('bozp') }}
+        </a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:#555;">
+        {{ 'Ak práce ešte nie sú dokončené, je potrebné vystaviť nové povolenie.'|t('bozp') }}
+    </p>
+{% endblock %}

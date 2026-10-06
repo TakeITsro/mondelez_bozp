@@ -1369,6 +1369,168 @@ h3 { font-size: 9pt; color: #4F2170; margin: 6pt 0 3pt; }
 </div>
 {% endif %}
 
+{# ============================================================
+   PRÁCA POD ENERGIOU (Príloha č. 10)
+   ============================================================ #}
+{% elseif subpermitType.value == 'energized' %}
+{% set energizedPrep = [
+    {key: 'contactAvoidable',  label: 'Je možné zabrániť kontaktu s pohyblivou časťou zariadenia'},
+    {key: 'workerAuthorized',  label: 'Vykonávateľ je školený / autorizovaný / spôsobilý na prácu pod energiou'},
+    {key: 'safeWorkProcedure', label: 'Je vypracovaný bezpečný pracovný postup pre danú prácu'},
+] %}
+{% set energyLabels = {
+    'electricity': 'Elektrina',
+    'pneumatics':  'Pneumatika/hydraulika',
+    'gravity':     'Gravitácia',
+    'chemical':    'Chemikália',
+    'gas':         'Plyn',
+    'other':       'Ostatné',
+} %}
+{% set hazardLabels = {
+    'electric_shock': 'Elektrický šok',
+    'pinch':          'Pritlačenie',
+    'retract':        'Vtiahnutie',
+    'cut':            'Porezanie',
+    'explosion':      'Výbuch',
+    'burn':           'Popálenie',
+    'other':          'Iné',
+} %}
+{% set measureLabels = {
+    'area_fenced':            'Oblasť je ohradená páskou/bariérou',
+    'area_clean':             'Oblasť je čistá, upratná a bez nečistôt',
+    'observer_at_estop':      'Pozorovateľ pri núdzovom tlačidle v priamom zornom poli',
+    'hands_behind_back':      'Pozorovanie s rukami za chrbtom bez nakláňania do nebezpečného priestoru',
+    'safe_distance_80cm':     'Dodržaná bezpečná vzdialenosť minimálne 80 cm',
+    'no_body_in_danger_zone': 'Žiadna časť tela v nebezpečnej zóne, pri zásahu vhodný nástroj',
+} %}
+
+<div class="section">
+    <h2>{{ "Práca pod energiou — Príprava na činnosť"|t('bozp') }}</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>{{ "Požiadavka"|t('bozp') }}</th>
+                <th style="width:12%">{{ "Áno / Nie"|t('bozp') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in energizedPrep %}
+                <tr>
+                    <td>{{ item.label|t('bozp') }}</td>
+                    <td>{{ _self.yn(attribute(values, item.key) ?? '') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+    <table class="data-table">
+        {% if values.protectionSystem %}
+            <tr>
+                <td class="label tall">{{ "Použitý systém ochrany"|t('bozp') }}</td>
+                <td class="value tall">{{ values.protectionSystem|nl2br }}</td>
+            </tr>
+        {% endif %}
+        <tr>
+            <td class="label">{{ "Výrobná linka"|t('bozp') }}</td>
+            <td class="value">{{ values.productionLine ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">{{ "Zariadenie"|t('bozp') }}</td>
+            <td class="value">{{ values.equipment ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label tall">{{ "Prečo nemožno splniť štandard LOTO"|t('bozp') }}</td>
+            <td class="value tall">{{ values.lotoReason ? values.lotoReason|nl2br : '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">{{ "Práce sa môžu začať o"|t('bozp') }}</td>
+            <td class="value">{{ values.workStartTime ?: '—' }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>{{ "Prítomné energie a nebezpečenstvá"|t('bozp') }}</h2>
+    <table class="data-table">
+        <tr>
+            <td class="label tall">{{ "Prítomné energie"|t('bozp') }}</td>
+            <td class="value tall">
+                {%- set out = [] -%}
+                {%- for k in (values.energiesPresent ?? []) -%}
+                    {%- set out = out|merge([(energyLabels[k] ?? k)|t('bozp')]) -%}
+                {%- endfor -%}
+                {{- out|length ? out|join(', ') : '—' -}}
+                {%- if values.energiesOther %} ({{ values.energiesOther }}){% endif -%}
+            </td>
+        </tr>
+        <tr>
+            <td class="label tall">{{ "Identifikácia nebezpečenstiev"|t('bozp') }}</td>
+            <td class="value tall">
+                {%- set out = [] -%}
+                {%- for k in (values.hazardTypes ?? []) -%}
+                    {%- set out = out|merge([(hazardLabels[k] ?? k)|t('bozp')]) -%}
+                {%- endfor -%}
+                {{- out|length ? out|join(', ') : '—' -}}
+                {%- if values.hazardsOther %} ({{ values.hazardsOther }}){% endif -%}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>{{ "Preventívne opatrenia"|t('bozp') }}</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th>{{ "Opatrenie"|t('bozp') }}</th>
+                <th style="width:12%">{{ "Áno / Nie"|t('bozp') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, label in measureLabels %}
+                <tr>
+                    <td>{{ label|t('bozp') }}</td>
+                    <td>{{ _self.yn(key in (values.preventiveMeasures ?? []) ? 'yes' : 'no') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# Daily equipment safety inspection record (page 2 of the printed form). #}
+{% if inspections is defined and inspections|length > 0 %}
+<div class="section">
+    <h2>{{ "Správa o kontrole bezpečnostného stavu zariadení"|t('bozp') }}</h2>
+    <table class="hazard-table">
+        <thead>
+            <tr>
+                <th style="width:14%">{{ "Dátum"|t('bozp') }}</th>
+                <th style="width:14%">{{ "Čas"|t('bozp') }}</th>
+                <th style="width:14%">{{ "Stav"|t('bozp') }}</th>
+                <th>{{ "Komentár"|t('bozp') }}</th>
+                <th style="width:20%">{{ "Meno technika"|t('bozp') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in inspections %}
+                <tr>
+                    <td>{{ i.dueDate|date('d.m.Y') }}</td>
+                    <td>{{ i.performedAt ? i.performedAt|date('H:i') : '—' }}</td>
+                    <td>
+                        {%- if not i.performedAt -%}{{ "Čaká"|t('bozp') }}
+                        {%- elseif i.status == 'issue' -%}{{ "Zistená závada"|t('bozp') }}
+                        {%- else -%}{{ "Bez závad"|t('bozp') }}{%- endif -%}
+                    </td>
+                    <td>{{ i.notes ?: '—' }}</td>
+                    <td>{{ i.performerName ?: '—' }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 {% endif %}{# end subpermitType #}
 <br>
 

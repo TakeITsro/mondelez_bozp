@@ -106,6 +106,45 @@ class SubpermitSignatureService extends Component
         return $sig;
     }
 
+    /**
+     * Record a signature slot with a name and date but no drawn image.
+     *
+     * Used by the HSE force closure of an expired subpermit: the person who
+     * should have signed is gone, so HSE records who closed it off and the
+     * PDF prints a blank ruled line under the name for a wet signature.
+     *
+     * capture() deliberately rejects empty signature data — that guard is
+     * right for every normal flow, which is why this is a separate path.
+     */
+    public function captureUnsigned(
+        SubpermitRecord $subpermit,
+        string $role,
+        string $signerName,
+        ?string $signerEmployer,
+        string $signatureDate,
+        ?Request $request = null,
+    ): SubpermitSignatureRecord {
+        $req = $request ?? Craft::$app->getRequest();
+
+        $sig = new SubpermitSignatureRecord();
+        $sig->subpermitId = (int) $subpermit->id;
+        $sig->role = $role;
+        $sig->signerName = $signerName;
+        $sig->signerEmployer = $signerEmployer !== null && $signerEmployer !== '' ? $signerEmployer : null;
+        // No image — the PDF falls through to an empty signature line.
+        $sig->signatureAssetId = null;
+        $sig->signatureDate = $signatureDate;
+        $sig->signedAt = date('Y-m-d H:i:s');
+        $sig->ipAddress = substr((string) ($req->getUserIP() ?? ''), 0, 45) ?: null;
+        $sig->userAgent = substr((string) ($req->getUserAgent() ?? ''), 0, 255) ?: null;
+
+        if (!$sig->save()) {
+            throw new \RuntimeException('Unsigned signature save failed: ' . print_r($sig->getErrors(), true));
+        }
+
+        return $sig;
+    }
+
     public function findSignature(int $subpermitId, string $role): ?SubpermitSignatureRecord
     {
         return SubpermitSignatureRecord::find()

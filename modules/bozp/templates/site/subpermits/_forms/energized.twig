@@ -1,0 +1,169 @@
+{# Príloha č. 10 — Povolenie na prácu pod energiou.
+   Layout mirrors the printed form. The issuer / recipient signature blocks on
+   the paper form map to the digital workflow (issuer + contractor preworks,
+   contractor closure, issuer closure), so no extra signer rows live here.
+
+   The daily equipment-safety inspection report on page 2 of the printed form
+   is deliberately not modelled yet — pending confirmation of how it should be
+   recorded. #}
+
+{% macro yn_row(name, value, label) %}
+    <div class="bozp-form-row">
+        <span class="bozp-form-row__label">{{ label }}</span>
+        <div class="bozp-form__yesno">
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="yes" required {% if value == 'yes' %}checked{% endif %}>
+                <div class="custom_radio"></div>
+                <span>{{ 'Áno'|t('bozp') }}</span>
+            </label>
+            <label class="bozp-form__yesno-opt">
+                <input type="radio" name="{{ name }}" value="no" required {% if value == 'no' %}checked{% endif %}>
+                <div class="custom_radio"></div>
+                <span>{{ 'Nie'|t('bozp') }}</span>
+            </label>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro check_row(name, selected, value, label) %}
+    <label class="bozp-form__check">
+        <input type="checkbox" name="{{ name }}[]" value="{{ value }}"
+               {% if value in selected %}checked{% endif %}>
+        <div class="custom_checkbox"></div>
+        <span>{{ label }}</span>
+    </label>
+{% endmacro %}
+
+{# ─── Expozícia pohyblivým častiam ────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Príprava na činnosť'|t('bozp') }}</legend>
+    <p class="bozp-form-section__hint">{{ '(*vyhovujúce zaškrknite)'|t('bozp') }}</p>
+
+    {{ _self.yn_row(
+        'contactAvoidable',
+        values.contactAvoidable ?? '',
+        'Je možné zabrániť vystaveniu sa riziku kontaktu s pohyblivou časťou zariadenia (použitie pracovných pomôcok atď.)'|t('bozp')
+    ) }}
+
+    <div class="bozp-form-row">
+        <label for="protectionSystem">{{ 'Ak nie, urči použitý systém ochrany'|t('bozp') }}</label>
+        <textarea id="protectionSystem" name="protectionSystem" rows="2">{{ values.protectionSystem ?? '' }}</textarea>
+    </div>
+
+    {{ _self.yn_row(
+        'workerAuthorized',
+        values.workerAuthorized ?? '',
+        'Vykonávateľ práce je školený — autorizovaný — spôsobilý na prácu pod energiou'|t('bozp')
+    ) }}
+
+    <div class="bozp-form-grid bozp-form-grid--2col">
+        <div class="bozp-form-row">
+            <label for="productionLine">{{ 'Výrobná linka'|t('bozp') }}</label>
+            <input type="text" id="productionLine" name="productionLine"
+                   value="{{ values.productionLine ?? '' }}" maxlength="255">
+        </div>
+        <div class="bozp-form-row">
+            <label for="equipment">{{ 'Zariadenie'|t('bozp') }}</label>
+            <input type="text" id="equipment" name="equipment"
+                   value="{{ values.equipment ?? '' }}" maxlength="255">
+        </div>
+    </div>
+</fieldset>
+
+{# ─── LOTO + bezpečný pracovný postup ─────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'LOTO a pracovný postup'|t('bozp') }}</legend>
+
+    <div class="bozp-form-row">
+        <label for="lotoReason">{{ 'Prečo nemôžete splniť štandard LOTO na vykonanie práce'|t('bozp') }}</label>
+        <textarea id="lotoReason" name="lotoReason" rows="3">{{ values.lotoReason ?? '' }}</textarea>
+    </div>
+
+    {{ _self.yn_row(
+        'safeWorkProcedure',
+        values.safeWorkProcedure ?? '',
+        'Je vypracovaný bezpečný pracovný postup pre danú prácu'|t('bozp')
+    ) }}
+    <p class="bozp-form-section__hint">
+        {{ 'Ak nie je vypracovaný a schválený, povolenie ďalej nesmie pokračovať.'|t('bozp') }}
+    </p>
+</fieldset>
+
+{# ─── Prítomné energie ────────────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Prítomné energie'|t('bozp') }}</legend>
+
+    {% set energies = values.energiesPresent ?? [] %}
+    <div class="bozp-form__checklist">
+        {{ _self.check_row('energiesPresent', energies, 'electricity',  'Elektrina'|t('bozp')) }}
+        {{ _self.check_row('energiesPresent', energies, 'pneumatics',   'Pneumatika/hydraulika'|t('bozp')) }}
+        {{ _self.check_row('energiesPresent', energies, 'gravity',      'Gravitácia'|t('bozp')) }}
+        {{ _self.check_row('energiesPresent', energies, 'chemical',     'Chemikália'|t('bozp')) }}
+        {{ _self.check_row('energiesPresent', energies, 'gas',          'Plyn'|t('bozp')) }}
+        {{ _self.check_row('energiesPresent', energies, 'other',        'Ostatné'|t('bozp')) }}
+    </div>
+
+    <div class="bozp-form-row">
+        <label for="energiesOther">{{ 'Ostatné — upresnite'|t('bozp') }}</label>
+        <input type="text" id="energiesOther" name="energiesOther"
+               value="{{ values.energiesOther ?? '' }}" maxlength="255">
+    </div>
+</fieldset>
+
+{# ─── Identifikácia nebezpečenstiev ───────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Identifikácia nebezpečenstiev'|t('bozp') }}</legend>
+
+    {% set hazards = values.hazardTypes ?? [] %}
+    <div class="bozp-form__checklist">
+        {{ _self.check_row('hazardTypes', hazards, 'electric_shock', 'Elektrický šok'|t('bozp')) }}
+        {{ _self.check_row('hazardTypes', hazards, 'pinch',          'Pritlačenie'|t('bozp')) }}
+        {{ _self.check_row('hazardTypes', hazards, 'retract',        'Vtiahnutie'|t('bozp')) }}
+        {{ _self.check_row('hazardTypes', hazards, 'cut',            'Porezanie'|t('bozp')) }}
+        {{ _self.check_row('hazardTypes', hazards, 'explosion',      'Výbuch'|t('bozp')) }}
+        {{ _self.check_row('hazardTypes', hazards, 'burn',           'Popálenie'|t('bozp')) }}
+        {{ _self.check_row('hazardTypes', hazards, 'other',          'Iné'|t('bozp')) }}
+    </div>
+
+    <div class="bozp-form-row">
+        <label for="hazardsOther">{{ 'Iné — upresnite'|t('bozp') }}</label>
+        <input type="text" id="hazardsOther" name="hazardsOther"
+               value="{{ values.hazardsOther ?? '' }}" maxlength="255">
+    </div>
+</fieldset>
+
+{# ─── Preventívne opatrenia ───────────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Preventívne opatrenia'|t('bozp') }}</legend>
+
+    {% set measures = values.preventiveMeasures ?? [] %}
+    <div class="bozp-form__checklist">
+        {{ _self.check_row('preventiveMeasures', measures, 'area_fenced',
+            'Oblasť je ohradená páskou/bariérou'|t('bozp')) }}
+        {{ _self.check_row('preventiveMeasures', measures, 'area_clean',
+            'Oblasť je čistá, upratná a bez nečistôt'|t('bozp')) }}
+        {{ _self.check_row('preventiveMeasures', measures, 'observer_at_estop',
+            'Vedľa núdzového tlačidla bude stáť pozorovateľ v priamom zornom poli'|t('bozp')) }}
+        {{ _self.check_row('preventiveMeasures', measures, 'hands_behind_back',
+            'Môžem pozorovať zariadenie s rukami za chrbtom bez nutnosti nakláňania sa do nebezpečného priestoru'|t('bozp')) }}
+        {{ _self.check_row('preventiveMeasures', measures, 'safe_distance_80cm',
+            'Môžem dodržať bezpečnú vzdialenosť minimálne 80 cm od pohyblivých častí zariadenia'|t('bozp')) }}
+        {{ _self.check_row('preventiveMeasures', measures, 'no_body_in_danger_zone',
+            'Nevkladám žiadnu časť tela do nebezpečnej zóny, ak je potrebný zásah, použijem vhodný pracovný nástroj'|t('bozp')) }}
+    </div>
+</fieldset>
+
+{# ─── Ukončenie plánovania prác ───────────────────────────────────────── #}
+<fieldset class="bozp-form-section">
+    <legend class="bozp-form-section__title">{{ 'Ukončenie plánovania prác a povolení'|t('bozp') }}</legend>
+
+    <div class="bozp-form-row">
+        <label for="workStartTime">{{ 'Práce sa môžu začať o (čas)'|t('bozp') }}</label>
+        <input type="time" id="workStartTime" name="workStartTime"
+               value="{{ values.workStartTime ?? '' }}">
+    </div>
+
+    <p class="bozp-form-section__hint">
+        {{ 'Toto povolenie je platné len na jednu pracovnú zmenu (8 hodín). Podmienky vydania musia byť splnené počas celého trvania práce. Povolenie môže byť kedykoľvek odňaté.'|t('bozp') }}
+    </p>
+</fieldset>

@@ -10,6 +10,8 @@ use modules\bozp\enums\SubpermitStatus;
 use modules\bozp\Module;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\SubpermitRecord;
+use modules\bozp\records\SubpermitSignatureRecord;
+use modules\bozp\services\SubpermitSignatureService;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
@@ -35,16 +37,26 @@ class PermitWorkflow extends Component
         'awaiting_assessment'   => ['draft', 'cancelled'],
         'draft'                 => ['submitted', 'cancelled'],
         'submitted'             => ['approved', 'rejected', 'cancelled'],
-        'approved'              => ['signed', 'cancelled', 'pending_closure'],
+        'approved'              => ['signed', 'cancelled', 'pending_closure', 'expired'],
         'rejected'              => ['draft', 'cancelled'],
-        'signed'                => ['active', 'cancelled'],
+        'signed'                => ['active', 'cancelled', 'expired'],
         'active'                => ['pending_closure', 'expired', 'cancelled'],
         'pending_closure'       => ['awaiting_hse_closure', 'cancelled', 'active'],
         'awaiting_hse_closure'  => ['closed', 'cancelled'],
         'closed'                => [],
         'cancelled'             => [],
-        'expired'               => [],
+        // An expired permit still has to be closed off properly — HSE force
+        // closes it, since the contractor portal is locked past validTo and
+        // the normal three-signature chain can no longer complete.
+        'expired'               => ['closed', 'cancelled'],
     ];
+
+    /**
+     * Permit statuses that auto-expire once validTo passes. Permits already
+     * in the closure chain are left alone — the work is done and yanking
+     * them mid-signature would strand the issuer.
+     */
+    public const EXPIRABLE_STATUSES = ['approved', 'signed', 'active'];
 
     /**
      * Required high-risk types (permit.requiresHighRisk) that do not yet
@@ -383,6 +395,98 @@ class PermitWorkflow extends Component
      * HSE officer final closure signature — fully closes the permit.
      * Only allowed once the issuer has signed (status "awaiting_hse_closure").
      */
+    /**
+     * Expire every still-open subpermit under a permit.
+     *
+     * A subpermit carrying an `issuer_closure` signature is already finished
+     * — actionSignClosure records that signature but never changes the
+     * status, so those rows still read `approved` and must be skipped or we
+     * would mark completed work as expired.
+     *
+     * @return int subpermits expired
+     */
+    public function expireSubpermitsFor(int $permitId): int
+    {
+        $openStatuses = [
+            SubpermitStatus::PendingSignatures->value,
+            SubpermitStatus::Pending->value,
+            SubpermitStatus::Approved->value,
+        ];
+
+        $closedSubpermitIds = SubpermitSignatureRecord::find()
+            ->select('subpermitId')
+            ->where(['role' => SubpermitSignatureService::ROLE_ISSUER_CLOSURE])
+            ->column();
+
+        $query = SubpermitRecord::find()
+            ->where(['parentPermitId' => $permitId])
+            ->andWhere(['in', 'status', $openStatuses]);
+
+        if ($closedSubpermitIds !== []) {
+            $query->andWhere(['not in', 'id', $closedSubpermitIds]);
+        }
+
+        $ids = $query->select('id')->column();
+        if ($ids === []) {
+            return 0;
+        }
+
+        return SubpermitRecord::updateAll(
+            ['status' => SubpermitStatus::Expired->value],
+            ['id' => $ids],
+        );
+    }
+
+    /**
+     * validTo has passed — the permit lapses. Work must stop; the paperwork
+     * stays open for HSE to force close.
+     *
+     * Driven by the bozp/notify/expire-permits cron.
+     */
+    public function expire(PermitRecord $permit): void
+    {
+        if (!in_array($permit->status, self::EXPIRABLE_STATUSES, true)) {
+            throw new InvalidArgumentException(
+                "Cannot expire a permit from status '{$permit->status}'."
+            );
+        }
+
+        $this->transition(
+            $permit,
+            PermitStatus::Expired,
+            actorUserId: null,
+            auditAction: 'expired',
+            note: 'validTo passed',
+        );
+    }
+
+    /**
+     * HSE force closure of an expired permit.
+     *
+     * Skips the contractor → issuer → HSE signature chain, which can no
+     * longer complete once the contractor portal has locked. Audited as
+     * `hse_force_closed` so it is distinguishable from a normal close.
+     */
+    public function forceCloseByHse(PermitRecord $permit, int $hseUserId, ?string $reason = null): void
+    {
+        if ($permit->status !== PermitStatus::Expired->value) {
+            throw new InvalidArgumentException(
+                "Force closure is only available for expired permits, not '{$permit->status}'."
+            );
+        }
+
+        $this->transition(
+            $permit,
+            PermitStatus::Closed,
+            $hseUserId,
+            extraColumns: [
+                'closedAt' => date('Y-m-d H:i:s'),
+            ],
+            auditAction: 'hse_force_closed',
+            note: $reason,
+        );
+    }
+
     public function closeByHse(PermitRecord $permit, int $hseUserId): void
     {
         if ($permit->status !== 'awaiting_hse_closure') {

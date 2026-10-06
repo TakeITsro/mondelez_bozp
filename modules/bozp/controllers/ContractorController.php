@@ -359,6 +359,9 @@ class ContractorController extends Controller
             /** @var Module $module */
             $module = Craft::$app->getModule('bozp');
             $module->permitWorkflow->cancelByRecipient($permit, $reason !== '' ? $reason : null, $values['signerName']);
+            // Permit called off — drop outstanding fire watch checks.
+            $module->fireWatchService->voidForPermit((int) $permit->id);
+            $module->equipmentInspectionService->voidForPermit((int) $permit->id);
             $module->permitMailer->notifyIssuerOfContractorSignature($permit, 'cancel', $values['signerName']);
             $module->permitPdfService->generateForPermit($permit);
 
@@ -854,6 +857,11 @@ class ContractorController extends Controller
             if (!$subpermit->save()) {
                 throw new \RuntimeException('Subpermit data save failed: ' . print_r($subpermit->getErrors(), true));
             }
+
+            // Post-hot-work fire watch: open the four hourly checks the
+            // issuer must perform before this subpermit can be closed.
+            // No-op for every other subpermit type.
+            $module->fireWatchService->openFor($subpermit);
 
             // Regenerate PDF so closure info appears
             $module->permitPdfService->generateForSubpermit($subpermit, $permit);

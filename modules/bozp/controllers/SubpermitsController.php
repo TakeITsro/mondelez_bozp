@@ -16,9 +16,13 @@ use modules\bozp\enums\SubpermitSigningRole;
 use modules\bozp\enums\SubpermitStatus;
 use modules\bozp\enums\SubpermitType;
 use modules\bozp\Module;
+use modules\bozp\records\EquipmentInspectionRecord;
+use modules\bozp\records\FireWatchControlRecord;
 use modules\bozp\records\PermitAttachmentRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\SubpermitRecord;
+use modules\bozp\services\EquipmentInspectionService;
+use modules\bozp\services\FireWatchService;
 use modules\bozp\services\SubpermitSignatureService;
 use Throwable;
 use yii\web\ForbiddenHttpException;
@@ -37,14 +41,17 @@ use yii\web\Response;
  */
 class SubpermitsController extends BaseSiteController
 {
-    public array|bool|int $allowAnonymous = ['new', 'form', 'save', 'view', 'cancel', 'pdf', 'sign-prework'];
+    // Listed here so requireBozpLogin() can bounce anonymous visitors to
+    // /login instead of Craft answering with a bare 403 — the fire-watch
+    // page is reached from an emailed link, often on a fresh device.
+    public array|bool|int $allowAnonymous = ['new', 'form', 'save', 'view', 'cancel', 'pdf', 'sign-prework', 'fire-watch', 'save-fire-watch', 'inspection', 'save-inspection'];
 
     /**
      * Subpermit types that require an issuer-uploaded attachment before
      * closure can be signed. Hot work + confined space need photo/document
      * evidence; ATEX needs the hourly verification sheet.
      */
-    private const ATTACHMENT_REQUIRED_TYPES = ['hot_work', 'confined_space', 'atex'];
+    private const ATTACHMENT_REQUIRED_TYPES = ['hot_work', 'confined_space', 'atex', 'energized'];
 
     private const ISSUER_UPLOAD_TYPE = 'subpermit_issuer_upload';
 
@@ -297,6 +304,20 @@ class SubpermitsController extends BaseSiteController
             return $this->redirect("permits/{$permitId}/subpermits/new/{$typeValue}");
         }
 
+        // Work on energized equipment: the printed form says the permit must
+        // not continue without an approved safe work procedure. Surfaced as a
+        // warning rather than a hard block, per the agreed behaviour.
+        if ($subpermitType === SubpermitType::Energized
+            && ($values['safeWorkProcedure'] ?? '') === 'no'
+        ) {
+            Craft::$app->getSession()->setError(
+                Craft::t(
+                    'bozp',
+                    'Upozornenie: pre túto prácu nie je vypracovaný a schválený bezpečný pracovný postup. Povolenie by nemalo pokračovať.'
+                )
+            );
+        }
+
         $parentApproved = \modules\bozp\services\SubpermitSigningService::isParentApproved($permit);
         if ($signingRoles !== []) {
             $notice = $parentApproved
@@ -362,7 +383,295 @@ class SubpermitsController extends BaseSiteController
             'signatures'          => $signatures,
             'attachments'         => $attachments,
             'attachmentRequired'  => $attachmentRequired,
+            // Post-hot-work fire watch. Empty for every other type.
+            'fireWatchControls'   => $module->fireWatchService->findFor((int) $subpermit->id),
+            'fireWatchOutstanding' => $module->fireWatchService->outstandingCount((int) $subpermit->id),
+            // Daily equipment inspection. Empty for every other type.
+            'inspections'          => $module->equipmentInspectionService->findFor((int) $subpermit->id),
+            'inspectionsOutstanding' => $module->equipmentInspectionService->outstandingCount((int) $subpermit->id),
         ]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Post-hot-work fire watch (issuer)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Fire watch page — the four hourly checks for a hot-work subpermit,
+     * with a form for the next outstanding one.
+     *
+     * Route: GET bozp/permits/<permitId>/subpermits/<id>/fire-watch
+     */
+    public function actionFireWatch(int $permitId, int $id): Response
+    {
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $permit = $this->findPermit($permitId);
+        $this->requireIsIssuer($permit);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+
+        return $this->renderTemplate('bozp/site/subpermits/fire-watch', [
+            'permit'    => $permit,
+            'subpermit' => $subpermit,
+            'controls'  => $module->fireWatchService->findFor((int) $subpermit->id),
+            'next'      => $module->fireWatchService->nextOutstanding((int) $subpermit->id),
+            'errors'    => [],
+        ]);
+    }
+
+    /**
+     * Record one fire watch check.
+     *
+     * A check performed after its scheduled hour still counts — dueAt keeps
+     * the scheduled time, performedAt records when it actually happened.
+     *
+     * Route: POST bozp/permits/<permitId>/subpermits/<id>/fire-watch
+     * Body: controlId, performerName, result, notes, signatureData
+     */
+    public function actionSaveFireWatch(): ?Response
+    {
+        $this->requirePostRequest();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $request   = Craft::$app->getRequest();
+        $permitId  = (int) $request->getRequiredBodyParam('permitId');
+        $id        = (int) $request->getRequiredBodyParam('id');
+        $controlId = (int) $request->getRequiredBodyParam('controlId');
+
+        $permit = $this->findPermit($permitId);
+        $this->requireIsIssuer($permit);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        $redirectUrl = "permits/{$permitId}/subpermits/{$id}/fire-watch";
+
+        /** @var FireWatchControlRecord|null $control */
+        $control = FireWatchControlRecord::findOne([
+            'id'          => $controlId,
+            'subpermitId' => (int) $subpermit->id,
+        ]);
+
+        if (!$control) {
+            throw new NotFoundHttpException('Fire watch control not found.');
+        }
+
+        if ($control->performedAt !== null) {
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Táto kontrola už bola zaznamenaná.')
+            );
+            return $this->redirect($redirectUrl);
+        }
+
+        $performerName = trim((string) $request->getBodyParam('performerName', ''));
+        $result        = (string) $request->getBodyParam('result', '');
+        $notes         = trim((string) $request->getBodyParam('notes', ''));
+        $signatureData = trim((string) $request->getBodyParam('signatureData', ''));
+
+        if ($performerName === '') {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Meno je povinné.'));
+            return $this->redirect($redirectUrl);
+        }
+        if (!in_array($result, [FireWatchControlRecord::RESULT_OK, FireWatchControlRecord::RESULT_ISSUE], true)) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Vyberte výsledok kontroly.'));
+            return $this->redirect($redirectUrl);
+        }
+        if ($signatureData === '' || !str_starts_with($signatureData, 'data:image/png;base64,')) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis je povinný.'));
+            return $this->redirect($redirectUrl);
+        }
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        try {
+            $module->fireWatchService->perform(
+                $control,
+                $performerName,
+                $result,
+                $notes !== '' ? $notes : null,
+                $signatureData,
+            );
+
+            $module->auditLogger->log(
+                permitId: (int) $permit->id,
+                userId: (int) Craft::$app->getUser()->getId(),
+                action: 'fire_watch_control',
+                note: 'Control ' . $control->sequence . '/' . FireWatchService::CONTROL_COUNT
+                    . ' — ' . $result
+                    . ($notes !== '' ? ' — ' . mb_substr($notes, 0, 100) : ''),
+            );
+
+            // Keep the subpermit PDF in step with the safety record.
+            $fresh = SubpermitRecord::findOne(['id' => $subpermit->id]) ?? $subpermit;
+            $module->permitPdfService->generateForSubpermit($fresh, $permit);
+        } catch (Throwable $e) {
+            Craft::error('Fire watch control save failed: ' . $e->getMessage(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Kontrolu sa nepodarilo uložiť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+            return $this->redirect($redirectUrl);
+        }
+
+        $remaining = $module->fireWatchService->outstandingCount((int) $subpermit->id);
+        Craft::$app->getSession()->setNotice(
+            $remaining > 0
+                ? Craft::t('bozp', 'Kontrola bola zaznamenaná. Zostáva: {n}.', ['n' => $remaining])
+                : Craft::t('bozp', 'Kontrola bola zaznamenaná. Požiarna hliadka je dokončená.')
+        );
+
+        return $this->redirect(
+            $remaining > 0 ? $redirectUrl : "permits/{$permitId}/subpermits/{$id}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Daily equipment safety inspection (issuer, energized subpermits)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Inspection page — past inspections plus a form for the next one due.
+     *
+     * Route: GET bozp/permits/<permitId>/subpermits/<id>/inspection
+     */
+    public function actionInspection(int $permitId, int $id): Response
+    {
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $permit = $this->findPermit($permitId);
+        $this->requireIsIssuer($permit);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        $this->view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+
+        return $this->renderTemplate('bozp/site/subpermits/inspection', [
+            'permit'      => $permit,
+            'subpermit'   => $subpermit,
+            'inspections' => $module->equipmentInspectionService->findFor((int) $subpermit->id),
+            'next'        => $module->equipmentInspectionService->nextOutstanding((int) $subpermit->id),
+            'checklist'   => EquipmentInspectionService::checklist(),
+            'groupLabels' => EquipmentInspectionService::groupLabels(),
+            'errors'      => [],
+        ]);
+    }
+
+    /**
+     * Record one daily equipment safety inspection.
+     *
+     * Route: POST bozp/permits/<permitId>/subpermits/<id>/inspection
+     * Body: inspectionId, performerName, status, items[key], notes, signatureData
+     */
+    public function actionSaveInspection(): ?Response
+    {
+        $this->requirePostRequest();
+        if ($redirect = $this->requireBozpLogin()) {
+            return $redirect;
+        }
+
+        $request      = Craft::$app->getRequest();
+        $permitId     = (int) $request->getRequiredBodyParam('permitId');
+        $id           = (int) $request->getRequiredBodyParam('id');
+        $inspectionId = (int) $request->getRequiredBodyParam('inspectionId');
+
+        $permit = $this->findPermit($permitId);
+        $this->requireIsIssuer($permit);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        $redirectUrl = "permits/{$permitId}/subpermits/{$id}/inspection";
+
+        /** @var EquipmentInspectionRecord|null $inspection */
+        $inspection = EquipmentInspectionRecord::findOne([
+            'id'          => $inspectionId,
+            'subpermitId' => (int) $subpermit->id,
+        ]);
+
+        if (!$inspection) {
+            throw new NotFoundHttpException('Inspection not found.');
+        }
+
+        if ($inspection->performedAt !== null) {
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Táto kontrola už bola zaznamenaná.')
+            );
+            return $this->redirect($redirectUrl);
+        }
+
+        $performerName = trim((string) $request->getBodyParam('performerName', ''));
+        $status        = (string) $request->getBodyParam('status', '');
+        $notes         = trim((string) $request->getBodyParam('notes', ''));
+        $signatureData = trim((string) $request->getBodyParam('signatureData', ''));
+        $items         = (array) $request->getBodyParam('items', []);
+
+        if ($performerName === '') {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Meno je povinné.'));
+            return $this->redirect($redirectUrl);
+        }
+        if (!in_array($status, [EquipmentInspectionRecord::STATUS_OK, EquipmentInspectionRecord::STATUS_ISSUE], true)) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Vyberte výsledok kontroly.'));
+            return $this->redirect($redirectUrl);
+        }
+        if ($signatureData === '' || !str_starts_with($signatureData, 'data:image/png;base64,')) {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Podpis je povinný.'));
+            return $this->redirect($redirectUrl);
+        }
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        try {
+            $module->equipmentInspectionService->perform(
+                $inspection,
+                $performerName,
+                $status,
+                array_map('strval', $items),
+                $notes !== '' ? $notes : null,
+                $signatureData,
+            );
+
+            $module->auditLogger->log(
+                permitId: (int) $permit->id,
+                userId: (int) Craft::$app->getUser()->getId(),
+                action: 'equipment_inspection',
+                note: 'Subpermit #' . $subpermit->id . ' — ' . $inspection->dueDate . ' — ' . $status
+                    . ($notes !== '' ? ' — ' . mb_substr($notes, 0, 100) : ''),
+            );
+
+            $fresh = SubpermitRecord::findOne(['id' => $subpermit->id]) ?? $subpermit;
+            $module->permitPdfService->generateForSubpermit($fresh, $permit);
+        } catch (Throwable $e) {
+            Craft::error('Equipment inspection save failed: ' . $e->getMessage(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Kontrolu sa nepodarilo uložiť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+            return $this->redirect($redirectUrl);
+        }
+
+        $remaining = $module->equipmentInspectionService->outstandingCount((int) $subpermit->id);
+        Craft::$app->getSession()->setNotice(
+            $remaining > 0
+                ? Craft::t('bozp', 'Kontrola bola zaznamenaná. Zostáva: {n}.', ['n' => $remaining])
+                : Craft::t('bozp', 'Kontrola bola zaznamenaná.')
+        );
+
+        return $this->redirect(
+            $remaining > 0 ? $redirectUrl : "permits/{$permitId}/subpermits/{$id}"
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -531,6 +840,10 @@ class SubpermitsController extends BaseSiteController
         try {
             $subpermit->status = SubpermitStatus::Cancelled->value;
             $subpermit->cancelledAt = date('Y-m-d H:i:s');
+            // Work called off — drop any outstanding fire watch checks.
+            // Performed ones stay as a safety record.
+            Craft::$app->getModule('bozp')->fireWatchService->voidFor((int) $subpermit->id);
+            Craft::$app->getModule('bozp')->equipmentInspectionService->voidFor((int) $subpermit->id);
             if (!$subpermit->save()) {
                 throw new \RuntimeException('Cancel failed: ' . print_r($subpermit->getErrors(), true));
             }
@@ -682,6 +995,36 @@ class SubpermitsController extends BaseSiteController
                 );
                 return $this->redirect("permits/{$permitId}/subpermits/{$id}");
             }
+        }
+
+        // Post-hot-work fire watch: every hourly check must be performed
+        // first. Subpermits with no fire watch rows (anything but hot_work,
+        // or closed before this feature shipped) pass straight through.
+        // Daily equipment safety inspection (energized subpermits). Blocked
+        // only while an inspection is outstanding — performing today's frees
+        // the closure; leaving it raises a new one tomorrow.
+        $outstandingInspections = $module->equipmentInspectionService->outstandingCount((int) $subpermit->id);
+        if ($outstandingInspections > 0) {
+            Craft::$app->getSession()->setError(
+                Craft::t(
+                    'bozp',
+                    'Pred uzavretím je potrebné vykonať dennú kontrolu bezpečnostného stavu zariadení. Zostáva: {n}.',
+                    ['n' => $outstandingInspections],
+                )
+            );
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
+        }
+
+        $outstandingWatch = $module->fireWatchService->outstandingCount((int) $subpermit->id);
+        if ($outstandingWatch > 0) {
+            Craft::$app->getSession()->setError(
+                Craft::t(
+                    'bozp',
+                    'Pred uzavretím je potrebné vykonať všetky kontroly požiarnej hliadky. Zostáva: {n}.',
+                    ['n' => $outstandingWatch],
+                )
+            );
+            return $this->redirect("permits/{$permitId}/subpermits/{$id}");
         }
 
         // Already signed?
@@ -984,6 +1327,15 @@ class SubpermitsController extends BaseSiteController
                 'ppeUsed' => [], 'toolsUsed' => [],
                 'insulationMethod' => [], 'insulationOther' => '',
                 'workStartTime' => '', 'workFinishTime' => '',
+            ],
+            SubpermitType::Energized => [
+                'contactAvoidable' => '', 'protectionSystem' => '',
+                'workerAuthorized' => '', 'productionLine' => '',
+                'equipment' => '', 'lotoReason' => '',
+                'safeWorkProcedure' => '', 'energiesPresent' => [],
+                'energiesOther' => '', 'hazardTypes' => [],
+                'hazardsOther' => '', 'preventiveMeasures' => [],
+                'workStartTime' => '',
             ],
         };
     }
@@ -1294,6 +1646,31 @@ class SubpermitsController extends BaseSiteController
                 'toolsUsed'                       => $arr('toolsUsed'),
                 'workspaceInsulation'             => $arr('workspaceInsulation'),
                 'workspaceInsulationOther'        => $str('workspaceInsulationOther'),
+            ],
+            SubpermitType::Energized => [
+                // Expozícia pohyblivým častiam
+                'contactAvoidable'    => $str('contactAvoidable'),
+                'protectionSystem'    => $str('protectionSystem'),
+            
+                // Spôsobilosť + zariadenie
+                'workerAuthorized'    => $str('workerAuthorized'),
+                'productionLine'      => $str('productionLine'),
+                'equipment'           => $str('equipment'),
+            
+                // Dôvod nesplnenia LOTO + bezpečný pracovný postup.
+                // safeWorkProcedure = 'no' je varovanie pri uložení, nie blokácia.
+                'lotoReason'          => $str('lotoReason'),
+                'safeWorkProcedure'   => $str('safeWorkProcedure'),
+            
+                // Prítomné energie / nebezpečenstvá / preventívne opatrenia
+                'energiesPresent'     => $arr('energiesPresent'),
+                'energiesOther'       => $str('energiesOther'),
+                'hazardTypes'         => $arr('hazardTypes'),
+                'hazardsOther'        => $str('hazardsOther'),
+                'preventiveMeasures'  => $arr('preventiveMeasures'),
+            
+                // Ukončenie plánovania prác
+                'workStartTime'       => $str('workStartTime'),
             ],
         };
 

@@ -1,0 +1,53 @@
+{% extends 'bozp/email/_layout.twig' %}
+
+{# Daily equipment safety inspection due — sent to the issuer at 16:00.
+   Variables: permit, subpermit, inspection, controlUrl #}
+
+{% block subject %}{{ 'Kontrola bezpečnostného stavu zariadení — permit {n}'|t('bozp', {n: permit.permitNumber}) }}{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:13px;color:#4F2170;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        {{ 'Práca pod energiou'|t('bozp') }}
+    </p>
+    <h2 style="margin:0 0 24px;font-size:20px;color:#000000;">
+        {{ 'Denná kontrola bezpečnostného stavu zariadení'|t('bozp') }}
+    </h2>
+
+    <p style="margin:0 0 16px;">{{ 'Dobrý deň,'|t('bozp') }}</p>
+
+    <p style="margin:0 0 20px;">
+        {{
+            'Pre permit <strong>{n}</strong> (spoločnosť <strong>{company}</strong>) je potrebné vykonať dennú kontrolu bezpečnostného stavu zariadení po dokončení práce.'|t('bozp', {
+                n: permit.permitNumber,
+                company: permit.contractorCompany ?: '—',
+            })|raw
+        }}
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#FEFFFD;border-left:4px solid #4F2170;border-radius:0 4px 4px 0;margin:0 0 24px;">
+        <tr>
+            <td style="padding:14px 18px;">
+                <p style="margin:0 0 6px;font-size:13px;color:#555;">
+                    {{ 'Miesto výkonu'|t('bozp') }}:
+                    <strong style="color:#000000;">{{ permit.workLocation ?: '—' }}</strong>
+                </p>
+                <p style="margin:0;font-size:13px;color:#555;">
+                    {{ 'Dátum kontroly'|t('bozp') }}:
+                    <strong style="color:#000000;">{{ inspection.dueDate|date('d.m.Y') }}</strong>
+                </p>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:0 0 24px;">
+        <a href="{{ controlUrl }}"
+           style="display:inline-block;background:#4F2170;color:#FEFFFD;text-decoration:none;padding:12px 28px;border-radius:40px;font-weight:600;">
+            {{ 'Zaznamenať kontrolu'|t('bozp') }}
+        </a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:#555;">
+        {{ 'Subpermit nie je možné uzavrieť, kým nie je vykonaná denná kontrola.'|t('bozp') }}
+    </p>
+{% endblock %}

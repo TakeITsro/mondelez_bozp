@@ -22,6 +22,7 @@ use modules\bozp\records\PermitHazardRecord;
 use modules\bozp\records\PermitRecord;
 use modules\bozp\records\SubpermitRecord;
 use modules\bozp\records\ZoneRecord;
+use modules\bozp\services\SubpermitSignatureService;
 use Throwable;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -174,6 +175,13 @@ class QueueController extends Controller
             'signatures'    => $signatures,
             'canApprove'    => Craft::$app->getUser()->checkPermission('bozp:approve'),
             'subpermitTypes' => SubpermitType::cases(),
+            // Force closure is offered only once the parent permit has
+            // lapsed and the subpermit isn't already closed off.
+            'canForceClose' => $permit->status === PermitStatus::Expired->value
+                && !$module->subpermitSignatureService->findSignature(
+                    (int) $subpermit->id,
+                    SubpermitSignatureService::ROLE_ISSUER_CLOSURE
+                ),
         ]);
     }
 
@@ -752,7 +760,11 @@ class QueueController extends Controller
         $id = (int) $request->getRequiredBodyParam('id');
         $permit = $this->findPermit($id);
 
-        if ($permit->status !== PermitStatus::AwaitingHseClosure->value) {
+        // Two ways in: the normal end of the signature chain, or a force
+        // closure of a permit that expired before the chain could finish.
+        $isForceClose = $permit->status === PermitStatus::Expired->value;
+
+        if (!$isForceClose && $permit->status !== PermitStatus::AwaitingHseClosure->value) {
             Craft::$app->getSession()->setError(Craft::t('bozp', 'Permit nie je v stave čakania na HSE.'));
             return $this->redirect("permits/{$permit->id}");
         }
@@ -790,7 +802,12 @@ class QueueController extends Controller
                 $signatureDate,
                 $signatureData,
             );
-            $module->permitWorkflow->closeByHse($permit, $userId);
+            if ($isForceClose) {
+                $reason = trim((string) $request->getBodyParam('forceCloseReason', ''));
+                $module->permitWorkflow->forceCloseByHse($permit, $userId, $reason !== '' ? $reason : null);
+            } else {
+                $module->permitWorkflow->closeByHse($permit, $userId);
+            }
 
             // Re-fetch so the PDF reflects the final closed state.
             $closed = PermitRecord::findOne(['id' => $permit->id]) ?? $permit;
@@ -798,7 +815,9 @@ class QueueController extends Controller
             $module->permitMailer->notifyParticipantsOfClosure($closed, $signerName);
 
             Craft::$app->getSession()->setNotice(
-                Craft::t('bozp', 'Permit {n} bol uzavretý.', ['n' => $permit->permitNumber])
+                $isForceClose
+                    ? Craft::t('bozp', 'Expirovaný permit {n} bol uzavretý HSE.', ['n' => $permit->permitNumber])
+                    : Craft::t('bozp', 'Permit {n} bol uzavretý.', ['n' => $permit->permitNumber])
             );
         } catch (Throwable $e) {
             Craft::error('BOZP HSE close failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), __METHOD__);
@@ -811,6 +830,106 @@ class QueueController extends Controller
         }
 
         return $this->redirect('permits');
+    }
+
+    /**
+     * HSE force closure of a subpermit under an expired permit.
+     *
+     * Overrides every normal gate — the missing contractor closure, the
+     * attachment requirement for hot work / confined space / ATEX, and the
+     * post-hot-work fire watch checks. Once the permit has lapsed the
+     * contractor portal is locked, so none of those can ever be satisfied
+     * and the subpermit would otherwise be stuck open forever.
+     *
+     * The issuer_closure slot is filled with the HSE officer's name but no
+     * drawn signature, so the PDF prints a blank ruled line under it for a
+     * wet signature on the filed copy.
+     *
+     * POST bozp/permit/<permitId>/subpermits/<id>/force-close
+     */
+    public function actionForceCloseSubpermit(): ?Response
+    {
+        $this->requirePostRequest();
+        $this->requireLogin();
+        $this->requirePermission('bozp:approve');
+
+        $request  = Craft::$app->getRequest();
+        $permitId = (int) $request->getRequiredBodyParam('permitId');
+        $id       = (int) $request->getRequiredBodyParam('id');
+
+        $permit    = $this->findPermit($permitId);
+        $subpermit = $this->findSubpermit($id, $permitId);
+
+        if ($permit->status !== PermitStatus::Expired->value) {
+            Craft::$app->getSession()->setError(
+                Craft::t('bozp', 'Núdzové uzavretie je možné len pre expirovaný permit.')
+            );
+            return $this->redirect("permits/{$permitId}/subpermit/{$id}");
+        }
+
+        /** @var Module $module */
+        $module = Craft::$app->getModule('bozp');
+
+        if ($module->subpermitSignatureService->findSignature(
+            (int) $subpermit->id,
+            SubpermitSignatureService::ROLE_ISSUER_CLOSURE
+        )) {
+            Craft::$app->getSession()->setNotice(
+                Craft::t('bozp', 'Subpermit už bol uzavretý.')
+            );
+            return $this->redirect("permits/{$permitId}/subpermit/{$id}");
+        }
+
+        $user       = Craft::$app->getUser()->getIdentity();
+        $signerName = trim((string) $request->getBodyParam('signerName', ''));
+        if ($signerName === '' && $user) {
+            $signerName = (string) ($user->fullName ?: $user->username);
+        }
+        if ($signerName === '') {
+            Craft::$app->getSession()->setError(Craft::t('bozp', 'Meno je povinné.'));
+            return $this->redirect("permits/{$permitId}/subpermit/{$id}");
+        }
+
+        $reason = trim((string) $request->getBodyParam('forceCloseReason', ''));
+
+        try {
+            // Name + date only — no image, so the PDF leaves a blank line.
+            $module->subpermitSignatureService->captureUnsigned(
+                $subpermit,
+                SubpermitSignatureService::ROLE_ISSUER_CLOSURE,
+                $signerName,
+                null,
+                date('Y-m-d'),
+            );
+
+            // Outstanding fire watch checks are moot once HSE closes the
+            // subpermit off — drop them so the cron stops mailing.
+            $module->fireWatchService->voidFor((int) $subpermit->id);
+
+            $module->auditLogger->log(
+                permitId: (int) $permit->id,
+                userId: $user ? (int) $user->id : null,
+                action: 'subpermit_force_closed',
+                note: 'Subpermit #' . $subpermit->id
+                    . ($reason !== '' ? ' — ' . mb_substr($reason, 0, 150) : ''),
+            );
+
+            $fresh = SubpermitRecord::findOne(['id' => $subpermit->id]) ?? $subpermit;
+            $module->permitPdfService->generateForSubpermit($fresh, $permit);
+        } catch (Throwable $e) {
+            Craft::error('Subpermit force close failed: ' . $e->getMessage(), __METHOD__);
+            $msg = (string) Craft::t('bozp', 'Subpermit sa nepodarilo uzavrieť. Skúste znova.');
+            if (Craft::$app->getConfig()->getGeneral()->devMode) {
+                $msg .= ' [debug: ' . $e->getMessage() . ']';
+            }
+            Craft::$app->getSession()->setError($msg);
+            return $this->redirect("permits/{$permitId}/subpermit/{$id}");
+        }
+
+        Craft::$app->getSession()->setNotice(
+            Craft::t('bozp', 'Subpermit bol uzavretý HSE.')
+        );
+        return $this->redirect("permits/{$permitId}/subpermit/{$id}");
     }
 
     /**

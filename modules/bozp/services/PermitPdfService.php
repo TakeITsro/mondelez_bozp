@@ -242,6 +242,10 @@ class PermitPdfService extends Component
             'controlSigImages'    => $controlSigImages,
             'contractorUrl'       => $contractorUrl,
             'contractorQrDataUri' => $contractorQrDataUri,
+            // Daily equipment safety inspections — energized subpermits only,
+            // empty array for every other type.
+            'inspections'         => Craft::$app->getModule('bozp')
+                ->equipmentInspectionService->findFor((int) $subpermit->id),
             'generatedAt'         => date('d.m.Y H:i'),
         ]);
 

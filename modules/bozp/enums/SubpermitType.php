@@ -22,6 +22,7 @@ enum SubpermitType: string
     case Excavation    = 'excavation';     // Príloha 7 — Výkopové práce
     case Lifting       = 'lifting';        // Príloha 8 — Zdvíhacie práce / žeriav
     case Atex          = 'atex';           // Príloha 9 — Prostredie ATEX
+    case Energized     = 'energized';      // Príloha 10 — Práca pod energiou
 
     public function label(): string
     {
@@ -34,6 +35,7 @@ enum SubpermitType: string
             self::Excavation    => Craft::t('bozp', 'Výkopové práce'),
             self::Lifting       => Craft::t('bozp', 'Zdvíhacie práce a práce so žeriavom'),
             self::Atex          => Craft::t('bozp', 'Práce v prostredí ATEX'),
+            self::Energized     => Craft::t('bozp', 'Práca pod energiou'),
         };
     }
 
@@ -49,6 +51,7 @@ enum SubpermitType: string
             self::Excavation    => 7,
             self::Lifting       => 8,
             self::Atex          => 9,
+            self::Energized     => 10,
         };
     }
 

@@ -15,6 +15,8 @@ use craft\web\UrlManager;
 use craft\web\View;
 use modules\bozp\services\AuditLogger;
 use modules\bozp\services\ClickUpClient;
+use modules\bozp\services\EquipmentInspectionService;
+use modules\bozp\services\FireWatchService;
 use modules\bozp\services\PermitMailer;
 use modules\bozp\services\PermitNumberGenerator;
 use modules\bozp\services\PermitPdfService;
@@ -39,6 +41,8 @@ use yii\base\Module as BaseModule;
  * @property-read SignatureService $signatureService
  * @property-read SubpermitSignatureService $subpermitSignatureService
  * @property-read SubpermitSigningService $subpermitSigningService
+ * @property-read FireWatchService $fireWatchService
+ * @property-read EquipmentInspectionService $equipmentInspectionService
  * @property-read ClickUpClient $clickUpClient
  */
 class Module extends BaseModule
@@ -60,6 +64,8 @@ class Module extends BaseModule
             'signatureService' => SignatureService::class,
             'subpermitSignatureService' => SubpermitSignatureService::class,
             'subpermitSigningService'   => SubpermitSigningService::class,
+            'fireWatchService'          => FireWatchService::class,
+            'equipmentInspectionService' => EquipmentInspectionService::class,
             'clickUpClient'             => ClickUpClient::class,
         ]);
 
@@ -72,6 +78,7 @@ class Module extends BaseModule
         $this->registerCpNavItem();
         $this->registerUserPermissions();
         $this->registerCpAccessGuard();
+        $this->registerSiteLanguage();
 
         Craft::info('BOZP module loaded.', __METHOD__);
     }
@@ -133,6 +140,57 @@ class Module extends BaseModule
         );
     }
 
+    /**
+     * Apply the BOZP language choice to every front-end request.
+     *
+     * `?lang=sk|en` switches and stores a 30-day cookie; otherwise the
+     * existing `bozp_lang` cookie decides. CP requests are left alone so
+     * Craft keeps using each user's own preferred language there.
+     *
+     * Hooked on the controller rather than the application because Craft
+     * sets the target language during bootstrap — assigning at
+     * EVENT_BEFORE_REQUEST would be overwritten. Registering on
+     * craft\web\Controller also covers the contractor portal and the
+     * token-signer page, which extend that class directly instead of
+     * BaseSiteController.
+     */
+    private function registerSiteLanguage(): void
+    {
+        Event::on(
+            \craft\web\Controller::class,
+            \craft\web\Controller::EVENT_BEFORE_ACTION,
+            static function (\yii\base\ActionEvent $event): void {
+                $app     = Craft::$app;
+                $request = $app->getRequest();
+
+                if ($request->getIsConsoleRequest() || $request->getIsCpRequest()) {
+                    return;
+                }
+
+                $allowed = ['sk', 'en'];
+                $lang    = (string) $request->getQueryParam('lang', '');
+
+                if (in_array($lang, $allowed, true)) {
+                    // Explicit switch — remember it for subsequent requests.
+                    $app->getResponse()->getCookies()->add(new \yii\web\Cookie([
+                        'name'     => 'bozp_lang',
+                        'value'    => $lang,
+                        'expire'   => time() + 30 * 24 * 60 * 60,
+                        'httpOnly' => true,
+                        'secure'   => $request->getIsSecureConnection(),
+                        'sameSite' => \yii\web\Cookie::SAME_SITE_LAX,
+                    ]));
+                } else {
+                    $lang = (string) $request->getCookies()->getValue('bozp_lang', '');
+                }
+
+                if (in_array($lang, $allowed, true)) {
+                    $app->language = $lang;
+                }
+            }
+        );
+    }
+
     private function registerTranslations(): void
     {
         Craft::$app->getI18n()->translations['bozp'] = [
@@ -182,6 +240,7 @@ class Module extends BaseModule
                 $event->rules['POST permits/<id:\d+>/delete'] = 'bozp/queue/delete';
                 $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/approve'] = 'bozp/queue/approve-subpermit';
                 $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/reject'] = 'bozp/queue/reject-subpermit';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/force-close'] = 'bozp/queue/force-close-subpermit';
                 $event->rules['permits/<permitId:\d+>/subpermit/<id:\d+>'] = 'bozp/queue/subpermit-view';
                 $event->rules['permits/<permitId:\d+>/subpermit/<id:\d+>/edit'] = 'bozp/queue/edit-subpermit';
 
@@ -267,6 +326,14 @@ class Module extends BaseModule
                 $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/sign-prework'] = 'bozp/subpermits/sign-prework';
                 $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/sign-closure'] = 'bozp/subpermits/sign-closure';
                 $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/upload']      = 'bozp/subpermits/upload-attachment';
+
+                // Post-hot-work fire watch (issuer)
+                $event->rules['permits/<permitId:\d+>/subpermits/<id:\d+>/fire-watch']      = 'bozp/subpermits/fire-watch';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/fire-watch'] = 'bozp/subpermits/save-fire-watch';
+
+                // Daily equipment safety inspection (energized subpermits)
+                $event->rules['permits/<permitId:\d+>/subpermits/<id:\d+>/inspection']      = 'bozp/subpermits/inspection';
+                $event->rules['POST permits/<permitId:\d+>/subpermits/<id:\d+>/inspection'] = 'bozp/subpermits/save-inspection';
 
                 // PDF download (issuer side)
                 $event->rules['permits/<id:\d+>/pdf'] = 'bozp/permits/pdf';

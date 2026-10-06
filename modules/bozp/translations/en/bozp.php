@@ -1342,4 +1342,185 @@ return [
         => 'Signing will be possible once HSE approves the general permit. Please try again later.',
     'Subpermit bol uložený. Pozvania na podpis budú odoslané po schválení permitu.'
         => 'Subpermit has been saved. Signing invitations will be sent after the permit is approved.',
+
+    // Post-hot-work fire watch
+    'Požiarna hliadka po ohňových prácach' => 'Post-hot-work fire watch',
+    'Požiarna hliadka {i}/{n} — permit {p}' => 'Fire watch {i}/{n} — permit {p}',
+    'Kontrola {i} zo {n} je splatná' => 'Check {i} of {n} is due',
+    'Dodávateľ uzavrel subpermit na ohňové práce k permitu <strong>{p}</strong> pre spoločnosť <strong>{company}</strong>. Vykonajte prosím kontrolu pracoviska a zaznamenajte jej výsledok.'
+        => 'The contractor closed the hot work subpermit for permit <strong>{p}</strong>, company <strong>{company}</strong>. Please inspect the work area and record the result.',
+    'Plánovaný čas kontroly' => 'Scheduled check time',
+    'Poradie' => 'Sequence',
+    'Zaznamenať kontrolu' => 'Record check',
+    'Subpermit nie je možné uzavrieť, kým nie sú vykonané všetky kontroly požiarnej hliadky.'
+        => 'The subpermit cannot be closed until every fire watch check has been performed.',
+    'Pred uzavretím je potrebné vykonať všetky kontroly požiarnej hliadky. Zostáva: {n}.'
+        => 'All fire watch checks must be performed before closing. Remaining: {n}.',
+    'Táto kontrola už bola zaznamenaná.' => 'This check has already been recorded.',
+    'Vyberte výsledok kontroly.' => 'Select the check result.',
+    'Kontrola bola zaznamenaná. Zostáva: {n}.' => 'Check recorded. Remaining: {n}.',
+    'Kontrola bola zaznamenaná. Požiarna hliadka je dokončená.' => 'Check recorded. The fire watch is complete.',
+    'Kontrolu sa nepodarilo uložiť. Skúste znova.' => 'The check could not be saved. Please try again.',
+    'Požiarna hliadka' => 'Fire watch',
+    'Bez závad' => 'No issues',
+    'Zistená závada' => 'Issue found',
+    'Splatné' => 'Due',
+    'Vykonané' => 'Performed',
+    'Čaká' => 'Pending',
+
+    // Permit expiry + HSE force closure
+    'Permit {n} expiroval' => 'Permit {n} has expired',
+    'Expirácia povolenia' => 'Permit expiry',
+    'Platnosť povolenia uplynula' => 'The permit validity has lapsed',
+    'Permit <strong>{n}</strong> pre spoločnosť <strong>{company}</strong> expiroval <strong>{at}</strong>. Práce na základe tohto povolenia nie je možné vykonávať.'
+        => 'Permit <strong>{n}</strong> for <strong>{company}</strong> expired on <strong>{at}</strong>. No work may be carried out under it.',
+    'Spolu s povolením expirovali aj otvorené subpermity: {n}.'
+        => 'Open subpermits expired along with the permit: {n}.',
+    'Expirované povolenie už nie je možné uzavrieť bežným postupom. Uzavretie vykoná HSE oddelenie.'
+        => 'An expired permit can no longer be closed through the normal process. The HSE department will close it.',
+    'Zobraziť permit' => 'View permit',
+    'Ak práce ešte nie sú dokončené, je potrebné vystaviť nové povolenie.'
+        => 'If the work is not finished, a new permit must be issued.',
+    'Expirovaný permit {n} bol uzavretý HSE.' => 'Expired permit {n} has been closed by HSE.',
+    'Núdzové uzavretie je možné len pre expirovaný permit.'
+        => 'Force closure is only available for an expired permit.',
+    'Subpermit už bol uzavretý.' => 'The subpermit has already been closed.',
+    'Subpermit bol uzavretý HSE.' => 'The subpermit has been closed by HSE.',
+    'Subpermit sa nepodarilo uzavrieť. Skúste znova.' => 'The subpermit could not be closed. Please try again.',
+    'Núdzové uzavretie (HSE)' => 'Force close (HSE)',
+
+    // Subpermit: work on energized equipment (Appendix 10)
+    'Práca pod energiou' => 'Work on energized equipment',
+    'Príprava na činnosť' => 'Activity preparation',
+    'Je možné zabrániť vystaveniu sa riziku kontaktu s pohyblivou časťou zariadenia (použitie pracovných pomôcok atď.)'
+        => 'Is it possible to avoid exposure to the risk of contact with a moving part of the equipment (use of work equipment, etc.)',
+    'Ak nie, urči použitý systém ochrany' => 'If not, specify the protection system used',
+    'Vykonávateľ práce je školený — autorizovaný — spôsobilý na prácu pod energiou'
+        => 'The work contractor is trained / authorised / competent to work on energized equipment',
+    'Výrobná linka' => 'Production line',
+    'Zariadenie' => 'Equipment',
+    'LOTO a pracovný postup' => 'LOTO and work procedure',
+    'Prečo nemôžete splniť štandard LOTO na vykonanie práce'
+        => 'Why the LOTO standard cannot be met to carry out the work',
+    'Je vypracovaný bezpečný pracovný postup pre danú prácu'
+        => 'A safe work procedure has been prepared for this work',
+    'Ak nie je vypracovaný a schválený, povolenie ďalej nesmie pokračovať.'
+        => 'If it is not prepared and approved, the permit must not continue.',
+    'Upozornenie: pre túto prácu nie je vypracovaný a schválený bezpečný pracovný postup. Povolenie by nemalo pokračovať.'
+        => 'Warning: no approved safe work procedure exists for this work. The permit should not continue.',
+    'Prítomné energie' => 'Energies present',
+    'Elektrina' => 'Electricity',
+    'Pneumatika/hydraulika' => 'Pneumatics/hydraulics',
+    'Gravitácia' => 'Gravity',
+    'Chemikália' => 'Chemical',
+    'Plyn' => 'Gas',
+    'Ostatné' => 'Other',
+    'Ostatné — upresnite' => 'Other — specify',
+    'Identifikácia nebezpečenstiev' => 'Hazard identification',
+    'Elektrický šok' => 'Electric shock',
+    'Pritlačenie' => 'Pinch',
+    'Vtiahnutie' => 'Retract',
+    'Porezanie' => 'Cut',
+    'Výbuch' => 'Explosion',
+    'Popálenie' => 'Burn',
+    'Iné' => 'Other',
+    'Iné — upresnite' => 'Other — specify',
+    'Preventívne opatrenia' => 'Preventive measures',
+    'Oblasť je ohradená páskou/bariérou' => 'The area is fenced off with tape/barrier',
+    'Oblasť je čistá, upratná a bez nečistôt' => 'The area is clean, tidy and free of debris',
+    'Vedľa núdzového tlačidla bude stáť pozorovateľ v priamom zornom poli'
+        => 'An observer will stand next to the emergency button in direct line of sight',
+    'Pozorovateľ pri núdzovom tlačidle v priamom zornom poli'
+        => 'Observer at the emergency button in direct line of sight',
+    'Môžem pozorovať zariadenie s rukami za chrbtom bez nutnosti nakláňania sa do nebezpečného priestoru'
+        => 'I can observe the equipment with my hands behind my back without leaning into a dangerous area',
+    'Pozorovanie s rukami za chrbtom bez nakláňania do nebezpečného priestoru'
+        => 'Observation with hands behind back, without leaning into a dangerous area',
+    'Môžem dodržať bezpečnú vzdialenosť minimálne 80 cm od pohyblivých častí zariadenia'
+        => 'I can keep a safe distance of at least 80 cm from moving parts of the equipment',
+    'Dodržaná bezpečná vzdialenosť minimálne 80 cm' => 'Safe distance of at least 80 cm maintained',
+    'Nevkladám žiadnu časť tela do nebezpečnej zóny, ak je potrebný zásah, použijem vhodný pracovný nástroj'
+        => 'I do not put any body part in the danger zone; if intervention is needed I use a suitable work tool',
+    'Žiadna časť tela v nebezpečnej zóne, pri zásahu vhodný nástroj'
+        => 'No body part in the danger zone; suitable tool used for intervention',
+    'Ukončenie plánovania prác a povolení' => 'Completion of work planning and permits',
+    'Práce sa môžu začať o (čas)' => 'Work can start at (time)',
+    'Práce sa môžu začať o' => 'Work can start at',
+    'Toto povolenie je platné len na jednu pracovnú zmenu (8 hodín). Podmienky vydania musia byť splnené počas celého trvania práce. Povolenie môže byť kedykoľvek odňaté.'
+        => 'This permit is valid for one work shift (8 hours) only. The conditions of issue must be met for the entire duration of the work. The permit may be withdrawn at any time.',
+    'Práca pod energiou — Príprava na činnosť' => 'Work on energized equipment — Activity preparation',
+    'Použitý systém ochrany' => 'Protection system used',
+    'Prečo nemožno splniť štandard LOTO' => 'Why the LOTO standard cannot be met',
+    'Prítomné energie a nebezpečenstvá' => 'Energies present and hazards',
+    'Je možné zabrániť kontaktu s pohyblivou časťou zariadenia'
+        => 'Contact with a moving part of the equipment can be avoided',
+    'Vykonávateľ je školený / autorizovaný / spôsobilý na prácu pod energiou'
+        => 'Contractor is trained / authorised / competent for work on energized equipment',
+    'Opatrenie' => 'Measure',
+
+    // Daily equipment safety inspection (Appendix 10, page 2)
+    'Kontrola bezpečnostného stavu zariadení' => 'Equipment safety condition inspection',
+    'Správa o kontrole bezpečnostného stavu zariadení' => 'Equipment safety condition inspection report',
+    'Kontrola bezpečnostného stavu zariadení — permit {n}' => 'Equipment safety inspection — permit {n}',
+    'Denná kontrola bezpečnostného stavu zariadení' => 'Daily equipment safety condition inspection',
+    'Pre permit <strong>{n}</strong> (spoločnosť <strong>{company}</strong>) je potrebné vykonať dennú kontrolu bezpečnostného stavu zariadení po dokončení práce.'
+        => 'A daily equipment safety condition inspection is required for permit <strong>{n}</strong> (company <strong>{company}</strong>) after work is completed.',
+    'Dátum kontroly' => 'Inspection date',
+    'Subpermit nie je možné uzavrieť, kým nie je vykonaná denná kontrola.'
+        => 'The subpermit cannot be closed until the daily inspection has been performed.',
+    'Pred uzavretím je potrebné vykonať dennú kontrolu bezpečnostného stavu zariadení. Zostáva: {n}.'
+        => 'The daily equipment safety inspection must be performed before closing. Remaining: {n}.',
+    'Vykonané kontroly' => 'Completed inspections',
+    'Kontrola za deň {d}' => 'Inspection for {d}',
+    'Štandard PS4 MG a LOTO · Zákon č. 124/2006 Zb. · Frekvencia: každý deň po dokončení práce'
+        => 'Standard PS4 MG & LOTO · Act No. 124/2006 Coll. · Frequency: every day after work completion',
+    'Mechanická bezpečnosť' => 'Mechanical safety',
+    'Bezpečnostné zariadenia' => 'Safety devices',
+    'Elektrická bezpečnosť' => 'Electrical safety',
+    'Konečná podmienka' => 'Final condition',
+    'Všetky ochranné kryty sú nainštalované a pevne upevnené.' => 'All protective guards are installed and securely fastened.',
+    'Nie sú prístupné žiadne pohyblivé ani nebezpečné časti.' => 'No moving or hazardous parts are accessible.',
+    'Všetky mechanické komponenty sú pevne upevnené.' => 'All mechanical components are securely fixed.',
+    'Na zariadení nezostalo žiadne náradie, voľné diely ani inštalačné materiály.'
+        => 'No tools, loose parts or installation materials remain on the equipment.',
+    'Koncové spínače / senzory sú nainštalované a funkčné.' => 'Limit switches / sensors are installed and functional.',
+    'Bezpečnostné prvky (interlocky) sú nainštalované a funkčné.' => 'Safety interlocks are installed and functional.',
+    'Núdzové zastavovacie zariadenia sú nainštalované a funkčné.' => 'Emergency stop devices are installed and functional.',
+    'Elektrické rozvádzače a kryty sú zatvorené a zabezpečené.' => 'Electrical panels and covers are closed and secured.',
+    'Nie sú prístupné žiadne živé elektrické súčiastky.' => 'No live electrical parts are accessible.',
+    'Káble a konektory sú správne zabezpečené a chránené.' => 'Cables and connectors are properly secured and protected.',
+    'Zariadenie je ponechané v bezpečnom stave.' => 'Equipment is left in a safe condition.',
+    'Pracovisko je čisté a bez nebezpečenstiev.' => 'The work area is clean and free from hazards.',
+    'Nezostali žiadne dočasné nebezpečné podmienky.' => 'No temporary unsafe conditions remain.',
+    'Všetky identifikované chyby boli zaznamenané a primerane zabezpečené.'
+        => 'All identified defects have been recorded and adequately secured.',
+    'Neaplikovateľné' => 'Not applicable',
+    'Výsledok kontroly' => 'Inspection result',
+    'Stav' => 'Status',
+    'Pred odchodom z pracoviska nahláste akékoľvek nedostatky' => 'Report any deficiencies before leaving the workplace',
+    'Meno technika' => 'Technician name',
+    'Momentálne nie je potrebná žiadna kontrola.' => 'No inspection is currently required.',
+    'Späť na subpermit' => 'Back to subpermit',
+    'Kontrola bola zaznamenaná.' => 'The inspection has been recorded.',
+    'Čas' => 'Time',
+    'Komentár' => 'Comment',
+    'Dôvod núdzového uzavretia' => 'Reason for force closure',
+
+    // Fire watch page
+    'Kontroly požiarnej hliadky' => 'Fire watch checks',
+    'Kontrola {i}/{n}' => 'Check {i}/{n}',
+    'Termín' => 'Due',
+    'Po termíne' => 'Overdue',
+    'Meno vykonávateľa' => 'Performed by',
+    'Skontrolujte pracovisko a jeho okolie. Overte, či nie sú prítomné známky tlenia, dymu alebo horenia.'
+        => 'Inspect the work area and its surroundings. Check for any signs of smouldering, smoke or burning.',
+    'Všetky kontroly požiarnej hliadky sú vykonané.' => 'All fire watch checks have been completed.',
+    'Prosím, podpíšte sa pred odoslaním.' => 'Please sign before submitting.',
+    'Podpisom potvrdzujete, že ste kontrolu požiarnej hliadky vykonali osobne.'
+        => 'By signing you confirm that you carried out the fire watch check in person.',
+    'Podpisom potvrdzujete, že ste kontrolu zariadení vykonali osobne.'
+        => 'By signing you confirm that you carried out the equipment inspection in person.',
+    'Podpis vykonávateľa' => 'Signature of the person performing the check',
+    'Podpis technika' => 'Technician signature',
+    'Vykonal' => 'Performed by',
 ];

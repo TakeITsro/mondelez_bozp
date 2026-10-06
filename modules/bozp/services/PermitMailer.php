@@ -467,6 +467,117 @@ class PermitMailer extends Component
     }
 
     /**
+     * validTo has passed and the permit has lapsed — tell the issuer.
+     *
+     * Without this the issuer gets the 24h warning and then silence; they
+     * would never learn the permit actually expired, or that closing it off
+     * now needs HSE.
+     */
+    public function notifyIssuerOfExpiry(PermitRecord $permit, int $expiredSubpermits = 0): void
+    {
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+        if (!$issuer || !$issuer->email) {
+            Craft::warning(
+                "BOZP mailer: no issuer email for expired permit #{$permit->id}",
+                __METHOD__,
+            );
+            return;
+        }
+
+        $this->send(
+            to: $issuer->email,
+            language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+            subjectKey: 'Permit {n} expiroval',
+            subjectParams: ['n' => $permit->permitNumber],
+            template: 'permit-expired',
+            vars: [
+                'permit'            => $permit,
+                'permitUrl'         => UrlHelper::siteUrl('permits/' . $permit->id),
+                'expiredSubpermits' => $expiredSubpermits,
+            ],
+        );
+    }
+
+    /**
+     * The daily equipment safety inspection has fallen due — remind the
+     * issuer. One mail per day at 16:00 while an energized subpermit is
+     * still open.
+     */
+    public function notifyIssuerOfEquipmentInspection(
+        PermitRecord $permit,
+        SubpermitRecord $subpermit,
+        \modules\bozp\records\EquipmentInspectionRecord $inspection,
+    ): void {
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+        if (!$issuer || !$issuer->email) {
+            Craft::warning(
+                "BOZP mailer: no issuer email for equipment inspection #{$inspection->id}",
+                __METHOD__,
+            );
+            return;
+        }
+
+        $this->send(
+            to: $issuer->email,
+            language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+            subjectKey: 'Kontrola bezpečnostného stavu zariadení — permit {n}',
+            subjectParams: ['n' => $permit->permitNumber],
+            template: 'equipment-inspection',
+            vars: [
+                'permit'     => $permit,
+                'subpermit'  => $subpermit,
+                'inspection' => $inspection,
+                'controlUrl' => UrlHelper::siteUrl(
+                    'permits/' . $permit->id . '/subpermits/' . $subpermit->id . '/inspection'
+                ),
+            ],
+        );
+    }
+
+    /**
+     * A post-hot-work fire watch check has fallen due — remind the issuer.
+     *
+     * Sent by the bozp/notify/fire-watch cron, once per check. These go out
+     * around the clock, including overnight, because the fire risk doesn't
+     * respect working hours.
+     */
+    public function notifyIssuerOfFireWatchControl(
+        PermitRecord $permit,
+        SubpermitRecord $subpermit,
+        \modules\bozp\records\FireWatchControlRecord $control,
+    ): void {
+        $issuer = $permit->issuerId ? User::find()->id($permit->issuerId)->one() : null;
+        if (!$issuer || !$issuer->email) {
+            Craft::warning(
+                "BOZP mailer: no issuer email for fire watch control #{$control->id}",
+                __METHOD__,
+            );
+            return;
+        }
+
+        $this->send(
+            to: $issuer->email,
+            language: $issuer->getPreferredLanguage() ?? Craft::$app->language,
+            subjectKey: 'Požiarna hliadka {i}/{n} — permit {p}',
+            subjectParams: [
+                'i' => $control->sequence,
+                'n' => \modules\bozp\services\FireWatchService::CONTROL_COUNT,
+                'p' => $permit->permitNumber,
+            ],
+            template: 'fire-watch-control',
+            vars: [
+                'permit'       => $permit,
+                'subpermit'    => $subpermit,
+                'control'      => $control,
+                'controlCount' => \modules\bozp\services\FireWatchService::CONTROL_COUNT,
+                'controlUrl'   => UrlHelper::siteUrl(
+                    'permits/' . $permit->id . '/subpermits/' . $subpermit->id . '/fire-watch'
+                ),
+            ],
+        );
+    }
+
+    /**
      * Control visit recorded — notify both issuer and contractor.
      */
     public function notifyParticipantsOfControl(

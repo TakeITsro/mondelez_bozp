@@ -162,6 +162,9 @@ class PermitsController extends BaseSiteController
                 $values['signatureData'],
             );
             $module->permitWorkflow->cancelByIssuer($permit, $userId, $reason);
+            // Permit called off — drop outstanding fire watch checks.
+            $module->fireWatchService->voidForPermit((int) $permit->id);
+            $module->equipmentInspectionService->voidForPermit((int) $permit->id);
             $module->permitMailer->notifyContractorOfIssuerSignature($permit, 'cancel', $values['signerName']);
             $module->permitPdfService->generateForPermit($permit);
 
